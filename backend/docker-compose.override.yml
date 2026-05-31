@@ -1,0 +1,15 @@
+# docker-compose.override.yml  (local dev only — git-ignored)
+services:
+  backend:
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+    volumes:
+      - ./backend:/var/www/html  # live-reload PHP in dev
+  frontend:
+    command: ["npm", "run", "dev", "--", "--host"]
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"   # Vite HMR port in dev

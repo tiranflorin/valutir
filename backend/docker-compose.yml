@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: valutir
+      POSTGRES_USER: valutir
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U valutir"]
+      interval: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://valutir:${DB_PASSWORD}@db:5432/valutir"
+      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
+      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE}
+      APP_ENV: prod
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+
+volumes:
+  pgdata:

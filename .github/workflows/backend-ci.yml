@@ -1,0 +1,42 @@
+name: Backend CI
+
+on:
+  push:
+    paths: ["backend/**"]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: valutir_test
+          POSTGRES_USER: valutir
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, openssl
+          coverage: none
+
+      - name: Install deps
+        working-directory: backend
+        run: composer install --no-interaction
+
+      - name: PHP CS Fixer (lint)
+        working-directory: backend
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: PHPUnit
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://valutir:test@localhost:5432/valutir_test
+        run: vendor/bin/phpunit --testdox
