@@ -1,0 +1,2 @@
+# valutir
+Subscriptions handling app
