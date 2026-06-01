@@ -1,6 +1,21 @@
 # ValuTir
 Subscriptions handling app
 
+SETUP:
+
+cp backend/.env.example backend/.env
+# then fill in DB_PASSWORD, JWT_PASSPHRASE, APP_SECRET
+
+cp frontend/.env.example frontend/.env
+# then adjust VITE_API_URL if needed
+
+FE:
+# Generate package-lock.json inside the container to avoid needing Node locally
+docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
+npm install
+
+docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
+npm run dev
 
 AWS Deployment (Low-Cost, Closed)
 For a "only I know the link" setup at near-zero cost:
@@ -27,3 +42,5 @@ Frontend: Subscription list + add/edit modal + dashboard totals
 CI: Both GitHub Actions workflows passing on push
 
 Deploy: EC2 + docker compose + Nginx + secret URL
+
+

@@ -1,0 +1,8 @@
+# Boots both stacks together from repo root:  docker compose up -d
+# Each stack can still be run independently from its own dir.
+
+include:
+    - path: ./backend/docker-compose.yml
+      env_file: ./backend/.env
+    - path: ./frontend/docker-compose.yml
+      env_file: ./frontend/.env
