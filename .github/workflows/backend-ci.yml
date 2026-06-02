@@ -1,8 +1,8 @@
-name: Backend CI
-
 on:
   push:
-    paths: ["backend/**"]
+    branches: ['**']
+    paths:
+      - 'backend/**'
 
 jobs:
   lint-and-test:
@@ -37,6 +37,6 @@ jobs:
 
       - name: PHPUnit
         working-directory: backend
-        env:
-          DATABASE_URL: postgresql://valutir:test@localhost:5432/valutir_test
-        run: vendor/bin/phpunit --testdox
+        run: |
+          cp .env.ci .env
+          vendor/bin/phpunit --testdox
