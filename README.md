@@ -13,12 +13,17 @@ VITE_API_URL=http://localhost:8080
 > docker compose exec backend php vendor/bin/phpunit tests/Controller/HealthcheckControllerTest.php
 
 ## FE:
-### Generate package-lock.json inside the container to avoid needing Node locally
-> docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
-npm install
+### npm install locally
+>npm install
 
-> docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
-npm run dev
+## Attach and Run Dev Manually
+>docker compose exec frontend /bin/sh
+ 
+Inside container:
+>npm run dev
+
+Output appears in your terminal 
+Open http://localhost:3000 in browser
 
 ## Project Structure
 

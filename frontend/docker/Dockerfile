@@ -1,21 +1,21 @@
-# Frontend Dockerfile (valutir/frontend/docker/Dockerfile)
-
 # === Dev stage ===
 FROM node:20-alpine AS dev
 
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
 
+# Copy only package files for reference (not for installing)
+COPY package*.json ./
+
+# Don't run npm ci — we'll mount node_modules from host
 COPY . .
 
-# Expose the dev server port (adjust if your framework uses another)
 EXPOSE 5173
 
-# Run dev server on all interfaces for Docker access
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+#CMD ["npm", "run", "dev"]
+# Keep container running with sleep (prevents exit)
+CMD ["sh", "-c", "echo 'Container ready. Run: docker compose exec frontend npm run dev' && tail -f /dev/null"]
 
-# === Prod stage (builder + nginx) ===
+# === Prod stage (unchanged) ===
 FROM node:20-alpine AS builder
 
 WORKDIR /app
