@@ -1,0 +1,14 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'frontend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder
+        run: echo "Frontend CI placeholder - nothing to do yet"

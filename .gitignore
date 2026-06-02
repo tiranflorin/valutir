@@ -57,6 +57,7 @@ backend/config/jwt/
 /backend/**/Entity/*~
 
 /backend/docker-compose.override.yml
+/frontend/docker-compose.override.yml
 
 # Embedded web-server pid file
 /backend/.web-server-pid

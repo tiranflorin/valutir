@@ -18,7 +18,7 @@ final class HealthcheckControllerTest extends WebTestCase
 
         $payload = json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame('ok', $payload['status']);
+        self::assertSame('oki', $payload['status']);
         self::assertSame('valutir', $payload['app']);
         self::assertArrayHasKey('php', $payload);
     }

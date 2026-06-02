@@ -14,7 +14,7 @@ final class HealthcheckController extends AbstractController
     public function __invoke(): JsonResponse
     {
         return $this->json([
-            'status' => 'ok',
+            'status' => 'oki',
             'app' => 'valutir',
             'php' => PHP_VERSION,
         ]);
