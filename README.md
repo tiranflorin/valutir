@@ -16,14 +16,17 @@ VITE_API_URL=http://localhost:8080
 ### npm install locally
 >npm install
 
-## Attach and Run Dev Manually
->docker compose exec frontend /bin/sh
- 
-Inside container:
->npm run dev
+[//]: # (## Attach and Run Dev Manually)
+
+[//]: # (>docker compose exec frontend /bin/sh)
+
+[//]: # ( )
+[//]: # (Inside container:)
+
+[//]: # (>npm run dev)
 
 Output appears in your terminal 
-Open http://localhost:3000 in browser
+Open http://localhost:5173 in browser
 
 ## Project Structure
 
@@ -68,8 +71,8 @@ This starts:
 
 ### 3. Inspect logs
 ```bash
-docker compose logs backend
-docker compose logs frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 ```
 
 ### 4. Down / Rebuild / Stale cache

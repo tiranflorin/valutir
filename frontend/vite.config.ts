@@ -5,13 +5,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 5173,
     watch: {
       usePolling: true,   // fixes file change detection on Docker volumes
       interval: 300,
     },
     hmr: {
-      clientPort: 3000,
+      clientPort: 5173,
     },
   },
 })

@@ -3,15 +3,19 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile
-            target: dev  # change to 'prod' for production
+            target: dev
         environment:
             VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
         ports:
-            - "3000:5173"
+            - "5173:5173"  # Changed from 3000 to match Vite default
+        volumes:
+            - .:/app                 # Sync all source files bidirectionally
+            - /app/node_modules      # Preserve node_modules inside container
         healthcheck:
-            test: ["CMD-SHELL", "wget -q --spider http://localhost:5173/ || exit 1"]
+            test: [ "CMD-SHELL", "wget -q --spider http://localhost:5173/ || exit 1" ]
             interval: 1m
             timeout: 5s
             retries: 2
             start_period: 15s
         restart: unless-stopped
+        command: [ "npm", "run", "dev" ]
