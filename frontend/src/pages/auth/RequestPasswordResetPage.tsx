@@ -7,51 +7,36 @@ import {
     Button,
     Link,
     InputAdornment,
-    IconButton,
-    Divider,
     Alert,
     CircularProgress,
     useTheme,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/AuthLayout';
 import ValuTirLogo from '../../components/ValuTirLogo';
 
-const LoginPage: React.FC = () => {
+const RequestPasswordResetPage: React.FC = () => {
     const theme = useTheme();
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     const [emailError, setEmailError] = useState('');
-    const [passwordError, setPasswordError] = useState('');
 
     const validate = () => {
         let valid = true;
         setEmailError('');
-        setPasswordError('');
 
         if (!email) {
             setEmailError('Email is required');
             valid = false;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setEmailError('Enter a valid email address');
-            valid = false;
-        }
-
-        if (!password) {
-            setPasswordError('Password is required');
-            valid = false;
-        } else if (password.length < 6) {
-            setPasswordError('Password must be at least 6 characters');
             valid = false;
         }
 
@@ -65,12 +50,69 @@ const LoginPage: React.FC = () => {
         setLoading(true);
         setError('');
 
-        // TODO: integrate with Symfony Lexik JWT — POST /api/login_check
+        // TODO: integrate with Symfony — POST /api/reset-password/request
         setTimeout(() => {
             setLoading(false);
-            setError('Backend not connected yet. JWT integration coming soon.');
+            setSuccess(true);
         }, 1200);
     };
+
+    if (success) {
+        return (
+            <AuthLayout>
+                <Paper
+                    elevation={theme.palette.mode === 'dark' ? 0 : 4}
+                    sx={{
+                        width: '100%',
+                        maxWidth: 440,
+                        p: 4,
+                        textAlign: 'center',
+                        border: theme.palette.mode === 'dark' ? `1px solid ${theme.palette.divider}` : 'none',
+                    }}
+                >
+                    <CheckCircleIcon sx={{ fontSize: 64, color: 'secondary.main', mb: 2 }} />
+                    <Typography variant="h5" gutterBottom>Check your email</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        We've sent a password reset link to <strong>{email}</strong>.
+                        Check your inbox and follow the instructions.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Didn't receive the email? Check your spam folder or try another email address.
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        size="large"
+                        onClick={() => {
+                            setSuccess(false);
+                            setEmail('');
+                        }}
+                        sx={{
+                            background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
+                            mb: 2,
+                        }}
+                    >
+                        Try Another Email
+                    </Button>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                            Remember your password?{' '}
+                            <Link
+                                component="button"
+                                variant="body2"
+                                color="primary"
+                                fontWeight={600}
+                                underline="hover"
+                                onClick={() => navigate('/login')}
+                            >
+                                Sign in
+                            </Link>
+                        </Typography>
+                    </Box>
+                </Paper>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout>
@@ -88,15 +130,15 @@ const LoginPage: React.FC = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                     <ValuTirLogo />
                     <Typography variant="h5" sx={{ mt: 1 }}>
-                        Welcome back
+                        Forgot password?
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Sign in to your ValuTir account
+                        No worries, we'll send you reset instructions
                     </Typography>
                 </Box>
 
                 {error && (
-                    <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                    <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
                         {error}
                     </Alert>
                 )}
@@ -110,7 +152,7 @@ const LoginPage: React.FC = () => {
                         onChange={e => setEmail(e.target.value)}
                         error={!!emailError}
                         helperText={emailError}
-                        sx={{ mb: 2 }}
+                        sx={{ mb: 3 }}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -119,49 +161,6 @@ const LoginPage: React.FC = () => {
                             ),
                         }}
                     />
-
-                    <TextField
-                        label="Password"
-                        type={showPassword ? 'text' : 'password'}
-                        fullWidth
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        error={!!passwordError}
-                        helperText={passwordError}
-                        sx={{ mb: 1 }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <LockOutlinedIcon color={passwordError ? 'error' : 'action'} fontSize="small" />
-                                </InputAdornment>
-                            ),
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        onClick={() => setShowPassword(p => !p)}
-                                        edge="end"
-                                        aria-label="toggle password visibility"
-                                        size="small"
-                                    >
-                                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-                        <Link
-                            component="button"
-                            variant="body2"
-                            color="primary"
-                            fontWeight={600}
-                            underline="hover"
-                            onClick={() => navigate('/request-password-reset')}
-                        >
-                            Forgot password?
-                        </Link>
-                    </Box>
 
                     <Button
                         type="submit"
@@ -177,27 +176,21 @@ const LoginPage: React.FC = () => {
                             mb: 2,
                         }}
                     >
-                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Sign In'}
+                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Reset Password'}
                     </Button>
-
-                    <Divider sx={{ my: 2 }}>
-                        <Typography variant="caption" color="text.secondary">
-                            OR
-                        </Typography>
-                    </Divider>
 
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
-                            Don't have an account?{' '}
+                            Remember your password?{' '}
                             <Link
                                 component="button"
                                 variant="body2"
-                                color="secondary"
+                                color="primary"
                                 fontWeight={600}
                                 underline="hover"
-                                onClick={() => navigate('/register')}
+                                onClick={() => navigate('/login')}
                             >
-                                Create account
+                                Sign in
                             </Link>
                         </Typography>
                     </Box>
@@ -207,4 +200,4 @@ const LoginPage: React.FC = () => {
     );
 };
 
-export default LoginPage;
+export default RequestPasswordResetPage;
