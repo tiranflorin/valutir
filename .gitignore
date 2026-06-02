@@ -56,5 +56,7 @@ backend/config/jwt/
 # Backup entities generated with doctrine:generate:entities command
 /backend/**/Entity/*~
 
+/backend/docker-compose.override.yml
+
 # Embedded web-server pid file
 /backend/.web-server-pid

@@ -1,34 +1,48 @@
+# Docker Compose - Backend (valutir/backend/)
 services:
     db:
         image: postgres:16-alpine
         environment:
             POSTGRES_DB: valutir
             POSTGRES_USER: valutir
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_PASSWORD: \${DB_PASSWORD}
         volumes:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U valutir"]
             interval: 5s
+            timeout: 5s
             retries: 5
         ports:
-            - "5432:5432"    # exposed so FE compose or tools like DBeaver can reach it
+            - "${DB_PORT:-5432}:5432"
+        restart: unless-stopped
 
     backend:
         build:
-            context: .        # context is now the backend/ dir itself
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: docker/Dockerfile
+            #target: dev  # change to 'prod' for production
         environment:
-            DATABASE_URL: "postgresql://valutir:${DB_PASSWORD}@db:5432/valutir"
+            DATABASE_URL: 'postgresql://valutir:${DB_PASSWORD}@db:5432/valutir'
             JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
             JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
-            JWT_PASSPHRASE: ${JWT_PASSPHRASE}
-            APP_ENV: prod
+            JWT_PASSPHRASE: \${JWT_PASSPHRASE}
+            APP_DEBUG: ${APP_DEBUG:-1}
+            PHP_IDE_CONFIG: ${PHP_IDE_CONFIG:-serverName=valutir-backend}
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         depends_on:
             db:
                 condition: service_healthy
         ports:
-            - "8080:8080"
+            - "${BE_PORT:-8080}:8080"
+        healthcheck:
+            test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/ || exit 1"]
+            interval: 1m
+            timeout: 5s
+            retries: 2
+            start_period: 15s
+        restart: unless-stopped
 
 volumes:
     pgdata:

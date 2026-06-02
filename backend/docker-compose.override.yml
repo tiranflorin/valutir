@@ -1,7 +1,7 @@
 services:
     backend:
-        environment:
-            APP_ENV: dev
-            APP_DEBUG: "1"
         volumes:
-            - .:/var/www/html            # . = backend/ dir, no path doubling
+            - .:/var/www/html
+            - /var/www/html/vendor  # Preserve vendor from being overwritten
+        environment:
+            APP_DEBUG: "1"

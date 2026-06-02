@@ -1,22 +1,81 @@
-# ValuTir
+# ValuTir - Developer Guide
 Subscriptions handling app
 
-SETUP:
+## Notes
+> cp backend/.env.example backend/.env
+- then fill in DB_PASSWORD, JWT_PASSPHRASE, APP_SECRET
 
-cp backend/.env.example backend/.env
-# then fill in DB_PASSWORD, JWT_PASSPHRASE, APP_SECRET
+> cp frontend/.env.example frontend/.env
+- then adjust VITE_API_URL if needed
+VITE_API_URL=http://localhost:8080
 
-cp frontend/.env.example frontend/.env
-# then adjust VITE_API_URL if needed
+## RUN PHPUnit tests:
+> docker compose exec backend php vendor/bin/phpunit tests/Controller/HealthcheckControllerTest.php
 
-FE:
-# Generate package-lock.json inside the container to avoid needing Node locally
-docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
+## FE:
+### Generate package-lock.json inside the container to avoid needing Node locally
+> docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
 npm install
 
-docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
+> docker run --rm -v "$(pwd)/frontend:/app" -w /app node:20-alpine \
 npm run dev
 
+## Project Structure
+
+```
+valutir/
+├── docker-compose.yml                 # Root compose (includes backend + frontend)
+├── backend/
+│   ├── docker-compose.yml             # Backend services (db + backend)
+│   ├── docker-compose.override.yml    # Dev overrides (bind mounts)
+│   ├── .env                           # Environment variables
+│   ├── .dockerignore                  # Exclude from Docker context
+│   └── docker/
+│       └── Dockerfile                 # Backend multi-stage Dockerfile
+└── frontend/
+    ├── docker-compose.yml             # Frontend service
+    ├── .env                           # Environment variables
+    ├── .dockerignore                  # Exclude from Docker context
+    └── docker/
+        ├── Dockerfile                 # Frontend multi-stage Dockerfile
+        └── nginx.conf                 # Nginx config for production
+```
+
+## Quick Start
+
+### 1. Start development stack
+
+From the root (`valutir/`) directory:
+
+```bash
+docker compose up -d --build
+```
+
+This starts:
+- **PostgreSQL** on `localhost:5432`
+- **Backend** on `localhost:8080` (PHP development server)
+- **Frontend** on `localhost:3000` (Vite dev server)
+
+### 2. Access the application
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+
+### 3. Inspect logs
+```bash
+docker compose logs backend
+docker compose logs frontend
+```
+
+### 4. Down / Rebuild / Stale cache
+
+```bash
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+```
+
+## Extra notes:
 AWS Deployment (Low-Cost, Closed)
 For a "only I know the link" setup at near-zero cost:
 
@@ -42,5 +101,3 @@ Frontend: Subscription list + add/edit modal + dashboard totals
 CI: Both GitHub Actions workflows passing on push
 
 Deploy: EC2 + docker compose + Nginx + secret URL
-
-
