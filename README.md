@@ -69,13 +69,16 @@ This starts:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080
 
-### 3. Inspect logs
+### 3. Check MailDev
+- Mails: http://localhost:1080 — you should see the MailDev inbox for all emails sent during development.
+
+### 4. Inspect logs
 ```bash
 docker compose logs -f backend
 docker compose logs -f frontend
 ```
 
-### 4. Down / Rebuild / Stale cache
+### 5. Down / Rebuild / Stale cache
 
 ```bash
 docker compose down -v
