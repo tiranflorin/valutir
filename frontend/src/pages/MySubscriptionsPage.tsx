@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
+import { Box, CardContent, Typography, useTheme } from '@mui/material';
 import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
 import AppSurfaceCard from '../components/AppSurfaceCard';

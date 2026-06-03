@@ -17,7 +17,7 @@ const AppSurfaceCard: React.FC<AppSurfaceCardProps> = ({
         <Card
             {...props}
             sx={{
-                borderRadius: compact ? 3 : 4,
+                borderRadius: compact ? 1 : 2,
                 border: `1px solid ${theme.palette.divider}`,
                 backgroundColor:
                     theme.palette.mode === 'dark'

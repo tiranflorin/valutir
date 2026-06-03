@@ -15,7 +15,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
-import ValuTirLogo from '../../components/ValuTirLogo';
+import BrandLogo from '../../components/BrandLogo';
 import { requestPasswordReset } from '../../services/auth';
 
 const RequestPasswordResetPage: React.FC = () => {
@@ -140,7 +140,14 @@ const RequestPasswordResetPage: React.FC = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <ValuTirLogo />
+                    <BrandLogo
+                        size="auth"
+                        sx={{
+                            mb: 1.5,
+                            display: 'block',
+                            textAlign: 'center',
+                        }}
+                    />
                     <Typography variant="h5" sx={{ mt: 1 }}>
                         Forgot password?
                     </Typography>

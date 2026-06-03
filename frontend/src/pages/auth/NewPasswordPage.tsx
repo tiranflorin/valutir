@@ -19,7 +19,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
-import ValuTirLogo from '../../components/ValuTirLogo';
+import BrandLogo from '../../components/BrandLogo';
 import { submitNewPassword } from '../../services/auth';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
@@ -166,7 +166,14 @@ const NewPasswordPage: React.FC = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <ValuTirLogo />
+                    <BrandLogo
+                        size="auth"
+                        sx={{
+                            mb: 1.5,
+                            display: 'block',
+                            textAlign: 'center',
+                        }}
+                    />
                     <Typography variant="h5" sx={{ mt: 1 }}>
                         Set a new password
                     </Typography>

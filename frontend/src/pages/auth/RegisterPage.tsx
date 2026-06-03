@@ -21,7 +21,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Navigate, useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
-import ValuTirLogo from '../../components/ValuTirLogo';
+import BrandLogo from '../../components/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { registerRequest } from '../../services/auth';
 
@@ -207,7 +207,14 @@ const RegisterPage: React.FC = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <ValuTirLogo />
+                    <BrandLogo
+                        size="auth"
+                        sx={{
+                            mb: 1.5,
+                            display: 'block',
+                            textAlign: 'center',
+                        }}
+                    />
                     <Typography variant="h5" sx={{ mt: 1.5, fontWeight: 700 }}>
                         Create account
                     </Typography>
