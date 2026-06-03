@@ -14,8 +14,9 @@ import {
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../../components/AuthLayout';
+import AppShell from '../../components/AppShell';
 import ValuTirLogo from '../../components/ValuTirLogo';
+import { requestPasswordReset } from '../../services/auth';
 
 const RequestPasswordResetPage: React.FC = () => {
     const theme = useTheme();
@@ -25,12 +26,12 @@ const RequestPasswordResetPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-
     const [emailError, setEmailError] = useState('');
 
     const validate = () => {
         let valid = true;
         setEmailError('');
+        setError('');
 
         if (!email) {
             setEmailError('Email is required');
@@ -45,21 +46,26 @@ const RequestPasswordResetPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validate()) return;
 
-        setLoading(true);
-        setError('');
+        if (!validate()) {
+            return;
+        }
 
-        // TODO: integrate with Symfony — POST /api/reset-password/request
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            setLoading(true);
+            setError('');
+            await requestPasswordReset(email);
             setSuccess(true);
-        }, 1200);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Could not request password reset');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (success) {
         return (
-            <AuthLayout>
+            <AppShell>
                 <Paper
                     elevation={theme.palette.mode === 'dark' ? 0 : 4}
                     sx={{
@@ -68,16 +74,18 @@ const RequestPasswordResetPage: React.FC = () => {
                         p: 4,
                         textAlign: 'center',
                         border: theme.palette.mode === 'dark' ? `1px solid ${theme.palette.divider}` : 'none',
+                        borderRadius: 4,
                     }}
                 >
                     <CheckCircleIcon sx={{ fontSize: 64, color: 'secondary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom>Check your email</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        We've sent a password reset link to <strong>{email}</strong>.
-                        Check your inbox and follow the instructions.
+                    <Typography variant="h5" gutterBottom>
+                        Check your email
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Didn't receive the email? Check your spam folder or try another email address.
+                        If the email is registered, a password reset link has been sent to <strong>{email}</strong>.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Check your inbox and spam folder, then follow the reset instructions.
                     </Typography>
                     <Button
                         variant="contained"
@@ -90,6 +98,9 @@ const RequestPasswordResetPage: React.FC = () => {
                         sx={{
                             background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
                             mb: 2,
+                            borderRadius: 999,
+                            py: 1.4,
+                            fontWeight: 700,
                         }}
                     >
                         Try Another Email
@@ -110,12 +121,12 @@ const RequestPasswordResetPage: React.FC = () => {
                         </Typography>
                     </Box>
                 </Paper>
-            </AuthLayout>
+            </AppShell>
         );
     }
 
     return (
-        <AuthLayout>
+        <AppShell>
             <Paper
                 elevation={theme.palette.mode === 'dark' ? 0 : 4}
                 sx={{
@@ -125,6 +136,7 @@ const RequestPasswordResetPage: React.FC = () => {
                     border: theme.palette.mode === 'dark'
                         ? `1px solid ${theme.palette.divider}`
                         : 'none',
+                    borderRadius: 4,
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
@@ -133,7 +145,7 @@ const RequestPasswordResetPage: React.FC = () => {
                         Forgot password?
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        No worries, we'll send you reset instructions
+                        We&apos;ll send you reset instructions
                     </Typography>
                 </Box>
 
@@ -149,7 +161,7 @@ const RequestPasswordResetPage: React.FC = () => {
                         type="email"
                         fullWidth
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value)}
                         error={!!emailError}
                         helperText={emailError}
                         sx={{ mb: 3 }}
@@ -174,6 +186,9 @@ const RequestPasswordResetPage: React.FC = () => {
                                 background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
                             },
                             mb: 2,
+                            borderRadius: 999,
+                            py: 1.4,
+                            fontWeight: 700,
                         }}
                     >
                         {loading ? <CircularProgress size={22} color="inherit" /> : 'Reset Password'}
@@ -196,7 +211,7 @@ const RequestPasswordResetPage: React.FC = () => {
                     </Box>
                 </Box>
             </Paper>
-        </AuthLayout>
+        </AppShell>
     );
 };
 

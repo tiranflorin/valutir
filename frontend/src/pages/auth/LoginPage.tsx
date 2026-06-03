@@ -1,43 +1,53 @@
 import React, { useState } from 'react';
 import {
     Box,
-    Paper,
-    Typography,
-    TextField,
     Button,
-    Link,
-    InputAdornment,
-    IconButton,
-    Divider,
-    Alert,
     CircularProgress,
+    IconButton,
+    InputAdornment,
+    Link,
+    Paper,
+    TextField,
+    Typography,
+    Alert,
     useTheme,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../../components/AuthLayout';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import AppShell from '../../components/AppShell';
 import ValuTirLogo from '../../components/ValuTirLogo';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginPage: React.FC = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { login, isAuthenticated } = useAuth();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
 
+    const [error, setError] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
+    const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+
+    if (isAuthenticated) {
+        return <Navigate to="/" replace />;
+    }
+
     const validate = () => {
         let valid = true;
+
         setEmailError('');
         setPasswordError('');
+        setError('');
 
         if (!email) {
             setEmailError('Email is required');
@@ -50,9 +60,6 @@ const LoginPage: React.FC = () => {
         if (!password) {
             setPasswordError('Password is required');
             valid = false;
-        } else if (password.length < 6) {
-            setPasswordError('Password must be at least 6 characters');
-            valid = false;
         }
 
         return valid;
@@ -60,43 +67,50 @@ const LoginPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validate()) return;
 
-        setLoading(true);
-        setError('');
+        if (!validate()) {
+            return;
+        }
 
-        // TODO: integrate with Symfony Lexik JWT — POST /api/login_check
-        setTimeout(() => {
+        try {
+            setLoading(true);
+            setError('');
+            await login(email, password);
+            navigate(redirectTo, { replace: true });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Login failed');
+        } finally {
             setLoading(false);
-            setError('Backend not connected yet. JWT integration coming soon.');
-        }, 1200);
+        }
     };
 
     return (
-        <AuthLayout>
+        <AppShell>
             <Paper
-                elevation={theme.palette.mode === 'dark' ? 0 : 4}
+                elevation={theme.palette.mode === 'dark' ? 0 : 6}
                 sx={{
                     width: '100%',
-                    maxWidth: 440,
+                    maxWidth: 460,
                     p: { xs: 3, sm: 4 },
+                    borderRadius: 4,
                     border: theme.palette.mode === 'dark'
                         ? `1px solid ${theme.palette.divider}`
                         : 'none',
+                    backdropFilter: 'blur(8px)',
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                     <ValuTirLogo />
-                    <Typography variant="h5" sx={{ mt: 1 }}>
+                    <Typography variant="h5" sx={{ mt: 1.5, fontWeight: 700 }}>
                         Welcome back
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Sign in to your ValuTir account
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                        Sign in to manage your account
                     </Typography>
                 </Box>
 
                 {error && (
-                    <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                    <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
                         {error}
                     </Alert>
                 )}
@@ -106,11 +120,12 @@ const LoginPage: React.FC = () => {
                         label="Email address"
                         type="email"
                         fullWidth
+                        margin="normal"
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value)}
                         error={!!emailError}
                         helperText={emailError}
-                        sx={{ mb: 2 }}
+                        autoComplete="email"
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -124,11 +139,12 @@ const LoginPage: React.FC = () => {
                         label="Password"
                         type={showPassword ? 'text' : 'password'}
                         fullWidth
+                        margin="normal"
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
                         helperText={passwordError}
-                        sx={{ mb: 1 }}
+                        autoComplete="current-password"
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -138,24 +154,22 @@ const LoginPage: React.FC = () => {
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton
-                                        onClick={() => setShowPassword(p => !p)}
                                         edge="end"
-                                        aria-label="toggle password visibility"
-                                        size="small"
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
-                                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                        {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
                                     </IconButton>
                                 </InputAdornment>
                             ),
                         }}
                     />
 
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, mb: 2 }}>
                         <Link
                             component="button"
+                            type="button"
                             variant="body2"
-                            color="primary"
-                            fontWeight={600}
                             underline="hover"
                             onClick={() => navigate('/request-password-reset')}
                         >
@@ -165,45 +179,38 @@ const LoginPage: React.FC = () => {
 
                     <Button
                         type="submit"
-                        variant="contained"
                         fullWidth
+                        variant="contained"
                         size="large"
                         disabled={loading}
                         sx={{
+                            py: 1.4,
+                            borderRadius: 999,
+                            fontWeight: 700,
                             background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                             '&:hover': {
                                 background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
                             },
-                            mb: 2,
                         }}
                     >
                         {loading ? <CircularProgress size={22} color="inherit" /> : 'Sign In'}
                     </Button>
 
-                    <Divider sx={{ my: 2 }}>
-                        <Typography variant="caption" color="text.secondary">
-                            OR
-                        </Typography>
-                    </Divider>
-
-                    <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Don't have an account?{' '}
-                            <Link
-                                component="button"
-                                variant="body2"
-                                color="secondary"
-                                fontWeight={600}
-                                underline="hover"
-                                onClick={() => navigate('/register')}
-                            >
-                                Create account
-                            </Link>
-                        </Typography>
-                    </Box>
+                    <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 3 }}>
+                        Don&apos;t have an account?{' '}
+                        <Link
+                            component="button"
+                            type="button"
+                            underline="hover"
+                            fontWeight={600}
+                            onClick={() => navigate('/register')}
+                        >
+                            Create account
+                        </Link>
+                    </Typography>
                 </Box>
             </Paper>
-        </AuthLayout>
+        </AppShell>
     );
 };
 

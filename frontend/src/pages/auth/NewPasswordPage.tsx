@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Box,
     Paper,
@@ -17,130 +17,122 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AuthLayout from '../../components/AuthLayout';
+import AppShell from '../../components/AppShell';
 import ValuTirLogo from '../../components/ValuTirLogo';
+import { submitNewPassword } from '../../services/auth';
 
-interface PasswordStrength {
-    score: number;
-    label: string;
-    color: string;
-}
-
-const getPasswordStrength = (pwd: string): PasswordStrength => {
-    let score = 0;
-    if (pwd.length >= 8) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[^A-Za-z0-9]/.test(pwd)) score++;
-    const levels: PasswordStrength[] = [
-        { score: 0, label: '', color: '#e0e0e0' },
-        { score: 1, label: 'Weak', color: '#f44336' },
-        { score: 2, label: 'Fair', color: '#FF9800' },
-        { score: 3, label: 'Good', color: '#2196F3' },
-        { score: 4, label: 'Strong', color: '#2ECC71' },
-    ];
-    return levels[score];
-};
-
-const PasswordRule: React.FC<{ met: boolean; text: string }> = ({ met, text }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.3 }}>
-        {met ? (
-            <CheckCircleIcon sx={{ fontSize: 14, color: '#2ECC71' }} />
-        ) : (
-            <CancelIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
-        )}
-        <Typography variant="caption" color={met ? 'text.primary' : 'text.disabled'}>
-            {text}
-        </Typography>
-    </Box>
-);
+type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
 
 const NewPasswordPage: React.FC = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    const token = searchParams.get('token'); // Reset token from email link
+    const token = searchParams.get('token') || '';
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     const [passwordError, setPasswordError] = useState('');
-    const [confirmError, setConfirmError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-    const passwordStrength = getPasswordStrength(password);
+    const checks = useMemo(() => {
+        return {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            number: /\d/.test(password),
+            special: /[^A-Za-z0-9]/.test(password),
+        };
+    }, [password]);
 
-    const rules = [
-        { met: password.length >= 8, text: 'At least 8 characters' },
-        { met: /[A-Z]/.test(password), text: 'One uppercase letter' },
-        { met: /[0-9]/.test(password), text: 'One number' },
-        { met: /[^A-Za-z0-9]/.test(password), text: 'One special character' },
-    ];
+    const passedChecks = Object.values(checks).filter(Boolean).length;
+
+    const strength = useMemo((): StrengthLevel => {
+        if (passedChecks <= 1) return 'Weak';
+        if (passedChecks === 2) return 'Fair';
+        if (passedChecks === 3) return 'Good';
+        return 'Strong';
+    }, [passedChecks]);
+
+    const progress = (passedChecks / 4) * 100;
 
     const validate = () => {
         let valid = true;
-        setPasswordError(''); setConfirmError('');
+
+        setPasswordError('');
+        setConfirmPasswordError('');
+        setError('');
 
         if (!token) {
-            setError('Invalid or missing reset token. Please request a new reset link.');
+            setError('Reset token is missing from the URL');
             valid = false;
         }
+
         if (!password) {
-            setPasswordError('Password is required');
+            setPasswordError('New password is required');
             valid = false;
-        } else if (passwordStrength.score < 3) {
-            setPasswordError('Please choose a stronger password');
+        } else if (strength === 'Weak' || strength === 'Fair') {
+            setPasswordError('Password strength must be at least Good');
             valid = false;
         }
+
         if (!confirmPassword) {
-            setConfirmError('Please confirm your password');
+            setConfirmPasswordError('Please confirm your new password');
             valid = false;
-        } else if (password !== confirmPassword) {
-            setConfirmError('Passwords do not match');
+        } else if (confirmPassword !== password) {
+            setConfirmPasswordError('Passwords do not match');
             valid = false;
         }
+
         return valid;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validate()) return;
 
-        setLoading(true);
-        setError('');
+        if (!validate()) {
+            return;
+        }
 
-        // TODO: integrate with Symfony — POST /api/reset-password/new
-        // Body: { token, newPassword }
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            setLoading(true);
+            setError('');
+            await submitNewPassword(token, password);
             setSuccess(true);
-        }, 1200);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Could not reset password');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (success) {
         return (
-            <AuthLayout>
+            <AppShell>
                 <Paper
                     elevation={theme.palette.mode === 'dark' ? 0 : 4}
                     sx={{
                         width: '100%',
-                        maxWidth: 440,
+                        maxWidth: 460,
                         p: 4,
                         textAlign: 'center',
+                        borderRadius: 4,
                         border: theme.palette.mode === 'dark' ? `1px solid ${theme.palette.divider}` : 'none',
                     }}
                 >
                     <CheckCircleIcon sx={{ fontSize: 64, color: 'secondary.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom>Password reset successful!</Typography>
+                    <Typography variant="h5" gutterBottom>
+                        Password updated
+                    </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Your password has been updated. You can now sign in with your new password.
+                        Your password has been changed successfully. You can now sign in with your new password.
                     </Typography>
                     <Button
                         variant="contained"
@@ -149,70 +141,37 @@ const NewPasswordPage: React.FC = () => {
                         onClick={() => navigate('/login')}
                         sx={{
                             background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                            borderRadius: 999,
+                            py: 1.4,
+                            fontWeight: 700,
                         }}
                     >
-                        Go to Sign In
+                        Go to login
                     </Button>
                 </Paper>
-            </AuthLayout>
-        );
-    }
-
-    // Check if token is missing
-    if (!token) {
-        return (
-            <AuthLayout>
-                <Paper
-                    elevation={theme.palette.mode === 'dark' ? 0 : 4}
-                    sx={{
-                        width: '100%',
-                        maxWidth: 440,
-                        p: 4,
-                        textAlign: 'center',
-                        border: theme.palette.mode === 'dark' ? `1px solid ${theme.palette.divider}` : 'none',
-                    }}
-                >
-                    <CheckCircleIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom>Invalid link</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        This password reset link is invalid or has expired. Please request a new one.
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        fullWidth
-                        size="large"
-                        onClick={() => navigate('/request-password-reset')}
-                        sx={{
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                        }}
-                    >
-                        Request New Reset Link
-                    </Button>
-                </Paper>
-            </AuthLayout>
+            </AppShell>
         );
     }
 
     return (
-        <AuthLayout>
+        <AppShell>
             <Paper
                 elevation={theme.palette.mode === 'dark' ? 0 : 4}
                 sx={{
                     width: '100%',
-                    maxWidth: 480,
+                    maxWidth: 500,
                     p: { xs: 3, sm: 4 },
-                    border: theme.palette.mode === 'dark'
-                        ? `1px solid ${theme.palette.divider}`
-                        : 'none',
+                    borderRadius: 4,
+                    border: theme.palette.mode === 'dark' ? `1px solid ${theme.palette.divider}` : 'none',
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
                     <ValuTirLogo />
                     <Typography variant="h5" sx={{ mt: 1 }}>
-                        Set new password
+                        Set a new password
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Your new password must be different from previous ones
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, textAlign: 'center' }}>
+                        Choose a strong password for your account
                     </Typography>
                 </Box>
 
@@ -227,11 +186,12 @@ const NewPasswordPage: React.FC = () => {
                         label="New password"
                         type={showPassword ? 'text' : 'password'}
                         fullWidth
+                        margin="normal"
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        onChange={(e) => setPassword(e.target.value)}
                         error={!!passwordError}
                         helperText={passwordError}
-                        sx={{ mb: password ? 1 : 2 }}
+                        autoComplete="new-password"
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
@@ -241,69 +201,94 @@ const NewPasswordPage: React.FC = () => {
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton
-                                        onClick={() => setShowPassword(p => !p)}
                                         edge="end"
-                                        size="small"
-                                        aria-label="toggle password visibility"
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
-                                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                     </IconButton>
                                 </InputAdornment>
                             ),
                         }}
                     />
 
-                    {password && (
-                        <Box sx={{ mb: 2, px: 0.5 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={(passwordStrength.score / 4) * 100}
-                                    sx={{
-                                        flex: 1,
-                                        height: 6,
-                                        borderRadius: 3,
-                                        backgroundColor: 'action.hover',
-                                        '& .MuiLinearProgress-bar': {
-                                            backgroundColor: passwordStrength.color,
-                                            borderRadius: 3,
-                                        },
-                                    }}
-                                />
-                                <Typography variant="caption" sx={{ color: passwordStrength.color, minWidth: 42, fontWeight: 600 }}>
-                                    {passwordStrength.label}
-                                </Typography>
-                            </Box>
-                            {rules.map(r => (
-                                <PasswordRule key={r.text} met={r.met} text={r.text} />
-                            ))}
+                    <Box sx={{ mt: 1.5, mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Password strength
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                fontWeight={700}
+                                color={
+                                    strength === 'Weak'
+                                        ? 'error.main'
+                                        : strength === 'Fair'
+                                            ? 'warning.main'
+                                            : strength === 'Good'
+                                                ? 'info.main'
+                                                : 'success.main'
+                                }
+                            >
+                                {strength}
+                            </Typography>
                         </Box>
-                    )}
+
+                        <LinearProgress
+                            variant="determinate"
+                            value={progress}
+                            color={
+                                strength === 'Weak'
+                                    ? 'error'
+                                    : strength === 'Fair'
+                                        ? 'warning'
+                                        : strength === 'Good'
+                                            ? 'info'
+                                            : 'success'
+                            }
+                            sx={{ height: 8, borderRadius: 999, mb: 1.25 }}
+                        />
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
+                            <Typography variant="caption" color={checks.length ? 'success.main' : 'text.secondary'}>
+                                • At least 8 characters
+                            </Typography>
+                            <Typography variant="caption" color={checks.uppercase ? 'success.main' : 'text.secondary'}>
+                                • One uppercase letter
+                            </Typography>
+                            <Typography variant="caption" color={checks.number ? 'success.main' : 'text.secondary'}>
+                                • One number
+                            </Typography>
+                            <Typography variant="caption" color={checks.special ? 'success.main' : 'text.secondary'}>
+                                • One special character
+                            </Typography>
+                        </Box>
+                    </Box>
 
                     <TextField
                         label="Confirm new password"
-                        type={showConfirm ? 'text' : 'password'}
+                        type={showConfirmPassword ? 'text' : 'password'}
                         fullWidth
+                        margin="normal"
                         value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        error={!!confirmError}
-                        helperText={confirmError}
-                        sx={{ mb: 3 }}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        error={!!confirmPasswordError}
+                        helperText={confirmPasswordError}
+                        autoComplete="new-password"
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <LockOutlinedIcon color={confirmError ? 'error' : 'action'} fontSize="small" />
+                                    <LockOutlinedIcon color={confirmPasswordError ? 'error' : 'action'} fontSize="small" />
                                 </InputAdornment>
                             ),
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton
-                                        onClick={() => setShowConfirm(p => !p)}
                                         edge="end"
-                                        size="small"
-                                        aria-label="toggle confirm password visibility"
+                                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                        aria-label={showConfirmPassword ? 'Hide password confirmation' : 'Show password confirmation'}
                                     >
-                                        {showConfirm ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                     </IconButton>
                                 </InputAdornment>
                             ),
@@ -317,34 +302,39 @@ const NewPasswordPage: React.FC = () => {
                         size="large"
                         disabled={loading}
                         sx={{
-                            background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
+                            mt: 2,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                             '&:hover': {
-                                background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.light})`,
+                                background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
                             },
+                            borderRadius: 999,
+                            py: 1.4,
+                            fontWeight: 700,
                             mb: 2,
                         }}
                     >
-                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Set New Password'}
+                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Save New Password'}
                     </Button>
 
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
-                            Remember your password?{' '}
+                            Back to{' '}
                             <Link
                                 component="button"
+                                type="button"
                                 variant="body2"
                                 color="primary"
                                 fontWeight={600}
                                 underline="hover"
                                 onClick={() => navigate('/login')}
                             >
-                                Sign in
+                                sign in
                             </Link>
                         </Typography>
                     </Box>
                 </Box>
             </Paper>
-        </AuthLayout>
+        </AppShell>
     );
 };
 
