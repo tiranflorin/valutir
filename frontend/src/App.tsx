@@ -8,6 +8,8 @@ import RegisterPage from './pages/auth/RegisterPage';
 import RequestPasswordResetPage from './pages/auth/RequestPasswordResetPage';
 import NewPasswordPage from './pages/auth/NewPasswordPage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
+import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
+import AddSubscriptionPage from './pages/AddSubscriptionPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
@@ -31,6 +33,22 @@ const AppRoutes: React.FC = () => {
                 element={
                     <ProtectedRoute>
                         <MySubscriptionsPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/my-subs/new"
+                element={
+                    <ProtectedRoute>
+                        <AddSubscriptionPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/my-subs/:subscriptionId"
+                element={
+                    <ProtectedRoute>
+                        <SubscriptionDetailPage />
                     </ProtectedRoute>
                 }
             />
