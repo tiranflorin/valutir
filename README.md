@@ -184,3 +184,21 @@ Detect duplicate services in the same category, like Spotify + YouTube Music, or
 Suggest annual instead of monthly only when the annual public price is known and lower on an equivalent plan.
 
 Flag “unused” only if the user marks low usage manually, or if recurring payments continue but they haven’t confirmed value recently.
+
+# TESTING:
+
+## FE:
+Use this flow:
+Start frontend container.
+Run 
+>docker compose exec frontend npm i -D vitest jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
+
+Add the Vitest config and test files.
+Run tests with
+> docker compose exec frontend npm run test:run
+
+That keeps your entire frontend toolchain consistent inside Docker, which is exactly what you want for CI parity.
+
+
+## BE:
+TODO

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppThemeProvider } from './context/ThemeContext';
 import HomePage from './pages/HomePage';
@@ -56,16 +56,21 @@ const AppRoutes: React.FC = () => {
     );
 };
 
-const App: React.FC = () => {
+const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
         <AppThemeProvider>
-            <BrowserRouter>
-                <AuthProvider>
-                    <AppRoutes />
-                </AuthProvider>
-            </BrowserRouter>
+            <AuthProvider>{children}</AuthProvider>
         </AppThemeProvider>
     );
 };
 
+const App: React.FC = () => {
+    return (
+        <AppProviders>
+            <AppRoutes />
+        </AppProviders>
+    );
+};
+
 export default App;
+export { AppProviders, AppRoutes };

@@ -19,3 +19,16 @@ services:
             start_period: 15s
         restart: unless-stopped
         command: [ "npm", "run", "dev" ]
+
+    frontend-test:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile
+            target: dev
+        environment:
+            VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+            CI: "true"
+        volumes:
+            - .:/app
+            - /app/node_modules
+        command: [ "npm", "run", "test:run" ]
