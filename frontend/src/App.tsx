@@ -18,16 +18,39 @@ const AppRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={<HomePage />} />
+
             <Route
                 path="/login"
-                element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+                element={
+                    isAuthenticated ? <Navigate to="/my-subs" replace /> : <LoginPage />
+                }
             />
+
             <Route
                 path="/register"
-                element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />}
+                element={
+                    isAuthenticated ? <Navigate to="/my-subs" replace /> : <RegisterPage />
+                }
             />
-            <Route path="/request-password-reset" element={<RequestPasswordResetPage />} />
-            <Route path="/reset-password" element={<NewPasswordPage />} />
+
+            <Route
+                path="/request-password-reset"
+                element={
+                    isAuthenticated ? (
+                        <Navigate to="/my-subs" replace />
+                    ) : (
+                        <RequestPasswordResetPage />
+                    )
+                }
+            />
+
+            <Route
+                path="/new-password"
+                element={
+                    isAuthenticated ? <Navigate to="/my-subs" replace /> : <NewPasswordPage />
+                }
+            />
+
             <Route
                 path="/my-subs"
                 element={
@@ -36,23 +59,29 @@ const AppRoutes: React.FC = () => {
                     </ProtectedRoute>
                 }
             />
+
             <Route
-                path="/my-subs/new"
+                path="/subscriptions/new"
                 element={
                     <ProtectedRoute>
                         <AddSubscriptionPage />
                     </ProtectedRoute>
                 }
             />
+
             <Route
-                path="/my-subs/:subscriptionId"
+                path="/subscriptions/:subscriptionId"
                 element={
                     <ProtectedRoute>
                         <SubscriptionDetailPage />
                     </ProtectedRoute>
                 }
             />
-            <Route path="/subscriptions/:subscriptionId" element={<SubscriptionDetailPage />} />
+
+            <Route
+                path="*"
+                element={<Navigate to={isAuthenticated ? '/my-subs' : '/'} replace />}
+            />
         </Routes>
     );
 };

@@ -68,12 +68,20 @@ class SubsController extends AbstractController
     }
 
     #[Route('/{id}', name: 'api_subs_delete', methods: ['DELETE'])]
-    public function delete(int $id): JsonResponse
+    public function delete(int $id, Request $request): JsonResponse
     {
         $user = $this->requireUser();
         $subscription = $this->subscriptionService->getForUser($id, $user);
 
-        $this->subscriptionService->delete($subscription);
+        $payload = $request->toArray();
+        $usedAndUseful = $payload['usedAndUseful'] ?? null;
+        if (!is_bool($usedAndUseful)) {
+            return $this->json([
+                'message' => 'The usedAndUseful field is required and must be a boolean.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->subscriptionService->delete($subscription, $usedAndUseful);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }

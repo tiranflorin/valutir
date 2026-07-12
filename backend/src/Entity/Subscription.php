@@ -64,7 +64,7 @@ class Subscription
     #[ORM\Column(nullable: true)]
     private ?bool $autoRenew = true;
 
-    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -72,6 +72,12 @@ class Subscription
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $deletedUseful = false;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $deletedAt = null;
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
@@ -256,6 +262,30 @@ class Subscription
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getDeletedUseful(): ?bool
+    {
+        return $this->deletedUseful;
+    }
+
+    public function setDeletedUseful(?bool $deletedUseful): static
+    {
+        $this->deletedUseful = $deletedUseful;
+
+        return $this;
+    }
+
+    public function getDeletedAt(): ?\DateTimeImmutable
+    {
+        return $this->deletedAt;
+    }
+
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): static
+    {
+        $this->deletedAt = $deletedAt;
+
+        return $this;
     }
 
     public function toArray(): array

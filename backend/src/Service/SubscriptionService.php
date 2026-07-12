@@ -64,9 +64,12 @@ class SubscriptionService
         return $subscription;
     }
 
-    public function delete(Subscription $subscription): void
+    public function delete(Subscription $subscription, ?bool $usedAndUseful = null): void
     {
-        $this->entityManager->remove($subscription);
+        $subscription->setDeletedAt(new \DateTimeImmutable());
+        $subscription->setCancelledAt(new \DateTimeImmutable());
+        $subscription->setIsActive(false);
+        $subscription->setDeletedUseful($usedAndUseful);
         $this->entityManager->flush();
     }
 
