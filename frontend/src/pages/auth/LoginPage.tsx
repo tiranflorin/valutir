@@ -85,7 +85,7 @@ const LoginPage: React.FC = () => {
     };
 
     return (
-        <AppShell>
+        <AppShell mode="auth" maxWidth="sm" showThemeToggle>
             <Paper
                 elevation={theme.palette.mode === 'dark' ? 0 : 6}
                 sx={{

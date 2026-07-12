@@ -152,7 +152,7 @@ const RegisterPage: React.FC = () => {
 
     if (success) {
         return (
-            <AppShell>
+            <AppShell mode="auth" maxWidth="sm" showThemeToggle>
                 <Paper
                     elevation={theme.palette.mode === 'dark' ? 0 : 6}
                     sx={{
@@ -193,7 +193,7 @@ const RegisterPage: React.FC = () => {
     }
 
     return (
-        <AppShell>
+        <AppShell mode="auth" maxWidth="sm" showThemeToggle>
             <Paper
                 elevation={theme.palette.mode === 'dark' ? 0 : 6}
                 sx={{

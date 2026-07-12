@@ -65,7 +65,7 @@ const RequestPasswordResetPage: React.FC = () => {
 
     if (success) {
         return (
-            <AppShell>
+            <AppShell mode="auth" maxWidth="sm" showThemeToggle>
                 <Paper
                     elevation={theme.palette.mode === 'dark' ? 0 : 4}
                     sx={{
@@ -126,7 +126,7 @@ const RequestPasswordResetPage: React.FC = () => {
     }
 
     return (
-        <AppShell>
+        <AppShell mode="auth" maxWidth="sm" showThemeToggle>
             <Paper
                 elevation={theme.palette.mode === 'dark' ? 0 : 4}
                 sx={{

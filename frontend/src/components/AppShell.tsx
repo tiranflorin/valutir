@@ -6,97 +6,68 @@ import { useAppTheme } from '../context/ThemeContext';
 
 type AppShellProps = {
     children: React.ReactNode;
-    centered?: boolean;
+    mode?: 'auth' | 'content';
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
     showThemeToggle?: boolean;
 };
 
 const AppShell: React.FC<AppShellProps> = ({
                                                children,
-                                               centered = true,
+                                               mode = 'content',
                                                maxWidth = 'sm',
-                                               showThemeToggle = true,
+                                               showThemeToggle = false,
                                            }) => {
     const theme = useTheme();
-    const { mode, toggleColorMode } = useAppTheme();
+    const { mode: colorMode, toggleColorMode } = useAppTheme();
 
     const background =
         theme.palette.mode === 'dark'
             ? `
-                radial-gradient(circle at top left, rgba(46, 204, 113, 0.18), transparent 30%),
-                radial-gradient(circle at top right, rgba(21, 101, 192, 0.10), transparent 24%),
-                linear-gradient(180deg, #0f1724 0%, #121a2a 44%, #101c19 100%)
-              `
+        radial-gradient(circle at top left, rgba(46, 204, 113, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(21, 101, 192, 0.10), transparent 24%),
+        linear-gradient(180deg, #0f1724 0%, #121a2a 44%, #101c19 100%)
+      `
             : `
-                radial-gradient(circle at top left, rgba(46, 204, 113, 0.16), transparent 30%),
-                radial-gradient(circle at top right, rgba(21, 101, 192, 0.08), transparent 24%),
-                linear-gradient(180deg, #f4fbf7 0%, #f2fbf8 44%, #eef8ff 100%)
-              `;
+        radial-gradient(circle at top left, rgba(46, 204, 113, 0.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(21, 101, 192, 0.08), transparent 24%),
+        linear-gradient(180deg, #f4fbf7 0%, #f2fbf8 44%, #eef8ff 100%)
+      `;
+
+    const isAuth = mode === 'auth';
 
     return (
         <Box
             sx={{
                 minHeight: '100vh',
-                backgroundImage: background,
+                background,
                 backgroundAttachment: 'fixed',
                 display: 'flex',
                 flexDirection: 'column',
-                px: 2,
-                py: centered ? 3 : 0,
+                justifyContent: isAuth ? 'center' : 'flex-start',
             }}
         >
-            {showThemeToggle && centered && (
-                <Box
-                    sx={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        mb: 2,
-                    }}
-                >
-                    <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-                        <IconButton
-                            onClick={toggleColorMode}
-                            sx={{
-                                color: 'text.primary',
-                                bgcolor:
-                                    theme.palette.mode === 'dark'
-                                        ? 'rgba(18, 24, 38, 0.68)'
-                                        : 'rgba(255, 255, 255, 0.72)',
-                                border: `1px solid ${theme.palette.divider}`,
-                                backdropFilter: 'blur(10px)',
-                                '&:hover': {
-                                    bgcolor:
-                                        theme.palette.mode === 'dark'
-                                            ? 'rgba(18, 24, 38, 0.82)'
-                                            : 'rgba(255, 255, 255, 0.9)',
-                                },
-                            }}
-                        >
-                            {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+            {showThemeToggle && (
+                <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 20 }}>
+                    <Tooltip title={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+                        <IconButton onClick={toggleColorMode} color="inherit" aria-label="Toggle theme">
+                            {colorMode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
                         </IconButton>
                     </Tooltip>
                 </Box>
             )}
 
-            <Box
+            <Container
+                maxWidth={maxWidth}
                 sx={{
-                    flex: 1,
+                    flex: isAuth ? '0 0 auto' : 1,
                     display: 'flex',
-                    alignItems: centered ? 'center' : 'stretch',
-                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    justifyContent: isAuth ? 'center' : 'flex-start',
+                    py: isAuth ? 4 : 0,
                 }}
             >
-                <Container
-                    maxWidth={maxWidth}
-                    sx={{
-                        width: '100%',
-                        py: centered ? 0 : { xs: 4, md: 6 },
-                    }}
-                >
-                    {children}
-                </Container>
-            </Box>
+                {children}
+            </Container>
         </Box>
     );
 };

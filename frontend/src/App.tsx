@@ -52,6 +52,7 @@ const AppRoutes: React.FC = () => {
                     </ProtectedRoute>
                 }
             />
+            <Route path="/subscriptions/:subscriptionId" element={<SubscriptionDetailPage />} />
         </Routes>
     );
 };

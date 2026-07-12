@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
     const { isAuthenticated, user } = useAuth();
 
     return (
-        <AppShell centered={false} maxWidth="lg">
+        <AppShell mode="content" maxWidth="lg">
             <Box sx={{ minHeight: '100%' }}>
                 <AppHeader />
 
