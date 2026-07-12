@@ -19,6 +19,7 @@ import AppShell from '../components/AppShell';
 import AppSurfaceCard from '../components/AppSurfaceCard';
 import { useAuth } from '../context/AuthContext';
 import { VITE_API_URL } from '../services/auth';
+import SubscriptionsOverviewCard from '../components/SubscriptionsOverviewCard';
 
 type Subscription = {
     id: number;
@@ -138,7 +139,7 @@ const MySubscriptionsPage: React.FC = () => {
                     >
                         <Box>
                             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                                My Subs
+                                Manage my Subs
                             </Typography>
                             <Typography color="text.secondary" sx={{ mt: 0.75 }}>
                                 Start with a clean overview of your recurring payments and open any subscription in one click.
@@ -192,6 +193,10 @@ const MySubscriptionsPage: React.FC = () => {
                             </Typography>
                         </Stack>
                     </AppSurfaceCard>
+                )}
+
+                {!loading && !error && subscriptions.length > 0 && (
+                    <SubscriptionsOverviewCard subscriptions={subscriptions} />
                 )}
 
                 {!loading && !error && activeSubscriptions.length > 0 && (
