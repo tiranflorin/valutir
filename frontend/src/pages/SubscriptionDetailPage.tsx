@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Box,
@@ -7,11 +7,13 @@ import {
     CircularProgress,
     Divider,
     Stack,
+    TextField,
     Typography,
     useTheme,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
@@ -42,9 +44,16 @@ const SubscriptionDetailPage: React.FC = () => {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
     const [usedAndUseful, setUsedAndUseful] = useState<boolean | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState('');
+
+    const [wasReenabled, setWasReenabled] = useState<boolean | null>(null);
+    const [reenabledFromDate, setReenabledFromDate] = useState('');
+    const [reenabledPrice, setReenabledPrice] = useState('');
+    const [updating, setUpdating] = useState(false);
+    const [updateError, setUpdateError] = useState('');
 
     useEffect(() => {
         const loadSubscription = async () => {
@@ -84,6 +93,7 @@ const SubscriptionDetailPage: React.FC = () => {
                 }
 
                 setSubscription(data);
+                setReenabledPrice(String(data?.amount ?? ''));
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Something went wrong.');
             } finally {
@@ -93,6 +103,11 @@ const SubscriptionDetailPage: React.FC = () => {
 
         loadSubscription();
     }, [token, subscriptionId, logout, navigate]);
+
+    const formattedStatus = useMemo(() => {
+        if (!subscription) return '';
+        return subscription.isActive ? 'Active' : 'Inactive';
+    }, [subscription]);
 
     const handleDelete = async () => {
         if (!token || !subscriptionId) {
@@ -147,8 +162,79 @@ const SubscriptionDetailPage: React.FC = () => {
         }
     };
 
+    const handleReenable = async () => {
+        if (!token || !subscriptionId || !subscription) {
+            setUpdateError('Missing authentication or subscription id.');
+            return;
+        }
+
+        if (wasReenabled !== true) {
+            setUpdateError('Please confirm that the subscription was re-enabled.');
+            return;
+        }
+
+        if (!reenabledFromDate) {
+            setUpdateError('Please provide the re-enabled date.');
+            return;
+        }
+
+        if (!reenabledPrice || Number(reenabledPrice) <= 0) {
+            setUpdateError('Please provide a valid re-enabled price.');
+            return;
+        }
+
+        try {
+            setUpdating(true);
+            setUpdateError('');
+
+            const response = await fetch(`${VITE_API_URL}/api/subs/${subscriptionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    serviceName: subscription.serviceName,
+                    category: subscription.category,
+                    amount: Number(reenabledPrice),
+                    currency: subscription.currency,
+                    billingCadence: subscription.billingCadence,
+                    nextBillingDate: subscription.nextBillingDate,
+                    notes: subscription.notes,
+                    isActive: true,
+                    autoRenew: true,
+                    cancelledAt: null,
+                    startedAt: reenabledFromDate,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (response.status === 401) {
+                logout();
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(data?.message || 'Failed to re-enable subscription.');
+            }
+
+            navigate('/my-subs', {
+                replace: true,
+                state: {
+                    deletedSubscriptionMessage: 'Subscription re-enabled successfully.',
+                },
+            });
+        } catch (err) {
+            setUpdateError(err instanceof Error ? err.message : 'Something went wrong.');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     return (
-        <AppShell mode="content" maxWidth="lg">
+        <AppShell centered={false} maxWidth="lg" showThemeToggle={false}>
             <AppHeader />
 
             <Button
@@ -181,10 +267,13 @@ const SubscriptionDetailPage: React.FC = () => {
                                 <Typography variant="h4" sx={{ fontWeight: 800 }}>
                                     {subscription.serviceName}
                                 </Typography>
+
                                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1 }}>
+                                    <Chip
+                                        label={formattedStatus}
+                                        color={subscription.isActive ? 'success' : 'default'}
+                                    />
                                     {subscription.autoRenew && <Chip label="Auto renew" color="primary" />}
-                                    <Chip label={subscription.category ?? 'Uncategorized'} variant="outlined" />
-                                    <Chip label={subscription.billingCadence} variant="outlined" />
                                 </Stack>
                             </Box>
 
@@ -198,81 +287,167 @@ const SubscriptionDetailPage: React.FC = () => {
                                 Details
                             </Typography>
 
+                            <DetailRow label="Category" value={subscription.category ?? '—'} />
+                            <DetailRow label="Billing cadence" value={subscription.billingCadence} />
                             <DetailRow label="Next billing date" value={subscription.nextBillingDate ?? '—'} />
                             <DetailRow label="Notes" value={subscription.notes ?? '—'} />
-                            <DetailRow label="Status" value={subscription.isActive ? 'Active' : 'Inactive'} />
                             <DetailRow label="Cancelled at" value={subscription.cancelledAt ?? '—'} />
                         </Stack>
                     </AppSurfaceCard>
 
-                    <AppSurfaceCard
-                        sx={{
-                            p: { xs: 3, md: 4 },
-                            border: `1px solid ${theme.palette.error.light}`,
-                        }}
-                    >
-                        <Stack spacing={2.5}>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                                    Delete subscription
-                                </Typography>
-                                <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                                    Before removing it from your active list, tell us whether it was actually used and useful for you.
-                                </Typography>
-                            </Box>
+                    {subscription.isActive ? (
+                        <AppSurfaceCard
+                            sx={{
+                                p: { xs: 3, md: 4 },
+                                border: `1px solid ${theme.palette.error.light}`,
+                            }}
+                        >
+                            <Stack spacing={2.5}>
+                                <Box>
+                                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                        Delete subscription
+                                    </Typography>
+                                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                                        Before removing it from your active list, tell us whether it was actually used and useful for you.
+                                    </Typography>
+                                </Box>
 
-                            <Box>
-                                <Typography sx={{ fontWeight: 700, mb: 1.25 }}>
-                                    Was this sub actually used and useful for you?
-                                </Typography>
+                                <Box>
+                                    <Typography sx={{ fontWeight: 700, mb: 1.25 }}>
+                                        Was this sub actually used and useful for you?
+                                    </Typography>
 
-                                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                    <Chip
-                                        label="Yes"
-                                        clickable
-                                        color={usedAndUseful === true ? 'success' : 'default'}
-                                        onClick={() => setUsedAndUseful(true)}
-                                        sx={{ fontWeight: 700, borderRadius: 999 }}
+                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                        <Chip
+                                            label="Yes"
+                                            clickable
+                                            color={usedAndUseful === true ? 'success' : 'default'}
+                                            onClick={() => setUsedAndUseful(true)}
+                                            sx={{ fontWeight: 700, borderRadius: 999 }}
+                                        />
+                                        <Chip
+                                            label="No"
+                                            clickable
+                                            color={usedAndUseful === false ? 'error' : 'default'}
+                                            onClick={() => setUsedAndUseful(false)}
+                                            sx={{ fontWeight: 700, borderRadius: 999 }}
+                                        />
+                                    </Stack>
+                                </Box>
+
+                                {deleteError && <Alert severity="error">{deleteError}</Alert>}
+
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        startIcon={<DeleteOutlineRoundedIcon />}
+                                        disabled={deleting || usedAndUseful === null}
+                                        onClick={handleDelete}
+                                        sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
+                                    >
+                                        {deleting ? 'Deleting...' : 'Delete subscription'}
+                                    </Button>
+
+                                    <Button
+                                        component={RouterLink}
+                                        to="/my-subs"
+                                        variant="outlined"
+                                        sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
+                                    >
+                                        Keep it
+                                    </Button>
+                                </Stack>
+                            </Stack>
+                        </AppSurfaceCard>
+                    ) : (
+                        <AppSurfaceCard
+                            sx={{
+                                p: { xs: 3, md: 4 },
+                                border: `1px solid ${theme.palette.success.light}`,
+                            }}
+                        >
+                            <Stack spacing={2.5}>
+                                <Box>
+                                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                        Re-enable subscription
+                                    </Typography>
+                                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                                        This subscription is currently inactive. If you started paying for it again, record when it came back and at what price.
+                                    </Typography>
+                                </Box>
+
+                                <Box>
+                                    <Typography sx={{ fontWeight: 700, mb: 1.25 }}>
+                                        Did you re-enable this subscription?
+                                    </Typography>
+
+                                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                        <Chip
+                                            label="Yes"
+                                            clickable
+                                            color={wasReenabled === true ? 'success' : 'default'}
+                                            onClick={() => setWasReenabled(true)}
+                                            sx={{ fontWeight: 700, borderRadius: 999 }}
+                                        />
+                                        <Chip
+                                            label="No"
+                                            clickable
+                                            color={wasReenabled === false ? 'default' : 'default'}
+                                            onClick={() => setWasReenabled(false)}
+                                            sx={{ fontWeight: 700, borderRadius: 999 }}
+                                        />
+                                    </Stack>
+                                </Box>
+
+                                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                                    <TextField
+                                        label="Re-enabled from"
+                                        type="date"
+                                        fullWidth
+                                        value={reenabledFromDate}
+                                        onChange={(e) => setReenabledFromDate(e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                        disabled={wasReenabled !== true}
                                     />
-                                    <Chip
-                                        label="No"
-                                        clickable
-                                        color={usedAndUseful === false ? 'error' : 'default'}
-                                        onClick={() => setUsedAndUseful(false)}
-                                        sx={{ fontWeight: 700, borderRadius: 999 }}
+
+                                    <TextField
+                                        label={`Price (${subscription.currency})`}
+                                        type="number"
+                                        fullWidth
+                                        value={reenabledPrice}
+                                        onChange={(e) => setReenabledPrice(e.target.value)}
+                                        inputProps={{ min: 0, step: '0.01' }}
+                                        disabled={wasReenabled !== true}
                                     />
                                 </Stack>
-                            </Box>
 
-                            {deleteError && <Alert severity="error">{deleteError}</Alert>}
+                                {updateError && <Alert severity="error">{updateError}</Alert>}
 
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <Button
-                                    variant="contained"
-                                    color="error"
-                                    startIcon={<DeleteOutlineRoundedIcon />}
-                                    disabled={deleting || usedAndUseful === null}
-                                    onClick={handleDelete}
-                                    sx={{
-                                        borderRadius: 999,
-                                        px: 3,
-                                        fontWeight: 700,
-                                    }}
-                                >
-                                    {deleting ? 'Deleting...' : 'Delete subscription'}
-                                </Button>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        startIcon={<RestartAltRoundedIcon />}
+                                        disabled={updating || wasReenabled !== true}
+                                        onClick={handleReenable}
+                                        sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
+                                    >
+                                        {updating ? 'Saving...' : 'Re-enable subscription'}
+                                    </Button>
 
-                                <Button
-                                    component={RouterLink}
-                                    to="/my-subs"
-                                    variant="outlined"
-                                    sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
-                                >
-                                    Keep it
-                                </Button>
+                                    <Button
+                                        component={RouterLink}
+                                        to="/my-subs"
+                                        variant="outlined"
+                                        sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
+                                    >
+                                        Back to list
+                                    </Button>
+                                </Stack>
                             </Stack>
-                        </Stack>
-                    </AppSurfaceCard>
+                        </AppSurfaceCard>
+                    )}
                 </Stack>
             )}
         </AppShell>
@@ -284,9 +459,7 @@ const DetailRow: React.FC<{ label: string; value: string }> = ({ label, value })
         <Typography variant="body2" color="text.secondary">
             {label}
         </Typography>
-        <Typography sx={{ fontWeight: 700 }}>
-            {value}
-        </Typography>
+        <Typography sx={{ fontWeight: 700 }}>{value}</Typography>
     </Box>
 );
 
