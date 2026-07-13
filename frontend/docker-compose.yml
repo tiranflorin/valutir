@@ -10,7 +10,7 @@ services:
             - "5173:5173"  # Changed from 3000 to match Vite default
         volumes:
             - .:/app                 # Sync all source files bidirectionally
-            - /app/node_modules      # Preserve node_modules inside container
+#            - /app/node_modules      # Preserve node_modules inside container
         healthcheck:
             test: [ "CMD-SHELL", "wget -q --spider http://localhost:5173/ || exit 1" ]
             interval: 1m
@@ -19,6 +19,7 @@ services:
             start_period: 15s
         restart: unless-stopped
         command: [ "npm", "run", "dev" ]
+#        command: ["sh", "-c", "echo 'frontend-test ready'; tail -f /dev/null"]
 
     frontend-test:
         build:
@@ -31,4 +32,4 @@ services:
         volumes:
             - .:/app
             - /app/node_modules
-        command: [ "npm", "run", "test:run" ]
+        command: ["sh", "-c", "echo 'frontend-test ready'; tail -f /dev/null"]

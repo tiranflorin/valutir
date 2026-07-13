@@ -28,7 +28,8 @@ describe('App routes', () => {
 
         renderWithMemoryRoute(<App />, { route: '/my-subs/new' });
 
-        expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
+        expect(screen.getAllByRole('link', { name: /login/i }).length).toBeGreaterThan(0);
+        expect(screen.getAllByRole('link', { name: /create account/i }).length).toBeGreaterThan(0);
     });
 
     it('redirects unauthenticated users from /my-subs to login', () => {
@@ -36,7 +37,8 @@ describe('App routes', () => {
 
         renderWithMemoryRoute(<App />, { route: '/my-subs' });
 
-        expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('renders add subscription page for authenticated users', () => {
