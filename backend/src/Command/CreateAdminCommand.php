@@ -14,10 +14,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class CreateAdminCommand extends Command
 {
     public function __construct(
-        private EntityManagerInterface      $entityManager,
-        private UserPasswordHasherInterface $passwordHasher
-    )
-    {
+        private EntityManagerInterface $entityManager,
+        private UserPasswordHasherInterface $passwordHasher,
+    ) {
         parent::__construct();
     }
 
@@ -26,6 +25,7 @@ class CreateAdminCommand extends Command
         $existing = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'admin@valutir.com']);
         if ($existing) {
             $output->writeln('<comment>Admin user already exists.</comment>');
+
             return Command::SUCCESS;
         }
 

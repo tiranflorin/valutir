@@ -47,7 +47,7 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $content = $request->getContent();
         if (strlen($content) > 4000) {
-            $content = substr($content, 0, 4000) . '... [truncated]';
+            $content = substr($content, 0, 4000).'... [truncated]';
         }
 
         $context = [
@@ -98,7 +98,7 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
             'errors' => $errors,
         ];
 
-        if ($this->appEnv !== 'prod') {
+        if ('prod' !== $this->appEnv) {
             $response['debug'] = [
                 'exception' => $exception::class,
                 'detail' => $exception->getMessage(),

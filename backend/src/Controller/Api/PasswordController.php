@@ -18,11 +18,10 @@ class PasswordController extends AbstractController
 {
     #[Route('/register', name: 'api_register', methods: ['POST'])]
     public function register(
-        Request                     $request,
+        Request $request,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface      $entityManager
-    ): JsonResponse
-    {
+        EntityManagerInterface $entityManager,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
@@ -51,11 +50,10 @@ class PasswordController extends AbstractController
 
     #[Route('/reset-password/request', name: 'api_reset_password_request', methods: ['POST'])]
     public function requestReset(
-        Request         $request,
-        UserRepository  $userRepository,
-        MailerInterface $mailer
-    ): JsonResponse
-    {
+        Request $request,
+        UserRepository $userRepository,
+        MailerInterface $mailer,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $email = $data['email'] ?? null;
 

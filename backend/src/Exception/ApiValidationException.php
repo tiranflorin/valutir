@@ -2,11 +2,10 @@
 
 namespace App\Exception;
 
-use RuntimeException;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ApiValidationException extends RuntimeException
+class ApiValidationException extends \RuntimeException
 {
     private array $errors;
 

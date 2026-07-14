@@ -88,11 +88,11 @@ class SubscriptionService
         $subscription->setAmount(number_format((float) $dto->amount, 2, '.', ''));
         $subscription->setCurrency((string) $dto->currency);
         $subscription->setBillingCadence((string) $dto->billingCadence);
-        $subscription->setCategory($dto->category !== null ? trim($dto->category) : null);
+        $subscription->setCategory(null !== $dto->category ? trim($dto->category) : null);
         $subscription->setStartedAt($this->parseDate($dto->startedAt));
         $subscription->setNextBillingDate($this->parseDate($dto->nextBillingDate));
-        $subscription->setNotes($dto->notes !== null ? trim($dto->notes) : null);
-        $subscription->setPaymentMethod($dto->paymentMethod !== null ? trim($dto->paymentMethod) : null);
+        $subscription->setNotes(null !== $dto->notes ? trim($dto->notes) : null);
+        $subscription->setPaymentMethod(null !== $dto->paymentMethod ? trim($dto->paymentMethod) : null);
         $subscription->setIsActive($dto->isActive);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
@@ -100,7 +100,7 @@ class SubscriptionService
 
     private function parseDate(?string $value): ?\DateTimeImmutable
     {
-        if ($value === null || $value === '') {
+        if (null === $value || '' === $value) {
             return null;
         }
 
