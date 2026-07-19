@@ -124,7 +124,7 @@ const AddSubscriptionPage: React.FC = () => {
         <AppShell mode="content" maxWidth="lg">
             <AppHeader />
 
-            <Stack spacing={3}>
+            <Stack spacing={0}>
                 <Button
                     component={RouterLink}
                     to="/my-subs"

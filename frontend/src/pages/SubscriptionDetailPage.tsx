@@ -90,15 +90,15 @@ const SubscriptionDetailPage: React.FC = () => {
     };
 
     return (
-        <AppShell centered={false} maxWidth="lg" showThemeToggle={false}>
+        <AppShell mode="content" maxWidth="lg">
             <AppHeader />
 
             <Button
                 component={RouterLink}
                 to="/my-subs"
-                startIcon={<ArrowBackRoundedIcon />}
                 variant="text"
-                sx={{ mb: 3, fontWeight: 700 }}
+                startIcon={<ArrowBackRoundedIcon />}
+                sx={{ alignSelf: 'flex-start', borderRadius: 999, fontWeight: 700 }}
             >
                 Back to My Subs
             </Button>

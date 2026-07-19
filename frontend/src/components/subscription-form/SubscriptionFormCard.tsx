@@ -158,7 +158,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                     flex: 1.38,
                     width: '100%',
                     p: { xs: 2.5, md: 3 },
-                    borderRadius: 4,
+                    borderRadius: 2,
                 }}
             >
                 <Box
@@ -282,13 +282,6 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             </Stack>
                         </Stack>
 
-                        {isTrial && (
-                            <Alert severity="info" sx={{ borderRadius: 3 }}>
-                                This subscription is currently in a trial period. The selected date below will be
-                                treated as the first day the user will be charged.
-                            </Alert>
-                        )}
-
                         {isOther && (
                             <Alert severity="warning" sx={{ borderRadius: 3 }}>
                                 “Other” is treated as non-active in the current flow and may be saved as
@@ -310,10 +303,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
 
                         {isTrial && (
                             <Alert severity="info" sx={{ borderRadius: 3 }}>
-                                Trial reminder: you should be warned before this date so you know a paid renewal is
-                                coming.
+                                You should be warned before this date so you know a paid renewal is coming.
                                 {trialReminderPreview
-                                    ? ` Planned reminder target: ${trialReminderPreview}.`
+                                    ? ` Reminder: ${trialReminderPreview}.`
                                     : ' Select a first charge date to preview the reminder timing.'}
                             </Alert>
                         )}
@@ -453,7 +445,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                     flex: 0.62,
                     width: '100%',
                     p: { xs: 2.5, md: 3 },
-                    borderRadius: 4,
+                    borderRadius: 2,
                     position: { lg: 'sticky' },
                     top: { lg: 96 },
                 }}
