@@ -169,10 +169,11 @@ const AddSubscriptionPage: React.FC = () => {
                 status: statusPayload,
                 startedAt: today,
                 nextBillingDate: renewalDate,
+                trialEndsAt: isTrial ? renewalDate : null,
+                trialReminderSentAt: null,
                 notes: notes.trim() || null,
                 paymentMethod: providerGroup.trim() || null,
                 householdShared,
-                isActive: !isOther,
                 autoRenew: !isOther,
                 cancelledAt: isOther ? today : null,
             };

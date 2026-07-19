@@ -28,7 +28,6 @@ final class Version20260712000100 extends AbstractMigration
             next_billing_date DATE DEFAULT NULL,
             notes TEXT DEFAULT NULL,
             payment_method VARCHAR(100) DEFAULT NULL,
-            is_active BOOLEAN DEFAULT TRUE,
             auto_renew BOOLEAN DEFAULT TRUE,
             cancelled_at DATE DEFAULT NULL,
             created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,

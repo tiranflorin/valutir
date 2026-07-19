@@ -41,6 +41,11 @@ class Subscription
     #[Assert\Choice(choices: ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])]
     private ?string $billingCadence = null;
 
+    #[ORM\Column(length: 20)]
+    #[Assert\NotBlank]
+    #[Assert\Choice(choices: ['active', 'trial', 'other', 'cancelled'])]
+    private ?string $status = null;
+
     #[ORM\Column(length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     private ?string $category = null;
@@ -51,15 +56,18 @@ class Subscription
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $nextBillingDate = null;
 
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $trialEndsAt = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $trialReminderSentAt = null;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     private ?string $paymentMethod = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?bool $isActive = true;
 
     #[ORM\Column(nullable: true)]
     private ?bool $autoRenew = true;
@@ -220,14 +228,7 @@ class Subscription
 
     public function isActive(): ?bool
     {
-        return $this->isActive;
-    }
-
-    public function setIsActive(?bool $isActive): static
-    {
-        $this->isActive = $isActive;
-
-        return $this;
+        return $this->status === 'active';
     }
 
     public function isAutoRenew(): ?bool
@@ -288,6 +289,36 @@ class Subscription
         return $this;
     }
 
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?string $status): void
+    {
+        $this->status = $status;
+    }
+
+    public function getTrialEndsAt(): ?\DateTimeImmutable
+    {
+        return $this->trialEndsAt;
+    }
+
+    public function setTrialEndsAt(?\DateTimeImmutable $trialEndsAt): void
+    {
+        $this->trialEndsAt = $trialEndsAt;
+    }
+
+    public function getTrialReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->trialReminderSentAt;
+    }
+
+    public function setTrialReminderSentAt(?\DateTimeImmutable $trialReminderSentAt): void
+    {
+        $this->trialReminderSentAt = $trialReminderSentAt;
+    }
+
     public function toArray(): array
     {
         return [
@@ -295,6 +326,7 @@ class Subscription
             'serviceName' => $this->getServiceName(),
             'amount' => $this->getAmount(),
             'currency' => $this->getCurrency(),
+            'status' => $this->getStatus(),
             'billingCadence' => $this->getBillingCadence(),
             'category' => $this->getCategory(),
             'startedAt' => $this->getStartedAt()?->format('Y-m-d'),
@@ -306,6 +338,8 @@ class Subscription
             'cancelledAt' => $this->getCancelledAt()?->format('Y-m-d'),
             'createdAt' => $this->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'trialEndsAt' => $this->getStartedAt()?->format('Y-m-d'),
+            'trialReminderSentAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
         ];
     }
 }

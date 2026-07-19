@@ -96,7 +96,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     billingCadence,
                     nextBillingDate: nextBillingDate || null,
                     notes: notes.trim() || null,
-                    isActive: true,
+                    status: subscription.status,
                     autoRenew,
                     cancelledAt: null,
                 }),
@@ -121,7 +121,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                 billingCadence,
                 nextBillingDate: nextBillingDate || null,
                 notes: notes.trim() || null,
-                isActive: true,
+                status: subscription.status,
                 autoRenew,
                 cancelledAt: null,
             });

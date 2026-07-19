@@ -68,7 +68,7 @@ class SubscriptionService
     {
         $subscription->setDeletedAt(new \DateTimeImmutable());
         $subscription->setCancelledAt(new \DateTimeImmutable());
-        $subscription->setIsActive(false);
+        $subscription->setStatus(false);
         $subscription->setDeletedUseful($usedAndUseful);
         $this->entityManager->flush();
     }
@@ -93,9 +93,11 @@ class SubscriptionService
         $subscription->setNextBillingDate($this->parseDate($dto->nextBillingDate));
         $subscription->setNotes(null !== $dto->notes ? trim($dto->notes) : null);
         $subscription->setPaymentMethod(null !== $dto->paymentMethod ? trim($dto->paymentMethod) : null);
-        $subscription->setIsActive($dto->isActive);
+        $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
+        $subscription->setTrialEndsAt($this->parseDate($dto->trialEndsAt));
+        $subscription->setTrialReminderSentAt($this->parseDateTime($dto->trialReminderSentAt));
     }
 
     private function parseDate(?string $value): ?\DateTimeImmutable
@@ -108,6 +110,21 @@ class SubscriptionService
 
         if (!$date) {
             throw new BadRequestHttpException(sprintf('Invalid date value "%s". Expected format: Y-m-d.', $value));
+        }
+
+        return $date;
+    }
+
+    private function parseDateTime(?string $value): ?\DateTimeImmutable
+    {
+        if (null === $value || '' === $value) {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value);
+
+        if (!$date) {
+            throw new BadRequestHttpException(sprintf('Invalid date value "%s". Expected format: Y-m-d H:i:s .', $value));
         }
 
         return $date;

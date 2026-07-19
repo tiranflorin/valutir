@@ -79,7 +79,7 @@ const SubscriptionDeleteCard: React.FC<Props> = ({
                         Delete subscription
                     </Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Before removing it from your active list, record whether it was actually used and useful for you.
+                        Before removing it from your list, record whether it was actually used and useful for you.
                     </Typography>
                 </Box>
 

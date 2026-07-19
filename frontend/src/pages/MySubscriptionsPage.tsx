@@ -30,7 +30,7 @@ type Subscription = {
     billingCadence: string;
     nextBillingDate: string | null;
     notes: string | null;
-    isActive: boolean;
+    status: string;
     autoRenew: boolean;
     cancelledAt: string | null;
 };
@@ -111,12 +111,12 @@ const MySubscriptionsPage: React.FC = () => {
     }, [token, logout, navigate]);
 
     const activeSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => subscription.isActive),
+        () => subscriptions.filter((subscription) => subscription.status !== 'cancelled'),
         [subscriptions]
     );
 
     const cancelledSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => !subscription.isActive),
+        () => subscriptions.filter((subscription) => subscription.status === 'cancelled'),
         [subscriptions]
     );
 
@@ -228,8 +228,8 @@ const MySubscriptionsPage: React.FC = () => {
                                         <Box sx={{ minWidth: 0 }}>
                                             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
                                                 <Chip
-                                                    label="Active"
-                                                    color="success"
+                                                    label={ subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) }
+                                                    color={subscription.status === 'active' ? 'success' : 'default'}
                                                     size="small"
                                                     sx={{ fontWeight: 700 }}
                                                 />

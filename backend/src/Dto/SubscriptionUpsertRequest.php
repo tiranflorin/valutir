@@ -36,10 +36,16 @@ class SubscriptionUpsertRequest
     #[Assert\Length(max: 100)]
     public ?string $paymentMethod = null;
 
-    public ?bool $isActive = true;
-
     public ?bool $autoRenew = true;
 
     #[Assert\Date]
     public ?string $cancelledAt = null;
+
+    #[Assert\NotBlank]
+    #[Assert\Choice(choices: ['active', 'trial', 'other', 'cancelled'])]
+    public ?string $status = null;
+
+    #[Assert\Date]
+    public ?string $trialEndsAt = null;
+    public ?string $trialReminderSentAt = null;
 }

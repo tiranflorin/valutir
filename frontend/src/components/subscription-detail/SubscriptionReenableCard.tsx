@@ -66,7 +66,7 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                     billingCadence: subscription.billingCadence,
                     nextBillingDate: subscription.nextBillingDate,
                     notes: subscription.notes,
-                    isActive: true,
+                    status: string,
                     autoRenew: true,
                     cancelledAt: null,
                     startedAt: reenabledFromDate,
@@ -87,7 +87,7 @@ const SubscriptionReenableCard: React.FC<Props> = ({
             onReenabled(data ?? {
                 ...subscription,
                 amount: Number(reenabledPrice),
-                isActive: true,
+                status: 'active',
                 autoRenew: true,
                 cancelledAt: null,
             });

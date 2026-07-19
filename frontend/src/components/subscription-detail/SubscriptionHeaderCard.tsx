@@ -13,7 +13,7 @@ export type SubscriptionCardModel = {
     billingCadence: string;
     nextBillingDate: string | null;
     notes: string | null;
-    isActive: boolean;
+    status: string;
     autoRenew: boolean;
     cancelledAt: string | null;
 };
@@ -51,8 +51,8 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
 
                     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.25 }}>
                         <Chip
-                            label={subscription.isActive ? 'Active' : 'Inactive'}
-                            color={subscription.isActive ? 'success' : 'default'}
+                            label={subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                            color={subscription.status === 'active' ? 'success' : 'default'}
                             sx={{ fontWeight: 700 }}
                         />
                         {subscription.autoRenew && (
@@ -75,7 +75,7 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
                     </Typography>
                 </Box>
 
-                {subscription.isActive && (
+                {subscription.status !== 'cancelled' && (
                     <Button
                         variant={isEditMode ? 'outlined' : 'contained'}
                         color={isEditMode ? 'inherit' : 'primary'}

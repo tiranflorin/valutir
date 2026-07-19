@@ -124,7 +124,7 @@ const SubscriptionDetailPage: React.FC = () => {
                         onCancelEdit={() => setIsEditMode(false)}
                     />
 
-                    {subscription.isActive ? (
+                    {subscription.status !== 'cancelled' ? (
                         isEditMode ? (
                             <SubscriptionEditCard
                                 subscription={subscription}
@@ -148,7 +148,7 @@ const SubscriptionDetailPage: React.FC = () => {
                         </>
                     )}
 
-                    {subscription.isActive && !isEditMode && (
+                    {subscription.status !== 'cancelled' && !isEditMode && (
                         <SubscriptionDeleteCard
                             subscriptionId={subscription.id}
                             token={token ?? ''}

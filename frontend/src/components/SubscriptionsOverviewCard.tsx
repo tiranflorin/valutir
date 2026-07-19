@@ -11,7 +11,7 @@ export type OverviewSubscription = {
     amount: number;
     currency: string;
     billingCadence: string;
-    isActive: boolean;
+    status: string;
     cancelledAt: string | null;
 };
 
@@ -79,12 +79,12 @@ const SubscriptionsOverviewCard: React.FC<Props> = ({ subscriptions }) => {
     const [currency, setCurrency] = useState<OverviewCurrency>('EUR');
 
     const activeSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => subscription.isActive),
+        () => subscriptions.filter((subscription) => subscription.status !== 'cancelled'),
         [subscriptions]
     );
 
     const cancelledSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => !subscription.isActive),
+        () => subscriptions.filter((subscription) => subscription.status === 'cancelled'),
         [subscriptions]
     );
 

@@ -46,7 +46,7 @@ const SubscriptionInfoCard: React.FC<Props> = ({ subscription }) => {
                 <DetailRow label="Next billing date" value={formatDate(subscription.nextBillingDate)} />
                 <DetailRow label="Auto renew" value={subscription.autoRenew ? 'Yes' : 'No'} />
                 <DetailRow label="Notes" value={subscription.notes ?? '—'} />
-                {!subscription.isActive && (
+                {subscription.status === 'cancelled' && (
                     <DetailRow label="Cancelled at" value={formatDate(subscription.cancelledAt)} />
                 )}
             </Stack>
