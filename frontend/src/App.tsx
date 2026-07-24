@@ -10,6 +10,7 @@ import NewPasswordPage from './pages/auth/NewPasswordPage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import AddSubscriptionPage from './pages/AddSubscriptionPage';
+import CalendarPage from './pages/CalendarPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
@@ -81,6 +82,15 @@ const AppRoutes: React.FC = () => {
             <Route
                 path="*"
                 element={<Navigate to={isAuthenticated ? '/my-subs' : '/'} replace />}
+            />
+
+            <Route
+                path="/calendar"
+                element={
+                    <ProtectedRoute>
+                        <CalendarPage />
+                    </ProtectedRoute>
+                }
             />
         </Routes>
     );

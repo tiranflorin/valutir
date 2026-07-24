@@ -65,9 +65,18 @@ const AppHeader: React.FC = () => {
                                     component={RouterLink}
                                     to="/my-subs"
                                     color="inherit"
-                                    sx={{ borderRadius: 999, px: 2, fontWeight: 700 }}
+                                    sx={{ fontWeight: 700 }}
                                 >
                                     My Subs
+                                </Button>
+
+                                <Button
+                                    component={RouterLink}
+                                    to="/calendar"
+                                    color="inherit"
+                                    sx={{ fontWeight: 700 }}
+                                >
+                                    Calendar
                                 </Button>
 
                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} color="inherit">

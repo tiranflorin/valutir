@@ -199,6 +199,211 @@ Run tests with
 
 That keeps your entire frontend toolchain consistent inside Docker, which is exactly what you want for CI parity.
 
+Calendar:
+
+Great — this is a real milestone. The screenshot shows the month grid is rendering correctly, events are placed on the right dates, toolbar navigation is visible, and the page is already integrated into your app shell/header. That means the calendar engine, fetch flow, recurrence mapping, and event rendering baseline are now working.
+
+Next priorities
+Based on the current UI, the best next steps are:
+
+Make the page match the rest of ValuTir visually.
+
+Improve event interaction and details.
+
+Add filtering and alternate views.
+
+Then polish mobile and loading/empty states.
+
+Right now the page is functional, but it still looks like a raw FullCalendar embed instead of a first-class ValuTir screen. The screenshot shows the main layout is still very plain, with the details section disconnected below the calendar and event pills using default FullCalendar styling.
+
+Step 1: match app styling
+Your immediate next task should be a layout/styling pass so the page feels like SubscriptionDetailPage, which already uses AppHeader, AppShell, MUI cards, spacing, and stronger structure. The current calendar screen has the right shell but not yet the same component polish.
+
+What to change next
+Replace the raw details block with a card-like panel using MUI Paper or Card.
+
+Put the calendar and selected-date details in a two-column layout on desktop.
+
+Remove the debug section from the main UI.
+
+Style event pills with your status colors instead of FullCalendar default blue.
+
+Make the toolbar look like the rest of the app, using MUI buttons or ButtonGroup.
+
+Recommended file updates
+You likely already have:
+
+src/pages/CalendarPage.tsx
+
+src/components/calendar/SubscriptionCalendar.tsx
+
+src/components/calendar/CalendarToolbar.tsx
+
+src/components/calendar/CalendarDayDetails.tsx
+
+Now update those rather than adding new files immediately.
+
+Step 2: improve interaction
+Your current screenshot still shows “Select a date,” which means the page is waiting for date clicks to reveal useful details. That’s okay for MVP, but the next UX upgrade is to make event clicks more valuable.
+
+Do this next
+On eventClick, open the subscription detail page for that item.
+
+On dateClick, populate the side details panel with all subscriptions due that day.
+
+Highlight the selected date visually in the details panel title.
+
+Show more metadata in each event detail card: category, cadence, payment method, notes if relevant.
+
+Since you already have SubscriptionDetailPage.tsx, the most natural next interaction is:
+
+ts
+navigate(`/subscriptions/${subscriptionId}`);
+or whatever your existing detail route is in App.tsx. Your app already has a subscription detail route pattern, so reusing it will make the calendar feel connected rather than isolated.
+
+Step 3: filters
+This is the most valuable product feature after the base month grid. Your backend data includes fields like billingCadence, category, paymentMethod, status, and isActive, which are ideal filter inputs for a subscription calendar.
+
+Add next
+Create:
+
+text
+src/components/calendar/CalendarFiltersBar.tsx
+Start with these filters:
+
+Billing cadence
+
+Category
+
+Status
+
+Active only
+
+Then filter the subscriptions list before passing it into useCalendarEvents.
+
+Suggested order
+Status filter
+
+Category filter
+
+Cadence filter
+
+Active-only toggle
+
+This will immediately make the calendar more useful than a static overview.
+
+Step 4: week/day/agenda views
+After filters, add alternate views. FullCalendar supports this cleanly through plugins and changeView(), and it is the next logical feature after month view is stable.
+
+Install next
+bash
+npm install @fullcalendar/timegrid @fullcalendar/list
+Then update
+SubscriptionCalendar.tsx
+
+CalendarToolbar.tsx
+
+Add view buttons:
+
+Month
+
+Week
+
+Day
+
+Agenda
+
+Map them to:
+
+dayGridMonth
+
+timeGridWeek
+
+timeGridDay
+
+listMonth
+
+That gives you the “monthly overview + closer inspection + agenda” model you originally wanted. FullCalendar’s plugin system is designed for switching between these standard views.
+
+Step 5: timeline section
+After alternate views, add a custom “Upcoming 30 days” block below or beside the calendar. This is especially important for ValuTir because subscription products are more about upcoming cash flow than meeting-style scheduling. Your earlier goal explicitly mentioned a timeline for the next 30/60/90 days, and a custom component will fit that use case better than relying only on generic calendar views.
+
+Add file
+text
+src/components/calendar/UpcomingTimeline.tsx
+Show
+date
+
+service name
+
+amount
+
+currency
+
+category
+
+status badge
+
+This should probably sit below the grid first, then later move into a tabbed secondary panel if needed.
+
+Step 6: page polish
+After features, finish with the product-level polish items:
+
+Skeleton while subscriptions load
+
+Empty state when no subscriptions match filters
+
+Better event chips with status colors
+
+Mobile stacked layout
+
+Right-side drawer or bottom sheet for selected-date details
+
+Remove developer debug text from the page
+
+The screenshot makes it clear the page works but still has “builder state” artifacts, especially the debug labels and default event style. That’s normal at this stage; now you move into refinement.
+
+Best next implementation order
+Here is the order I recommend from this point:
+
+Restyle layout to match ValuTir.
+
+Make eventClick open subscription details.
+
+Improve CalendarDayDetails card content.
+
+Add CalendarFiltersBar.
+
+Add week/day/agenda views.
+
+Add UpcomingTimeline.
+
+Add skeleton, empty state, and mobile drawer.
+
+Very next concrete task
+If you want the best immediate improvement, do this next:
+
+convert the page into a desktop two-column layout
+
+make CalendarDayDetails a MUI card
+
+wire eventClick to navigate to SubscriptionDetailPage
+
+remove the debug block
+
+That will give you the biggest visible product jump with the smallest engineering effort, and it will align the screen more closely with the style and behavior of your existing detail pages.
+
+If you want, I can now give you the next full file changes for exactly that step:
+
+visual alignment with ValuTir
+
+event click -> detail page navigation
+
+improved selected-date details card
+
+removal of debug UI
+
+import useCalendarEvents from '../hooks/useCalendarEvents';
 
 ## BE:
 TODO

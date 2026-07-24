@@ -284,8 +284,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
 
                         {isOther && (
                             <Alert severity="warning" sx={{ borderRadius: 3 }}>
-                                “Other” is treated as non-active in the current flow and may be saved as
-                                cancelled/inactive depending on backend rules.
+                                “Other” is treated as partially active in the current flow. (TODO)
                             </Alert>
                         )}
 
@@ -306,7 +305,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 You should be warned before this date so you know a paid renewal is coming.
                                 {trialReminderPreview
                                     ? ` Reminder: ${trialReminderPreview}.`
-                                    : ' Select a first charge date to preview the reminder timing.'}
+                                    : ' Select a date.'}
                             </Alert>
                         )}
 
