@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, CircularProgress, Paper, Stack } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
 import SubscriptionCalendar from '../components/calendar/SubscriptionCalendar';
@@ -11,7 +12,9 @@ import { SubscriptionRecord } from '../types/subscription';
 import './CalendarPage.css';
 
 const CalendarPage: React.FC = () => {
+    const navigate = useNavigate();
     const { token, logout } = useAuth();
+
     const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -71,6 +74,17 @@ const CalendarPage: React.FC = () => {
         return calendarEvents.filter((event) => event.start === selectedDate);
     }, [calendarEvents, selectedDate]);
 
+    const handleEventClick = (eventId: string) => {
+        setSelectedEventId(eventId);
+
+        const clicked = calendarEvents.find((event) => event.id === eventId);
+        if (!clicked) return;
+
+        if (clicked.start !== selectedDate) {
+            setSelectedDate(clicked.start);
+        }
+    };
+
     return (
         <>
             <AppHeader title="Calendar" subtitle="Track renewals and upcoming billing dates." />
@@ -90,8 +104,9 @@ const CalendarPage: React.FC = () => {
                             <Paper className="calendar-page__calendar-card" elevation={0}>
                                 <SubscriptionCalendar
                                     events={calendarEvents}
+                                    selectedDate={selectedDate}
                                     onDateClick={setSelectedDate}
-                                    onEventClick={setSelectedEventId}
+                                    onEventClick={handleEventClick}
                                     onDatesSet={setVisibleRange}
                                 />
                             </Paper>
@@ -99,6 +114,7 @@ const CalendarPage: React.FC = () => {
                             <Box className="calendar-page__side">
                                 <CalendarDayDetails
                                     selectedDate={selectedDate}
+                                    selectedEventId={selectedEventId}
                                     events={selectedDateEvents}
                                 />
                             </Box>

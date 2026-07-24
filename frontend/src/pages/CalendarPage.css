@@ -16,9 +16,11 @@
     width: 100%;
     padding: 20px;
     border-radius: 20px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: #fff;
+    border: 1px solid var(--calendar-card-border);
+    background: var(--calendar-card-bg);
+    color: var(--calendar-text);
     overflow: hidden;
+    box-shadow: var(--calendar-card-shadow);
 }
 
 .calendar-page__side {
@@ -28,6 +30,129 @@
 .calendar-page__side > * {
     padding-left: 14px;
     padding-right: 14px;
+}
+
+.calendar-page__details-card {
+    border-radius: 20px;
+    border: 1px solid var(--calendar-card-border);
+    background: var(--calendar-card-bg);
+    color: var(--calendar-text);
+    box-shadow: var(--calendar-card-shadow);
+}
+
+.calendar-day-details__title {
+    color: var(--calendar-title);
+}
+
+.calendar-day-details__title--active {
+    color: var(--calendar-title);
+}
+
+.calendar-day-details__item {
+    border: 1px solid var(--calendar-item-border);
+    border-radius: 14px;
+    padding: 14px;
+    background: var(--calendar-item-bg);
+    color: var(--calendar-text);
+}
+
+.calendar-day-details__item--selected {
+    border-color: var(--calendar-selected-border);
+    background: var(--calendar-selected-bg);
+}
+
+.calendar-day--selected {
+    background: var(--calendar-selected-bg);
+}
+
+.calendar-status-chip {
+    text-transform: capitalize;
+    font-weight: 700;
+}
+
+.calendar-status-chip--upcoming {
+    background-color: rgba(59, 130, 246, 0.14) !important;
+    color: var(--calendar-chip-upcoming) !important;
+}
+
+.calendar-status-chip--dueSoon {
+    background-color: rgba(245, 158, 11, 0.18) !important;
+    color: var(--calendar-chip-dueSoon) !important;
+}
+
+.calendar-status-chip--overdue {
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    color: var(--calendar-chip-overdue) !important;
+}
+
+.calendar-status-chip--renewed {
+    background-color: rgba(16, 185, 129, 0.16) !important;
+    color: var(--calendar-chip-renewed) !important;
+}
+
+.calendar-shell .fc {
+    color: var(--calendar-text);
+    --fc-border-color: var(--calendar-grid-border);
+    --fc-page-bg-color: transparent;
+    --fc-today-bg-color: var(--calendar-today-bg);
+}
+
+.calendar-shell .fc .fc-toolbar {
+    display: none;
+}
+
+.calendar-shell .fc .fc-scrollgrid {
+    border-color: var(--calendar-grid-border);
+}
+
+.calendar-shell .fc-theme-standard td,
+.calendar-shell .fc-theme-standard th {
+    border-color: var(--calendar-grid-border);
+}
+
+.calendar-shell .fc .fc-col-header-cell {
+    background: var(--calendar-header-bg);
+}
+
+.calendar-shell .fc .fc-col-header-cell-cushion {
+    color: var(--calendar-title);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.calendar-shell .fc .fc-daygrid-day-number {
+    color: var(--calendar-title);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.calendar-shell .fc .fc-daygrid-day.fc-day-other {
+    background: var(--calendar-other-day-bg);
+}
+
+.calendar-shell .fc .fc-daygrid-day.fc-day-today {
+    background: var(--calendar-today-bg);
+}
+
+.calendar-shell .fc .fc-more-link {
+    color: var(--calendar-title);
+    font-weight: 700;
+}
+
+.calendar-shell .fc .fc-popover {
+    border: 1px solid var(--calendar-card-border);
+    background: var(--calendar-card-bg);
+    color: var(--calendar-text);
+}
+
+.calendar-shell .fc .fc-popover-header,
+.calendar-shell .fc .fc-popover-body {
+    background: var(--calendar-card-bg);
+    color: var(--calendar-text);
+}
+
+.calendar-shell .fc .fc-button {
+    border-color: var(--calendar-card-border);
 }
 
 @media (max-width: 1200px) {

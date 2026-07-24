@@ -1,26 +1,45 @@
-import React from 'react';
-import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { CalendarEvent } from '../../types/calendar';
 
 interface CalendarDayDetailsProps {
     selectedDate?: string;
+    selectedEventId?: string;
     events: CalendarEvent[];
 }
 
 const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                                                                    selectedDate,
+                                                                   selectedEventId,
                                                                    events,
                                                                }) => {
+    const sortedEvents = useMemo(() => {
+        if (!selectedEventId) return events;
+
+        return [...events].sort((a, b) => {
+            if (a.id === selectedEventId) return -1;
+            if (b.id === selectedEventId) return 1;
+            return 0;
+        });
+    }, [events, selectedEventId]);
+
+    const titleText = selectedDate || 'Select a date';
+
     return (
-        <Paper className="calendar-page__card" elevation={0}>
+        <Paper className="calendar-page__details-card" elevation={0}>
             <Stack spacing={2}>
                 <Box>
                     <Typography variant="overline" color="text.secondary">
                         Selected date
                     </Typography>
 
-                    <Typography variant="h6" fontWeight={800}>
-                        {selectedDate || 'Select a date'}
+                    <Typography
+                        variant="h6"
+                        fontWeight={800}
+                        className={selectedDate ? 'calendar-day-details__title calendar-day-details__title--active' : 'calendar-day-details__title'}
+                    >
+                        {titleText}
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
@@ -37,38 +56,70 @@ const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                 )}
 
                 <Stack spacing={1.5}>
-                    {events.map((event) => (
-                        <Box key={event.id} className="calendar-day-details__item">
-                            <Stack spacing={1}>
-                                <Stack
-                                    direction="row"
-                                    justifyContent="space-between"
-                                    alignItems="center"
-                                    gap={1}
-                                >
-                                    <Typography variant="subtitle2" fontWeight={700}>
-                                        {event.title}
-                                    </Typography>
+                    {sortedEvents.map((event) => {
+                        const props = event.extendedProps;
+                        const isSelected = event.id === selectedEventId;
 
-                                    <Chip
-                                        size="small"
-                                        label={event.extendedProps.status}
-                                        className={`calendar-status-chip calendar-status-chip--${event.extendedProps.status}`}
-                                    />
-                                </Stack>
+                        return (
+                            <Box
+                                key={event.id}
+                                className={`calendar-day-details__item${isSelected ? ' calendar-day-details__item--selected' : ''}`}
+                            >
+                                <Stack spacing={1.25}>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                                        <Typography variant="subtitle1" fontWeight={800}>
+                                            {event.title}
+                                        </Typography>
 
-                                <Typography variant="body2" color="text.secondary">
-                                    {event.extendedProps.amount} {event.extendedProps.currency}
-                                </Typography>
+                                        <Chip
+                                            size="small"
+                                            label={props.status}
+                                            className={`calendar-status-chip calendar-status-chip--${props.status}`}
+                                        />
+                                    </Stack>
 
-                                {event.extendedProps.ownerName && (
                                     <Typography variant="body2" color="text.secondary">
-                                        Owner: {event.extendedProps.ownerName}
+                                        {props.amount} {props.currency}
                                     </Typography>
-                                )}
-                            </Stack>
-                        </Box>
-                    ))}
+
+                                    {props.category && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Category: {props.category}
+                                        </Typography>
+                                    )}
+
+                                    {props.billingCadence && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Cadence: {props.billingCadence}
+                                        </Typography>
+                                    )}
+
+                                    {props.paymentMethod && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Payment: {props.paymentMethod}
+                                        </Typography>
+                                    )}
+
+                                    {props.notes && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Notes: {props.notes}
+                                        </Typography>
+                                    )}
+
+                                    <Box pt={0.5}>
+                                        <Button
+                                            component={RouterLink}
+                                            to={`/subscriptions/${props.subscriptionId}`}
+                                            size="small"
+                                            variant={isSelected ? 'contained' : 'outlined'}
+                                        >
+                                            Open subscription
+                                        </Button>
+                                    </Box>
+                                </Stack>
+                            </Box>
+                        );
+                    })}
                 </Stack>
             </Stack>
         </Paper>

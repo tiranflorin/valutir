@@ -1,12 +1,13 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import CalendarToolbar from './CalendarToolbar';
 import { CalendarEvent } from '../../types/calendar';
+import CalendarToolbar from './CalendarToolbar';
 
 interface SubscriptionCalendarProps {
     events: CalendarEvent[];
+    selectedDate?: string;
     onDateClick?: (date: string) => void;
     onEventClick?: (eventId: string) => void;
     onDatesSet?: (range: { start: string; end: string }) => void;
@@ -14,49 +15,44 @@ interface SubscriptionCalendarProps {
 
 const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
                                                                        events,
+                                                                       selectedDate,
                                                                        onDateClick,
                                                                        onEventClick,
                                                                        onDatesSet,
                                                                    }) => {
     const calendarRef = useRef<FullCalendar | null>(null);
-    const [title, setTitle] = useState('Calendar');
-
-    const calendarApi = useMemo(
-        () => () => calendarRef.current?.getApi(),
-        []
-    );
 
     return (
         <div className="calendar-shell">
             <CalendarToolbar
-                title={title}
-                onPrev={() => calendarApi()?.prev()}
-                onToday={() => calendarApi()?.today()}
-                onNext={() => calendarApi()?.next()}
+                onPrev={() => calendarRef.current?.getApi().prev()}
+                onToday={() => calendarRef.current?.getApi().today()}
+                onNext={() => calendarRef.current?.getApi().next()}
             />
 
-            <div className="calendar-shell__body">
-                <FullCalendar
-                    ref={calendarRef}
-                    plugins={[dayGridPlugin, interactionPlugin]}
-                    initialView="dayGridMonth"
-                    headerToolbar={false}
-                    height="auto"
-                    fixedWeekCount={false}
-                    showNonCurrentDates={false}
-                    dayMaxEventRows={3}
-                    events={events}
-                    dateClick={(arg) => onDateClick?.(arg.dateStr)}
-                    eventClick={(arg) => onEventClick?.(arg.event.id)}
-                    datesSet={(arg) => {
-                        setTitle(arg.view.title);
-                        onDatesSet?.({
-                            start: arg.startStr,
-                            end: arg.endStr,
-                        });
-                    }}
-                />
-            </div>
+            <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={false}
+                height="auto"
+                fixedWeekCount={false}
+                showNonCurrentDates={false}
+                dayMaxEventRows={3}
+                events={events}
+                dateClick={(arg) => onDateClick?.(arg.dateStr)}
+                eventClick={(arg) => onEventClick?.(arg.event.id)}
+                datesSet={(arg) => {
+                    onDatesSet?.({
+                        start: arg.startStr,
+                        end: arg.endStr,
+                    });
+                }}
+                dayCellClassNames={(arg) => {
+                    const dateStr = arg.date.toISOString().slice(0, 10);
+                    return selectedDate && dateStr === selectedDate ? ['calendar-day--selected'] : [];
+                }}
+            />
         </div>
     );
 };
