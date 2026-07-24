@@ -1,3 +1,56 @@
+:root,
+[data-theme='light'] {
+    --calendar-card-bg: #ffffff;
+    --calendar-item-bg: #f8fafc;
+    --calendar-header-bg: #f8fafc;
+    --calendar-day-bg: #ffffff;
+    --calendar-other-day-bg: #f3f4f6;
+
+    --calendar-text: #475569;
+    --calendar-title: #0f172a;
+
+    --calendar-card-border: rgba(15, 23, 42, 0.08);
+    --calendar-item-border: rgba(15, 23, 42, 0.08);
+    --calendar-grid-border: rgba(15, 23, 42, 0.10);
+
+    --calendar-selected-bg: rgba(37, 99, 235, 0.08);
+    --calendar-selected-border: rgba(37, 99, 235, 0.28);
+    --calendar-today-bg: rgba(37, 99, 235, 0.06);
+
+    --calendar-card-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
+
+    --calendar-chip-upcoming: #1d4ed8;
+    --calendar-chip-dueSoon: #b45309;
+    --calendar-chip-overdue: #b91c1c;
+    --calendar-chip-renewed: #047857;
+}
+
+[data-theme='dark'] {
+    --calendar-card-bg: #0f172a;
+    --calendar-item-bg: #162238;
+    --calendar-header-bg: #1e2d45;
+    --calendar-day-bg: #111c2f;
+    --calendar-other-day-bg: #26334a;
+
+    --calendar-text: #aab9cc;
+    --calendar-title: #f1f5f9;
+
+    --calendar-card-border: rgba(148, 163, 184, 0.22);
+    --calendar-item-border: rgba(148, 163, 184, 0.20);
+    --calendar-grid-border: rgba(203, 213, 225, 0.34);
+
+    --calendar-selected-bg: #1d385f;
+    --calendar-selected-border: rgba(96, 165, 250, 0.52);
+    --calendar-today-bg: #1a3154;
+
+    --calendar-card-shadow: 0 14px 32px rgba(2, 6, 23, 0.34);
+
+    --calendar-chip-upcoming: #dbeafe;
+    --calendar-chip-dueSoon: #fde68a;
+    --calendar-chip-overdue: #fecaca;
+    --calendar-chip-renewed: #d1fae5;
+}
+
 .calendar-page {
     width: 100%;
     padding-top: 12px;
@@ -15,11 +68,11 @@
     min-width: 0;
     width: 100%;
     padding: 20px;
-    border-radius: 20px;
+    overflow: hidden;
     border: 1px solid var(--calendar-card-border);
+    border-radius: 20px;
     background: var(--calendar-card-bg);
     color: var(--calendar-text);
-    overflow: hidden;
     box-shadow: var(--calendar-card-shadow);
 }
 
@@ -28,30 +81,26 @@
 }
 
 .calendar-page__side > * {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-inline: 14px;
 }
 
 .calendar-page__details-card {
-    border-radius: 20px;
     border: 1px solid var(--calendar-card-border);
+    border-radius: 20px;
     background: var(--calendar-card-bg);
     color: var(--calendar-text);
     box-shadow: var(--calendar-card-shadow);
 }
 
-.calendar-day-details__title {
-    color: var(--calendar-title);
-}
-
+.calendar-day-details__title,
 .calendar-day-details__title--active {
     color: var(--calendar-title);
 }
 
 .calendar-day-details__item {
+    padding: 14px;
     border: 1px solid var(--calendar-item-border);
     border-radius: 14px;
-    padding: 14px;
     background: var(--calendar-item-bg);
     color: var(--calendar-text);
 }
@@ -61,7 +110,8 @@
     background: var(--calendar-selected-bg);
 }
 
-.calendar-day--selected {
+.calendar-day--selected,
+.calendar-shell .fc .fc-daygrid-day.calendar-day--selected .fc-daygrid-day-frame {
     background: var(--calendar-selected-bg);
 }
 
@@ -92,26 +142,43 @@
 
 .calendar-shell .fc {
     color: var(--calendar-text);
-    --fc-border-color: var(--calendar-grid-border);
+    --fc-border-color: transparent;
     --fc-page-bg-color: transparent;
-    --fc-today-bg-color: var(--calendar-today-bg);
+    --fc-today-bg-color: transparent;
 }
 
 .calendar-shell .fc .fc-toolbar {
     display: none;
 }
 
-.calendar-shell .fc .fc-scrollgrid {
-    border-color: var(--calendar-grid-border);
-}
-
+/* FullCalendar uses nested tables. Draw the grid on visible inner surfaces. */
+.calendar-shell .fc .fc-scrollgrid,
+.calendar-shell .fc .fc-scrollgrid table,
 .calendar-shell .fc-theme-standard td,
 .calendar-shell .fc-theme-standard th {
-    border-color: var(--calendar-grid-border);
+    border: 0 !important;
 }
 
 .calendar-shell .fc .fc-col-header-cell {
+    border: 0 !important;
+    background: transparent;
+}
+
+.calendar-shell .fc .fc-col-header-cell .fc-scrollgrid-sync-inner {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--calendar-grid-border);
+    border-bottom: 1px solid var(--calendar-grid-border);
     background: var(--calendar-header-bg);
+}
+
+.calendar-shell
+.fc
+.fc-col-header-cell:last-child
+.fc-scrollgrid-sync-inner {
+    border-right: 0;
 }
 
 .calendar-shell .fc .fc-col-header-cell-cushion {
@@ -120,18 +187,52 @@
     text-decoration: none;
 }
 
+.calendar-shell .fc .fc-daygrid-day {
+    border: 0 !important;
+    background: transparent;
+}
+
+.calendar-shell .fc .fc-daygrid-day-frame {
+    min-height: 100%;
+    border-right: 1px solid var(--calendar-grid-border);
+    border-bottom: 1px solid var(--calendar-grid-border);
+    background: var(--calendar-day-bg);
+}
+
+.calendar-shell
+.fc
+.fc-daygrid-body
+tr
+> td:last-child
+.fc-daygrid-day-frame {
+    border-right: 0;
+}
+
+.calendar-shell
+.fc
+.fc-daygrid-body
+tr:last-child
+.fc-daygrid-day-frame {
+    border-bottom: 0;
+}
+
 .calendar-shell .fc .fc-daygrid-day-number {
     color: var(--calendar-title);
     font-weight: 700;
     text-decoration: none;
 }
 
-.calendar-shell .fc .fc-daygrid-day.fc-day-other {
+.calendar-shell .fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-frame,
+.calendar-shell .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-frame {
     background: var(--calendar-other-day-bg);
 }
 
-.calendar-shell .fc .fc-daygrid-day.fc-day-today {
+.calendar-shell .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
     background: var(--calendar-today-bg);
+}
+
+.calendar-shell .fc .fc-daygrid-day.calendar-day--selected .fc-daygrid-day-frame {
+    background: var(--calendar-selected-bg);
 }
 
 .calendar-shell .fc .fc-more-link {
@@ -143,6 +244,7 @@
     border: 1px solid var(--calendar-card-border);
     background: var(--calendar-card-bg);
     color: var(--calendar-text);
+    box-shadow: var(--calendar-card-shadow);
 }
 
 .calendar-shell .fc .fc-popover-header,
@@ -161,7 +263,6 @@
     }
 
     .calendar-page__side > * {
-        padding-left: 0;
-        padding-right: 0;
+        padding-inline: 0;
     }
 }

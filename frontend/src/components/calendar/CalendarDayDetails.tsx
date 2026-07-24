@@ -37,7 +37,11 @@ const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                     <Typography
                         variant="h6"
                         fontWeight={800}
-                        className={selectedDate ? 'calendar-day-details__title calendar-day-details__title--active' : 'calendar-day-details__title'}
+                        className={
+                            selectedDate
+                                ? 'calendar-day-details__title calendar-day-details__title--active'
+                                : 'calendar-day-details__title'
+                        }
                     >
                         {titleText}
                     </Typography>
@@ -48,12 +52,6 @@ const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                             : 'Click a date to inspect subscriptions due that day.'}
                     </Typography>
                 </Box>
-
-                {selectedDate && events.length === 0 && (
-                    <Typography variant="body2" color="text.secondary">
-                        No subscriptions due on this date.
-                    </Typography>
-                )}
 
                 <Stack spacing={1.5}>
                     {sortedEvents.map((event) => {

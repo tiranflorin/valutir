@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, CircularProgress, Paper, Stack } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
 import SubscriptionCalendar from '../components/calendar/SubscriptionCalendar';
@@ -12,7 +11,6 @@ import { SubscriptionRecord } from '../types/subscription';
 import './CalendarPage.css';
 
 const CalendarPage: React.FC = () => {
-    const navigate = useNavigate();
     const { token, logout } = useAuth();
 
     const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
@@ -74,6 +72,13 @@ const CalendarPage: React.FC = () => {
         return calendarEvents.filter((event) => event.start === selectedDate);
     }, [calendarEvents, selectedDate]);
 
+    const handleDateClick = (date: string) => {
+        setSelectedDate(date);
+
+        const eventsForDate = calendarEvents.filter((event) => event.start === date);
+        setSelectedEventId(eventsForDate[0]?.id);
+    };
+
     const handleEventClick = (eventId: string) => {
         setSelectedEventId(eventId);
 
@@ -105,7 +110,7 @@ const CalendarPage: React.FC = () => {
                                 <SubscriptionCalendar
                                     events={calendarEvents}
                                     selectedDate={selectedDate}
-                                    onDateClick={setSelectedDate}
+                                    onDateClick={handleDateClick}
                                     onEventClick={handleEventClick}
                                     onDatesSet={setVisibleRange}
                                 />

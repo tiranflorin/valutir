@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
 import { CssBaseline, PaletteMode, ThemeProvider } from '@mui/material';
 import { createAppTheme } from '../theme';
 
@@ -9,11 +15,19 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+                                                                              children,
+                                                                          }) => {
     const [mode, setMode] = useState<PaletteMode>('light');
 
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', mode);
+    }, [mode]);
+
     const toggleColorMode = () => {
-        setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+        setMode((previousMode) =>
+            previousMode === 'light' ? 'dark' : 'light'
+        );
     };
 
     const theme = useMemo(() => createAppTheme(mode), [mode]);
