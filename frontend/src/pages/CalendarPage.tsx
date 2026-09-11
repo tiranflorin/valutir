@@ -4,10 +4,12 @@ import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
 import SubscriptionCalendar from '../components/calendar/SubscriptionCalendar';
 import CalendarDayDetails from '../components/calendar/CalendarDayDetails';
+import CalendarFiltersBar from '../components/calendar/CalendarFiltersBar';
+import type { CalendarFilters } from '../components/calendar/CalendarFiltersBar';
 import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
 import { VITE_API_URL } from '../services/auth';
-import { SubscriptionRecord } from '../types/subscription';
+import type { SubscriptionRecord } from '../types/subscription';
 import './CalendarPage.css';
 
 const CalendarPage: React.FC = () => {
@@ -19,6 +21,12 @@ const CalendarPage: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>();
     const [selectedEventId, setSelectedEventId] = useState<string>();
     const [visibleRange, setVisibleRange] = useState<{ start: string; end: string }>();
+    const [filters, setFilters] = useState<CalendarFilters>({
+        status: 'all',
+        category: 'all',
+        billingCadence: 'all',
+        activeOnly: false,
+    });
 
     useEffect(() => {
         const loadSubscriptions = async () => {
@@ -61,8 +69,26 @@ const CalendarPage: React.FC = () => {
         loadSubscriptions();
     }, [token, logout]);
 
+    const categories = useMemo(() => Array.from(new Set(
+        subscriptions
+            .map((subscription) => subscription.category)
+            .filter((category): category is string => Boolean(category))
+    )).sort(), [subscriptions]);
+
+    const filteredSubscriptions = useMemo(() => subscriptions.filter((subscription) => {
+        if (filters.status !== 'all' && subscription.status !== filters.status) return false;
+        if (filters.category !== 'all' && subscription.category !== filters.category) return false;
+        if (
+            filters.billingCadence !== 'all'
+            && subscription.billingCadence !== filters.billingCadence
+        ) return false;
+        if (filters.activeOnly && !subscription.isActive) return false;
+
+        return true;
+    }), [subscriptions, filters]);
+
     const calendarEvents = useCalendarEvents({
-        subscriptions,
+        subscriptions: filteredSubscriptions,
         rangeStart: visibleRange?.start,
         rangeEnd: visibleRange?.end,
     });
@@ -105,34 +131,43 @@ const CalendarPage: React.FC = () => {
                     {!loading && error && <Alert severity="error">{error}</Alert>}
 
                     {!loading && !error && (
-                        <Box className="calendar-page__layout">
-                            <Paper className="calendar-page__calendar-card" elevation={0}>
-                                <SubscriptionCalendar
-                                    events={calendarEvents}
-                                    title={visibleRange?.start
-                                        ? new Date(visibleRange.start).toLocaleString('default', {
-                                            month: 'long',
-                                            year: 'numeric',
-                                        })
-                                        : new Date().toLocaleString('default', {
-                                            month: 'long',
-                                            year: 'numeric',
-                                        })}
-                                    selectedDate={selectedDate}
-                                    onDateClick={handleDateClick}
-                                    onEventClick={handleEventClick}
-                                    onDatesSet={setVisibleRange}
-                                />
-                            </Paper>
+                        <>
+                            <Box className="calendar-page__layout">
+                                <Paper className="calendar-page__calendar-card" elevation={0}>
+                                    <SubscriptionCalendar
+                                        events={calendarEvents}
+                                        filters={(
+                                            <CalendarFiltersBar
+                                                filters={filters}
+                                                categories={categories}
+                                                onChange={setFilters}
+                                            />
+                                        )}
+                                        title={visibleRange?.start
+                                            ? new Date(visibleRange.start).toLocaleString('default', {
+                                                month: 'long',
+                                                year: 'numeric',
+                                            })
+                                            : new Date().toLocaleString('default', {
+                                                month: 'long',
+                                                year: 'numeric',
+                                            })}
+                                        selectedDate={selectedDate}
+                                        onDateClick={handleDateClick}
+                                        onEventClick={handleEventClick}
+                                        onDatesSet={setVisibleRange}
+                                    />
+                                </Paper>
 
-                            <Box className="calendar-page__side">
-                                <CalendarDayDetails
-                                    selectedDate={selectedDate}
-                                    selectedEventId={selectedEventId}
-                                    events={selectedDateEvents}
-                                />
+                                <Box className="calendar-page__side">
+                                    <CalendarDayDetails
+                                        selectedDate={selectedDate}
+                                        selectedEventId={selectedEventId}
+                                        events={selectedDateEvents}
+                                    />
+                                </Box>
                             </Box>
-                        </Box>
+                        </>
                     )}
                 </Stack>
             </AppShell>

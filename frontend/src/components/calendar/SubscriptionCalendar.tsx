@@ -2,12 +2,13 @@ import React, { useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { CalendarEvent } from '../../types/calendar';
+import type { CalendarEvent } from '../../types/calendar';
 import CalendarToolbar from './CalendarToolbar';
 
 interface SubscriptionCalendarProps {
     events: CalendarEvent[];
     title: string;
+    filters?: React.ReactNode;
     selectedDate?: string;
     onDateClick?: (date: string) => void;
     onEventClick?: (eventId: string) => void;
@@ -17,11 +18,12 @@ interface SubscriptionCalendarProps {
 const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
     events,
     title,
-                                                                       selectedDate,
-                                                                       onDateClick,
-                                                                       onEventClick,
-                                                                       onDatesSet,
-                                                                   }) => {
+    filters,
+    selectedDate,
+    onDateClick,
+    onEventClick,
+    onDatesSet,
+}) => {
     const calendarRef = useRef<FullCalendar | null>(null);
 
     const toLocalDateString = (date: Date) => {
@@ -41,6 +43,8 @@ const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
                 onToday={() => calendarRef.current?.getApi().today()}
                 onNext={() => calendarRef.current?.getApi().next()}
             />
+
+            {filters}
 
             <FullCalendar
                 ref={calendarRef}

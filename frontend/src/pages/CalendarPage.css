@@ -127,6 +127,10 @@
     letter-spacing: -0.02em;
 }
 
+.calendar-filters-bar {
+    margin: 0 2px 22px;
+}
+
 .calendar-page__side {
     min-width: 0;
 }

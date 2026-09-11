@@ -1,0 +1,7 @@
+  [mcp_servers.phpstorm]
+    url = "http://127.0.0.1:64442/stream"
+# Controls text verbosity for GPT-5 family models via the Responses API
+model_verbosity = "low"
+
+# Optional: Disable or shorten step-by-step reasoning summaries to save even more tokens
+model_reasoning_summary = "concise"  # or "none"

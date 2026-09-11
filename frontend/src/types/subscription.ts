@@ -5,6 +5,7 @@ export type BackendSubscriptionStatus =
     | 'other';
 
 export type SubscriptionBillingFrequency =
+    | 'daily'
     | 'weekly'
     | 'monthly'
     | 'quarterly'

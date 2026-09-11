@@ -27,6 +27,9 @@ const addFrequency = (date: Date, frequency: SubscriptionRecord['billingCadence'
     const next = new Date(date);
 
     switch (frequency) {
+        case 'daily':
+            next.setDate(next.getDate() + 1);
+            return next;
         case 'weekly':
             next.setDate(next.getDate() + 7);
             return next;
