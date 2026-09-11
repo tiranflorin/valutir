@@ -109,6 +109,15 @@ const CalendarPage: React.FC = () => {
                             <Paper className="calendar-page__calendar-card" elevation={0}>
                                 <SubscriptionCalendar
                                     events={calendarEvents}
+                                    title={visibleRange?.start
+                                        ? new Date(visibleRange.start).toLocaleString('default', {
+                                            month: 'long',
+                                            year: 'numeric',
+                                        })
+                                        : new Date().toLocaleString('default', {
+                                            month: 'long',
+                                            year: 'numeric',
+                                        })}
                                     selectedDate={selectedDate}
                                     onDateClick={handleDateClick}
                                     onEventClick={handleEventClick}

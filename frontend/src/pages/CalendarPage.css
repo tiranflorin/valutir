@@ -76,6 +76,57 @@
     box-shadow: var(--calendar-card-shadow);
 }
 
+.calendar-toolbar {
+    margin-bottom: 26px;
+    padding: 2px 2px 22px;
+    border-bottom: 1px solid var(--calendar-grid-border);
+}
+
+.calendar-toolbar__content {
+    min-height: 44px;
+}
+
+.calendar-toolbar__button.MuiButton-root {
+    min-height: 40px;
+    padding: 0 15px;
+    border-color: var(--calendar-selected-border);
+    border-radius: 10px;
+    color: var(--calendar-title);
+    font-weight: 750;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.calendar-toolbar__button.MuiButton-root:hover {
+    border-color: var(--calendar-selected-border);
+    background: var(--calendar-selected-bg);
+}
+
+.calendar-toolbar__button--today.MuiButton-root {
+    border-color: transparent;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #0f9f8a);
+    box-shadow: 0 5px 12px rgba(37, 99, 235, 0.18);
+}
+
+.calendar-toolbar__button--today.MuiButton-root:hover {
+    border-color: transparent;
+    background: linear-gradient(135deg, #1d4ed8, #078572);
+}
+
+.calendar-toolbar__title {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    margin-left: 8px;
+    padding-left: 22px;
+    border-left: 1px solid var(--calendar-grid-border);
+    color: var(--calendar-title);
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em;
+}
+
 .calendar-page__side {
     min-width: 0;
 }
@@ -149,6 +200,31 @@
 
 .calendar-shell .fc .fc-toolbar {
     display: none;
+}
+
+@media (max-width: 620px) {
+    .calendar-toolbar {
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+    }
+
+    .calendar-toolbar__content {
+        align-items: stretch;
+    }
+
+    .calendar-toolbar__button.MuiButton-root {
+        flex: 1 1 auto;
+        padding: 0 10px;
+    }
+
+    .calendar-toolbar__title {
+        flex-basis: 100%;
+        min-height: auto;
+        margin: 4px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--calendar-grid-border);
+        border-left: 0;
+    }
 }
 
 /* FullCalendar uses nested tables. Draw the grid on visible inner surfaces. */

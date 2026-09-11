@@ -7,6 +7,7 @@ import CalendarToolbar from './CalendarToolbar';
 
 interface SubscriptionCalendarProps {
     events: CalendarEvent[];
+    title: string;
     selectedDate?: string;
     onDateClick?: (date: string) => void;
     onEventClick?: (eventId: string) => void;
@@ -14,7 +15,8 @@ interface SubscriptionCalendarProps {
 }
 
 const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
-                                                                       events,
+    events,
+    title,
                                                                        selectedDate,
                                                                        onDateClick,
                                                                        onEventClick,
@@ -34,6 +36,7 @@ const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
     return (
         <div className="calendar-shell">
             <CalendarToolbar
+                title={title}
                 onPrev={() => calendarRef.current?.getApi().prev()}
                 onToday={() => calendarRef.current?.getApi().today()}
                 onNext={() => calendarRef.current?.getApi().next()}
