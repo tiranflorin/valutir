@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>08 · Remove subscription</title>
+    <link rel="stylesheet" href="personal-screens.css">
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="heading">
+            <div>
+                <h1 class="title">Have you cancelled Netflix with the provider?</h1>
+                <div class="sub">Removing it from ValuTir only updates your tracker. It does not stop billing.</div>
+            </div>
+        </div>
+        <div class="split">
+            <section class="card section">
+                <div class="notice"><b>Before removing</b><br>If you still have an active plan, cancel it with the
+                    provider first. Check whether access continues until the end of your paid period.
+                </div>
+                <div class="subhead">Was this subscription used and useful?</div>
+                <div class="chips"><span class="chip">Yes, useful</span><span class="chip sel">No, not useful</span>
+                </div>
+                <div class="subhead">Cancellation status</div>
+                <div class="chips"><span class="chip sel">Already cancelled with provider</span><span class="chip">Not yet cancelled</span>
+                </div>
+                <div class="formgrid" style="margin-top:14px">
+                    <div class="formfield"><label>Provider cancellation date</label>
+                        <div class="input">2026-10-25 ▦</div>
+                    </div>
+                    <div class="formfield"><label>Access ends (optional)</label>
+                        <div class="input">2026-11-09 ▦</div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="button outline">Keep in tracker</button>
+                    <button class="button" style="background:#a44d43">Remove from tracker</button>
+                </div>
+            </section>
+            <aside class="card sidecard"><h2>What happens next?</h2>
+                <div class="row">
+                    <div class="logo">1</div>
+                    <div>
+                        <div class="name">Your record is archived</div>
+                        <div class="muted">It remains visible in Cancelled for context.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="logo">2</div>
+                    <div>
+                        <div class="name">Your answer is saved</div>
+                        <div class="muted">This helps you reflect on whether it was useful.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="logo">3</div>
+                    <div>
+                        <div class="name">Re-enable if needed</div>
+                        <div class="muted">If you start paying again, update the record.</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

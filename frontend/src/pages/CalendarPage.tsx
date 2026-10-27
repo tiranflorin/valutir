@@ -159,7 +159,7 @@ const CalendarPage: React.FC = () => {
                                     />
                                 </Paper>
 
-                                <Box className="calendar-page__side">
+                                <Box className="calendar-page__side" sx={{ pb: '10px' }}>
                                     <CalendarDayDetails
                                         selectedDate={selectedDate}
                                         selectedEventId={selectedEventId}

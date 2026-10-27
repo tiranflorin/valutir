@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>12 · Selected calendar date</title>
+    <link rel="stylesheet" href="personal-screens.css">
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=calendar&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="heading">
+            <div>
+                <h1 class="title">Three subscriptions due</h1>
+                <div class="sub">Friday, 23 October 2026 · select a service to open its details.</div>
+            </div>
+            <button class="button outline">← Back to calendar</button>
+        </div>
+        <div class="split">
+            <section class="card section">
+                <div class="section-title">Payments scheduled <span class="link">Total €45.97</span></div>
+                <div class="row">
+                    <div class="logo">▶</div>
+                    <div>
+                        <div class="name">Spotify</div>
+                        <div class="muted">€10.99 · Monthly · Entertainment</div>
+                        <span class="pill green">Active</span></div>
+                    <button class="button outline">Open</button>
+                </div>
+                <div class="row">
+                    <div class="logo">X</div>
+                    <div>
+                        <div class="name">Game Pass</div>
+                        <div class="muted">€14.99 · Monthly · Entertainment</div>
+                        <span class="pill">Review</span></div>
+                    <button class="button outline">Open</button>
+                </div>
+                <div class="row">
+                    <div class="logo">✦</div>
+                    <div>
+                        <div class="name">Design app</div>
+                        <div class="muted">€19.99 · Trial ends / first charge</div>
+                        <span class="pill">Trial</span></div>
+                    <button class="button outline">Open</button>
+                </div>
+            </section>
+            <aside class="card sidecard"><h2>Calendar filters</h2>
+                <div class="filterrow"><span class="chip sel">All statuses</span><span class="chip">Active</span><span
+                        class="chip">Trial</span><span class="chip">Cancelled</span></div>
+                <div class="filterrow"><span class="chip sel">All categories</span><span
+                        class="chip">Entertainment</span><span class="chip">Software</span></div>
+                <div class="filterrow"><span class="chip sel">All cadences</span><span class="chip">Monthly</span><span
+                        class="chip">Yearly</span></div>
+                <div class="checkrow"><span class="checkbox"></span>Show active subscriptions only</div>
+            </aside>
+        </div>
+        <div class="foot">The date list respects current calendar filters. Amounts retain their source currency when
+            currencies differ.
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

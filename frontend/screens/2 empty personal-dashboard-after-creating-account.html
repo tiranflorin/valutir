@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>02 · Personal dashboard · empty state</title>
+    <link rel="stylesheet" href="personal-screens.css">
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation" src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="heading">
+            <div>
+                <h1 class="title">Your recurring expenses</h1>
+                <div class="sub">See what you pay, what renews next, and what may need a review.</div>
+            </div>
+            <button class="button">＋ Add subscription</button>
+        </div>
+
+        <div class="foot">Main path: review an upcoming charge, open all subscriptions, add a service, or switch to
+            calendar.
+        </div>
+        <section class="card empty" style="margin-top:20px">
+            <div class="kicker">Empty state · New account</div>
+            <div class="symbol">＋</div>
+            <h2>No subscriptions yet</h2>
+            <p>Add the recurring services you want to keep an eye on. You can start with one and add more later.</p>
+            <button class="button">Add your first subscription</button>
+        </section>
+    </div>
+<iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe></main>
+</body>
+</html>

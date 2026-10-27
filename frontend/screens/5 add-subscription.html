@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>05 · Add subscription</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        .body {
+            max-width: 1000px;
+            padding-top: 28px
+        }
+
+        .scope {
+            padding: 14px 15px;
+            background: #f7faf8;
+            border: 1px solid #e5ece7;
+            border-radius: 11px;
+            margin: 0 0 15px
+        }
+
+        .scope label {
+            font-size: 12px;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        .scope-options {
+            display: flex;
+            gap: 7px
+        }
+
+        .scope-option {
+            min-width: 100px;
+            text-align: center;
+            border: 1px solid #dfe7e1;
+            background: white;
+            border-radius: 99px;
+            padding: 7px 11px;
+            font-size: 11px;
+            color: #53645a;
+            cursor: pointer
+        }
+
+        .scope-option[aria-pressed="true"] {
+            background: #eaf5ed;
+            color: #246a42;
+            border-color: #b9dcc3;
+            font-weight: 750
+        }
+
+        .scope-note {
+            font-size: 11px;
+            color: #78847d;
+            margin-top: 7px;
+            line-height: 1.5
+        }
+
+        .formgrid {
+            margin-top: 10px
+        }
+
+        .context-message {
+            font-size: 11px;
+            color: #718077;
+            line-height: 1.5
+        }
+
+        @media (max-width: 700px) {
+            .scope-options {
+                flex-wrap: wrap
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe id="page-header" class="chrome-header" title="Account navigation"
+            src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="heading">
+            <div>
+                <h1 class="title">Track a subscription</h1>
+                <div class="sub">Add the current price and next billing date. Choose which dashboard should include
+                    it.
+                </div>
+            </div>
+        </div>
+        <div class="split">
+            <section class="card section">
+                <div class="scope"><label>Where should this subscription appear?</label>
+                    <div class="scope-options" role="group" aria-label="Subscription context">
+                        <button type="button" class="scope-option" data-context="personal" aria-pressed="true">
+                            Personal
+                        </button>
+                        <button type="button" class="scope-option" data-context="business" aria-pressed="false">
+                            Business
+                        </button>
+                    </div>
+                    <div class="scope-note" id="scope-note">Opened from Personal, so Personal is selected by default.
+                        You can change this before saving. A subscription belongs to one view at a time.
+                    </div>
+                </div>
+                <div class="subhead" style="margin-top:0">Core details</div>
+                <div class="formgrid">
+                    <div class="formfield full"><label>Service name *</label>
+                        <div class="input">Netflix</div>
+                    </div>
+                    <div class="formfield"><label>Price *</label>
+                        <div class="input">13.99</div>
+                    </div>
+                    <div class="formfield"><label>Currency *</label>
+                        <div class="input">EUR · Euro⌄</div>
+                    </div>
+                    <div class="formfield full"><label>Billing cadence *</label>
+                        <div class="chips"><span class="chip">Weekly</span><span class="chip sel">Monthly</span><span
+                                class="chip">Quarterly</span><span class="chip">Yearly</span></div>
+                    </div>
+                    <div class="formfield full"><label>Category</label>
+                        <div class="chips"><span class="chip sel">Entertainment</span><span class="chip">Software</span><span
+                                class="chip">Fitness</span><span class="chip">Utilities</span><span
+                                class="chip">Other</span></div>
+                    </div>
+                    <div class="formfield"><label>Status</label>
+                        <div class="chips"><span class="chip sel">Active</span><span class="chip">Trial</span></div>
+                    </div>
+                    <div class="formfield"><label>Next billing date *</label>
+                        <div class="input">2026-11-09 ▦</div>
+                    </div>
+                </div>
+                <div class="banner"><b>Monthly equivalent €13.99</b> · Annual run rate €167.88<br>Use the normalized
+                    amount to compare different billing cadences.
+                </div>
+                <div class="subhead">Optional details</div>
+                <div class="formgrid">
+                    <div class="formfield"><label>Provider group</label>
+                        <div class="input">Netflix Standard</div>
+                    </div>
+                    <div class="formfield"><label>Auto-renew</label>
+                        <div class="toggle"><span>Subscription renews automatically</span><b>ON ◉</b></div>
+                    </div>
+                    <div class="formfield full"><label>Notes</label>
+                        <div class="input" style="height:54px">Shared with family</div>
+                    </div>
+                    <div class="formfield full" id="household-option">
+                        <div class="toggle"><span><b>Household shared</b><br><span class="small">For family or household services</span></span><b>YES
+                            ◉</b></div>
+                    </div>
+                </div>
+                <div class="actions"><a class="button outline" id="cancel-link"
+                                        href="3 personal-dashboard-with-business-switch.html">Cancel</a>
+                    <button class="button">Save subscription</button>
+                </div>
+            </section>
+            <aside class="card sidecard"><h2>Before you save</h2>
+                <p class="muted">Confirm the next billing date, especially for trials and annual plans.</p>
+                <div class="notice"><b>For a trial</b><br>Record the trial end date and first paid amount so ValuTir can
+                    put the conversion at the top of your reminders.
+                </div>
+                <p class="foot">The selected context is saved as the subscription’s internal <code>b2b</code> value.</p>
+            </aside>
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Account footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+<script>
+    const params = new URLSearchParams(location.search);
+    let context = params.get('context') === 'business' ? 'business' : 'personal';
+    const options = [...document.querySelectorAll('[data-context]')];
+    const note = document.querySelector('#scope-note');
+    const cancel = document.querySelector('#cancel-link');
+    const pageHeader = document.querySelector('#page-header');
+    pageHeader.src = `partials/header.html?mode=member&active=subscriptions&context=${context}`;
+
+    function setContext(next) {
+        context = next;
+        options.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.context === context)));
+        note.textContent = `Opened from ${context === 'business' ? 'Business' : 'Personal'}, so ${context === 'business' ? 'Business' : 'Personal'} is selected by default. You can change this before saving. A subscription belongs to one view at a time.`;
+        document.querySelector('#household-option').hidden = context === 'business';
+        cancel.href = context === 'business' ? '4 business-dashboard-switch.html' : '3 personal-dashboard-with-business-switch.html';
+    }
+
+    options.forEach(o => o.addEventListener('click', () => setContext(o.dataset.context)));
+    setContext(context);
+</script>
+</body>
+</html>

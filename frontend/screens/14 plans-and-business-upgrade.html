@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>14 · Plans and one-time upgrade</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        .body {
+            max-width: 980px;
+            padding-top: 30px
+        }
+
+        .hero {
+            text-align: center;
+            margin: 8px auto 24px;
+            max-width: 670px
+        }
+
+        .hero .title {
+            margin: 6px 0
+        }
+
+        .hero .sub {
+            line-height: 1.6
+        }
+
+        .plans {
+            display: grid;
+            grid-template-columns:1fr 1fr;
+            gap: 16px;
+            align-items: stretch
+        }
+
+        .plan {
+            padding: 22px
+        }
+
+        .plan.featured {
+            border: 2px solid #7ab58e;
+            position: relative
+        }
+
+        .plan-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #28764b;
+            text-transform: uppercase;
+            letter-spacing: .08em
+        }
+
+        .plan h2 {
+            font-size: 20px;
+            margin: 9px 0 5px
+        }
+
+        .price {
+            font-size: 25px;
+            font-weight: 850;
+            margin: 15px 0 4px
+        }
+
+        .price span {
+            font-size: 13px;
+            color: #738078;
+            font-weight: 500
+        }
+
+        .plan-desc {
+            font-size: 12px;
+            color: #758078;
+            line-height: 1.5;
+            min-height: 34px
+        }
+
+        .rule {
+            height: 1px;
+            background: #edf1ee;
+            margin: 17px 0
+        }
+
+        .features {
+            list-style: none;
+            padding: 0;
+            margin: 0
+        }
+
+        .features li {
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f3f1;
+            color: #4f6156
+        }
+
+        .features li:before {
+            content: '✓';
+            color: #26754a;
+            font-weight: 900;
+            margin-right: 8px
+        }
+
+        .plan .button {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 18px
+        }
+
+        .plan .button.outline {
+            background: #fff;
+            border: 1px solid #dce6df;
+            color: #375346
+        }
+
+        .business-note {
+            margin-top: 19px;
+            padding: 13px 16px;
+            background: #f5f7fc;
+            border: 1px solid #e5e9f2;
+            border-radius: 11px;
+            font-size: 12px;
+            color: #59647c;
+            line-height: 1.55
+        }
+
+        .free-note {
+            text-align: center;
+            font-size: 12px;
+            color: #748078;
+            margin: 17px auto 0;
+            line-height: 1.6
+        }
+
+        .back {
+            display: inline-block;
+            color: #28764b;
+            font-size: 12px;
+            font-weight: 750;
+            text-decoration: none;
+            margin-bottom: 14px
+        }
+
+        @media (max-width: 700px) {
+            .plans {
+                grid-template-columns:1fr
+            }
+
+            .plan-desc {
+                min-height: 0
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=plan&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="hero">
+            <h1 class="title">A useful tracker should stay useful for free.</h1>
+            <div class="sub">Personal and Business views stay free. Pay once only if you need more than 50 active
+                subscriptions or the advanced small-business tools.
+            </div>
+        </div>
+        <div class="plans">
+            <section class="card plan">
+                <div class="plan-label">Free forever</div>
+                <h2>Core tracking</h2>
+                <div class="plan-desc">For personal bills and the everyday business list.</div>
+                <div class="price">€0 <span>forever</span></div>
+                <div class="rule"></div>
+                <ul class="features">
+                    <li>Personal and Business dashboards</li>
+                    <li>Up to 50 active subscriptions combined</li>
+                    <li>Renewal calendar and basic reminders</li>
+                    <li>Monthly and yearly cost summaries</li>
+                    <li>Trial tracking and review decisions</li>
+                    <li>One account; each subscription belongs to one view</li>
+                </ul>
+                <a class="button outline" href="3 personal-dashboard-with-business-switch.html">Start for free</a>
+            </section>
+            <section class="card plan featured">
+                <div class="plan-label">One-time unlock · no renewal</div>
+                <h2>More room for your list</h2>
+                <div class="plan-desc">For people who track more services or need extra business detail.</div>
+                <div class="price">Pay once <span>amount to be decided</span></div>
+                <div class="rule"></div>
+                <ul class="features">
+                    <li>Add and track more than 50 active subscriptions</li>
+                    <li>Project and cost-center allocation for Business</li>
+                    <li>Bookkeeping-ready business export</li>
+                    <li>Custom reminder timing and renewal reports</li>
+                    <li>Price and renewal history</li>
+                    <li>Keep both dashboards and the same shared account</li>
+                </ul>
+                <a class="button" href="#upgrade-note">One-time upgrade</a></section>
+        </div>
+        <div class="business-note" id="upgrade-note"><b>Business tracking itself stays free.</b> Marking a subscription
+            Business and switching dashboards never requires payment. The one-time unlock is for going beyond 50 active
+            subscriptions or using advanced business tools.
+        </div>
+        <div class="free-note">At 50 active subscriptions, your current records remain available to view, edit, review
+            and archive. Add a 51st after the one-time unlock.<br>The payment amount and exact included business tools
+            are still to be set.
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

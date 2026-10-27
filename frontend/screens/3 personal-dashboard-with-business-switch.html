@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>03 · Personal dashboard</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        .body {
+            max-width: 1180px;
+            padding-top: 26px
+        }
+
+        .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px
+        }
+
+        .view-switch {
+            display: inline-flex;
+            gap: 3px;
+            margin-top: 12px;
+            padding: 4px;
+            border: 1px solid #dfe8e1;
+            border-radius: 10px;
+            background: #eef3ef
+        }
+
+        .view-switch a {
+            padding: 8px 13px;
+            border-radius: 7px;
+            color: #66736a;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none
+        }
+
+        .view-switch a[aria-current="page"] {
+            background: #fff;
+            color: #236b43;
+            box-shadow: 0 1px 4px #1e362614
+        }
+
+        .title {
+            margin: 5px 0
+        }
+
+        
+
+        .overview {
+            display: grid;
+            grid-template-columns:repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0 12px
+        }
+
+        .overview .metric {
+            min-height: 88px
+        }
+
+        .metric .value {
+            font-size: 24px;
+            font-weight: 800
+        }
+
+        .metric .value small {
+            font-size: 12px;
+            color: #758078;
+            font-weight: 500
+        }
+
+        .metric.primary-metric {
+            background: #f2f8f4;
+            border-color: #dcebe0
+        }
+
+        .metric.trial-warning {
+            background: #fffaf3;
+            border-color: #efd8b7
+        }
+
+        .metric.trial-warning small, .metric.trial-warning .hint {
+            color: #92591d
+        }
+
+        .hint a {
+            color: #286e47;
+            font-weight: 750;
+            text-decoration: none
+        }
+
+        .listcard {
+            overflow: hidden
+        }
+
+        .listhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 18px 10px
+        }
+
+        .listhead h2 {
+            font-size: 15px;
+            margin: 0
+        }
+
+        .filters {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 0 18px 12px;
+            border-bottom: 1px solid #edf1ee
+        }
+
+        .filters .chip {
+            font-size: 11px
+        }
+
+        .listlabels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 18px 8px
+        }
+
+        .listlabels strong {
+            font-size: 12px;
+            color: #738078;
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        .listlabels span {
+            font-size: 11px;
+            color: #87928a
+        }
+
+        .attention {
+            display: grid;
+            grid-template-columns:36px 1fr auto auto;
+            gap: 11px;
+            align-items: center;
+            padding: 12px 18px;
+            background: #fffaf3;
+            border-top: 1px solid #f1e2cc
+        }
+
+        .attention img, .service-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px
+        }
+
+        .attention .name {
+            font-size: 13px;
+            font-weight: 750
+        }
+
+        .attention .muted {
+            font-size: 11px;
+            margin-top: 4px
+        }
+
+        .attention .money {
+            text-align: right;
+            font-size: 12px;
+            font-weight: 750
+        }
+
+        .attention .action {
+            font-size: 12px;
+            color: #98601f;
+            font-weight: 750
+        }
+
+        .table-wrap {
+            overflow: auto;
+            padding: 0 18px 12px
+        }
+
+        .subs-table {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: collapse
+        }
+
+        .subs-table th {
+            text-align: left;
+            color: #818c84;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            padding: 10px 7px;
+            border-bottom: 1px solid #e9eeea
+        }
+
+        .subs-table td {
+            font-size: 12px;
+            padding: 10px 7px;
+            border-bottom: 1px solid #edf1ee;
+            white-space: nowrap
+        }
+
+        .service-cell {
+            display: flex;
+            align-items: center;
+            gap: 7px
+        }
+
+        .service-icon {
+            width: 25px;
+            height: 25px
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 4px 6px;
+            border-radius: 99px;
+            background: #e8f4eb;
+            color: #256844
+        }
+
+        .tag.shared {
+            background: #f0f0fb;
+            color: #4d568c
+        }
+
+        .tag.review {
+            background: #fff3e3;
+            color: #91591c
+        }
+
+        .status-note {
+            font-size: 11px;
+            color: #758078;
+            margin: 12px 18px 16px
+        }
+
+        .status-note b {
+            color: #44574b
+        }
+
+        .foot {
+            margin-top: 12px
+        }
+
+        @media (max-width: 700px) {
+            .overview {
+                grid-template-columns:1fr
+            }
+
+            .head {
+                flex-direction: column
+            }
+
+            .attention {
+                grid-template-columns:34px 1fr auto
+            }
+
+            .attention .action {
+                grid-column: 2/-1
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation" src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="head">
+            <div>
+                <h1 class="title">Your recurring expenses</h1>
+                <div class="sub">See what you pay, what renews next, and what may need a review.</div>
+                <nav class="view-switch" aria-label="Subscription view">
+                    <a href="3 personal-dashboard-with-business-switch.html" aria-current="page">Personal</a>
+                    <a href="4 business-dashboard-switch.html">Business</a>
+                </nav>
+            </div>
+            <a class="button" href="5 add-subscription.html?context=personal">＋ Add subscription</a></div>
+        <section class="overview">
+            <div class="card metric"><small>Due in next 7 days</small>
+                <div class="value">€15.99</div>
+                <div class="hint"><a href="#attention">See 2 charges ↓</a></div>
+            </div>
+            <div class="card metric trial-warning"><small>Trial ending soon</small>
+                <div class="value">1 <small>in 2 days</small></div>
+                <div class="hint"><a href="#attention">Review trial ↓</a></div>
+            </div>
+            <div class="card metric primary-metric"><small>Tracked recurring bills</small>
+                <div class="value">€85.00 <small>/ month</small></div>
+                <div class="hint">€1,020 annual run rate · full bill amounts</div>
+            </div>
+        </section>
+        <section class="overview">
+            <div class="card metric"><small>Trial subscriptions</small>
+                <div class="value">2 <small>tracked</small></div>
+                <div class="hint">1 needs attention soon</div>
+            </div>
+            <div class="card metric"><small>Shared with household</small>
+                <div class="value">3 <small>services</small></div>
+                <div class="hint"><a href="#all">Filter shared ↓</a> · full bill amounts shown</div>
+            </div>
+            <div class="card metric"><small>Active subscriptions</small>
+                <div class="value">8 <small>including trials</small></div>
+                <div class="hint">2 cancelled · available in the filter</div>
+            </div>
+        </section>
+        <section class="card listcard" id="all">
+            <div class="listhead"><h2>All personal subscriptions</h2><span class="count">8 active · 2 cancelled</span>
+            </div>
+            <div class="filters"><span class="chip sel">All 10</span><span class="chip">Upcoming 2</span><span
+                    class="chip">Trials 1</span><span class="chip">Shared 3</span><span class="chip">Cancelled 2</span>
+            </div>
+            <div id="attention" class="listlabels"><strong>Needs attention ·
+                1</strong><span>Trials first, then renewals</span></div>
+            <div class="attention"><img src="icons/design-app.svg" alt="">
+                <div>
+                    <div class="name">Design app</div>
+                    <div class="muted">TRIAL ENDS · First charge in 2 days</div>
+                </div>
+                <div class="money">€19.99/mo</div>
+                <a class="action" href="10 renewal-review-screen.html">Review trial →</a></div>
+            <div class="listlabels"><strong>Other subscriptions</strong><span>Category, cost, cadence, next renewal and status</span>
+            </div>
+            <div class="table-wrap">
+                <table class="subs-table">
+                    <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Category ↕</th>
+                        <th>Cost ↕</th>
+                        <th>Cadence ↕</th>
+                        <th>Next renewal ↑</th>
+                        <th>Status ↕</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td><span class="service-cell"><img class="service-icon" src="icons/icloud-plus.svg" alt="">iCloud+</span>
+                        </td>
+                        <td>Utilities</td>
+                        <td>€2.99</td>
+                        <td>Monthly</td>
+                        <td>Today</td>
+                        <td><span class="tag">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="service-cell"><img class="service-icon" src="icons/spotify.svg" alt="">Spotify <span
+                                class="tag shared">SHARED</span></span></td>
+                        <td>Entertainment</td>
+                        <td>€10.99</td>
+                        <td>Monthly</td>
+                        <td>In 4 days</td>
+                        <td><span class="tag">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="service-cell"><img class="service-icon" src="icons/game-pass.svg" alt="">Game Pass</span>
+                        </td>
+                        <td>Entertainment</td>
+                        <td>€14.99</td>
+                        <td>Monthly</td>
+                        <td>In 4 days</td>
+                        <td><span class="tag review">Review</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="service-cell"><img class="service-icon" src="icons/netflix.svg" alt="">Netflix <span
+                                class="tag shared">SHARED</span></span></td>
+                        <td>Entertainment</td>
+                        <td>€13.99</td>
+                        <td>Monthly</td>
+                        <td>In 12 days</td>
+                        <td><span class="tag">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="service-cell"><img class="service-icon" src="icons/adobe.svg"
+                                                            alt="">Adobe</span></td>
+                        <td>Software</td>
+                        <td>€19.99</td>
+                        <td>Monthly</td>
+                        <td>In 28 days</td>
+                        <td><span class="tag">Active</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="status-note"><b>One account, two views.</b> The switch filters subscriptions by their Personal
+                or Business setting. Shared household tags remain within Personal.
+            </div>
+        </section>
+        <div class="foot">Personal is the default view. Adding a subscription from this dashboard preselects Personal;
+            you can change it in the form.
+        </div>
+    </div>
+<iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe></main>
+</body>
+</html>

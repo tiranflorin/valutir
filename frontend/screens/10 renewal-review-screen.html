@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>10 · Renewal review</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        :root {
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            color: #19251e;
+            background: #f2f6f3
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0
+        }
+
+        .app {
+            max-width: 1280px;
+            min-height: 100vh;
+            margin: auto;
+            background: #f8faf9
+        }
+
+        .top {
+            height: 68px;
+            background: #fff;
+            border-bottom: 1px solid #e4ebe6;
+            padding: 0 38px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 850
+        }
+
+        .brand:before {
+            content: "";
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #27a16a;
+            margin-right: 9px
+        }
+
+        .workspace {
+            font-size: 13px;
+            border: 1px solid #e0e8e2;
+            border-radius: 99px;
+            padding: 8px 13px;
+            color: #45604e
+        }
+
+        .body {
+            max-width: 1050px;
+            margin: auto;
+            padding: 34px 24px 56px
+        }
+
+        .back {
+            font-size: 13px;
+            color: #47705a;
+            font-weight: 700
+        }
+
+        .heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 18px 0 21px
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            font-size: 12px;
+            color: #26754a;
+            font-weight: 800
+        }
+
+        .heading h1 {
+            font-size: 29px;
+            letter-spacing: -.8px;
+            margin: 5px 0
+        }
+
+        .sub {
+            font-size: 14px;
+            color: #758078
+        }
+
+        .due {
+            background: #fff3e2;
+            color: #8c581e;
+            border-radius: 99px;
+            padding: 8px 11px;
+            font-size: 13px;
+            font-weight: 750;
+            white-space: nowrap
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns:1.45fr .8fr;
+            gap: 16px
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e3eae5;
+            border-radius: 15px;
+            box-shadow: 0 5px 18px #1e362608
+        }
+
+        .card h2 {
+            font-size: 16px;
+            margin: 0 0 4px
+        }
+
+        .card-head {
+            padding: 19px 20px 15px
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #7a867e
+        }
+
+        .service {
+            padding: 0 20px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .logo {
+            height: 44px;
+            width: 44px;
+            border-radius: 12px;
+            background: #f0f5f2;
+            color: #335a43;
+            display: grid;
+            place-items: center;
+            font-weight: 800
+        }
+
+        .service b {
+            font-size: 15px
+        }
+
+        .service p {
+            font-size: 13px;
+            color: #77837b;
+            margin: 4px 0 0
+        }
+
+        .costs {
+            margin: 0 20px 18px;
+            background: #f5f8f6;
+            border-radius: 12px;
+            padding: 14px;
+            display: grid;
+            grid-template-columns:repeat(3, 1fr);
+            gap: 10px
+        }
+
+        .costs small {
+            display: block;
+            font-size: 12px;
+            color: #7a867e;
+            margin-bottom: 6px
+        }
+
+        .costs b {
+            font-size: 14px
+        }
+
+        .question {
+            padding: 16px 20px;
+            border-top: 1px solid #edf1ee
+        }
+
+        .question label {
+            display: block;
+            font-size: 13px;
+            font-weight: 750;
+            margin-bottom: 9px
+        }
+
+        .choices {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap
+        }
+
+        .choice {
+            border: 1px solid #e0e7e2;
+            border-radius: 9px;
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #52645a;
+            background: #fff
+        }
+
+        .choice.selected {
+            border-color: #77b18d;
+            background: #edf7f0;
+            color: #236840;
+            font-weight: 750
+        }
+
+        .scale {
+            display: flex;
+            gap: 7px
+        }
+
+        .scale span {
+            flex: 1;
+            text-align: center;
+            padding: 9px 4px;
+            border: 1px solid #e0e7e2;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #59685f
+        }
+
+        .scale span.selected {
+            background: #eaf5ed;
+            border-color: #71ab87;
+            color: #216942;
+            font-weight: 800
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #59685f;
+            font-size: 13px;
+            margin-top: 10px
+        }
+
+        .box {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #b9c7bd;
+            border-radius: 4px
+        }
+
+        .box.on {
+            background: #246f46;
+            border-color: #246f46;
+            box-shadow: inset 0 0 0 3px white
+        }
+
+        .side {
+            padding: 18px
+        }
+
+        .side h2 {
+            margin-bottom: 12px
+        }
+
+        .renewal-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf1ee;
+            font-size: 13px
+        }
+
+        .renewal-line:last-of-type {
+            border: 0
+        }
+
+        .renewal-line span {
+            color: #77837b
+        }
+
+        .impact {
+            padding: 12px;
+            background: #f2f7f4;
+            border-radius: 10px;
+            margin-top: 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #52645a
+        }
+
+        .impact strong {
+            color: #25392c
+        }
+
+        .suggestion {
+            padding: 11px 12px;
+            margin-top: 13px;
+            background: #eff7f1;
+            border: 1px solid #d9ebde;
+            border-radius: 10px;
+            color: #435a49;
+            font-size: 12px;
+            line-height: 1.5
+        }
+
+        .suggestion strong {
+            display: block;
+            color: #215d3b;
+            font-size: 13px;
+            margin-bottom: 3px
+        }
+
+        .choice-actions {
+            margin-top: 16px
+        }
+
+        .choice-actions h3 {
+            font-size: 14px;
+            margin: 0 0 5px
+        }
+
+        .choice-actions p {
+            font-size: 13px;
+            color: #77837b;
+            margin: 0 0 12px;
+            line-height: 1.45
+        }
+
+        .decision {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 11px 12px;
+            margin: 7px 0;
+            border: 1px solid #dfe7e1;
+            border-radius: 10px;
+            background: white;
+            color: #27372d;
+            font-size: 13px;
+            font-weight: 750
+        }
+
+        .decision small {
+            display: block;
+            color: #77837b;
+            font-weight: 400;
+            margin-top: 4px
+        }
+
+        .decision.keep {
+            border-color: #b9ddc5;
+            background: #f1f8f3
+        }
+
+        .decision.cancel {
+            color: #854c43
+        }
+
+        .decision.chosen {
+            border: 2px solid #286f48;
+            background: #eff7f1;
+            box-shadow: 0 0 0 2px #e1f0e5
+        }
+
+        .radio {
+            display: inline-grid;
+            place-items: center;
+            width: 13px;
+            height: 13px;
+            border: 1px solid #9dad9f;
+            border-radius: 50%;
+            margin-right: 7px;
+            vertical-align: -2px
+        }
+
+        .chosen .radio {
+            border: 4px solid #286f48
+        }
+
+        .reminder {
+            font-size: 12px;
+            color: #64736a;
+            margin-top: 10px;
+            line-height: 1.5
+        }
+
+        .footnote {
+            font-size: 12px;
+            color: #87928a;
+            margin-top: 16px;
+            line-height: 1.5
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 17px
+        }
+
+        .quiet {
+            color: #68776e;
+            font-size: 13px
+        }
+
+        .primary {
+            border: 0;
+            background: #1c7045;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 9px;
+            font-weight: 750;
+            font-size: 13px;
+            width: 100%;
+            margin-top: 12px
+        }
+
+        .notice {
+            padding: 12px 14px;
+            background: #fff7e9;
+            color: #675535;
+            border: 1px solid #f1e2c8;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-top: 14px
+        }
+
+        @media (max-width: 760px) {
+            .top {
+                padding: 0 16px
+            }
+
+            .body {
+                padding: 24px 14px
+            }
+
+            .layout {
+                grid-template-columns:1fr
+            }
+
+            .heading {
+                gap: 10px;
+                flex-direction: column
+            }
+
+            .costs {
+                grid-template-columns:1fr 1fr
+            }
+
+            .side {
+                order: 2
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body"><a class="back">← Back to subscriptions</a>
+        <div class="heading">
+            <div>
+                <h1>Is Game Pass still worth it?</h1>
+                <div class="sub">Take a moment to compare the upcoming cost with how you use it.</div>
+            </div>
+            <span class="due">Renews in 4 days</span></div>
+        <div class="layout">
+            <section class="card">
+                <div class="card-head"><h2>Subscription at a glance</h2>
+                    <div class="hint">Your details and your own assessment</div>
+                </div>
+                <div class="service">
+                    <div class="logo">X</div>
+                    <div><b>Game Pass</b>
+                        <p>Monthly · Auto-renew is on</p></div>
+                </div>
+                <div class="costs">
+                    <div><small>Next charge</small><b>€14.99</b></div>
+                    <div><small>Monthly cost</small><b>€14.99</b></div>
+                    <div><small>Yearly run rate</small><b>€179.88</b></div>
+                </div>
+                <div class="question"><label>How often have you used it recently?</label>
+                    <div class="choices"><span class="choice">Most days</span><span
+                            class="choice">A few times a month</span><span class="choice selected">Rarely</span><span
+                            class="choice">Not at all</span></div>
+                </div>
+                <div class="question"><label>Does it feel worth the price to you?</label>
+                    <div class="scale"><span>1<br>Not worth it</span><span class="selected">2</span><span>3</span><span>4</span><span>5<br>Great value</span>
+                    </div>
+                </div>
+                <div class="question"><label>What would you like to remember?</label>
+                    <div class="choices"><span class="choice selected">I marked this as not worth the money</span><span
+                            class="choice">Price changed</span><span class="choice">Just checking</span></div>
+                    <div class="check"><span class="box on"></span>Remind me again before the renewal</div>
+                </div>
+                <div class="footer" style="padding:0 20px 19px"><span class="quiet">Assessment and decision are saved together.</span><span
+                        class="hint">You can update this later.</span></div>
+            </section>
+            <aside class="card side"><h2>Your decision</h2>
+                <div class="hint">Your assessment can guide a choice, but you decide what happens.</div>
+                <div class="renewal-line"><span>Renewal date</span><b>In 4 days</b></div>
+                <div class="renewal-line"><span>Next charge</span><b>€14.99</b></div>
+                <div class="renewal-line"><span>Reminder</span><b>1 day before</b></div>
+                <div class="impact"><strong>If you cancel before renewal</strong><br>Potential savings: €14.99 next
+                    month · €179.88 over a year. Estimate uses the current price and assumes no replacement plan.
+                </div>
+                <div class="suggestion"><strong>Based on your answers: consider cancelling or downgrading.</strong>You
+                    selected “Rarely” and rated the value 2/5. This is a prompt, not a decision. Keep it if it still
+                    matters to you.
+                </div>
+                <div class="choice-actions"><h3>Choose your plan</h3>
+                    <p>Select one option, then save it. ValuTir will record your plan but won’t change the provider
+                        subscription.</p>
+                    <button class="decision keep"><span class="radio"></span>Keep it<small>Continue tracking the next
+                        renewal.</small></button>
+                    <button class="decision"><span class="radio"></span>Look for a lower plan<small>Review downgrade
+                        options with the provider.</small></button>
+                    <button class="decision cancel chosen"><span class="radio"></span>I plan to cancel<small>Record
+                        intent and keep a reminder before renewal.</small></button>
+                    <button class="decision"><span class="radio"></span>Decide later<small>Set a date to review it
+                        again.</small></button>
+                </div>
+                <div class="reminder">Reminder selected: 1 day before renewal. A later review date can replace this
+                    reminder.
+                </div>
+                <button class="primary">Save decision &amp; set reminder</button>
+                <div class="reminder">After saving, ValuTir can show cancellation guidance. You’ll still cancel directly
+                    with the provider.
+                </div>
+            </aside>
+        </div>
+        <div class="notice"><b>Cancellation timing matters.</b> Some services keep access through the paid period after
+            cancellation. Check the provider’s terms, and confirm cancellation there before treating the subscription as
+            ended.
+        </div>
+        <div class="footnote">Decision support uses the amount, cadence, next renewal date, and your own usage/value
+            assessment. ValuTir does not infer actual usage or make the cancellation choice for you.
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

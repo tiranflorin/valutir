@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>13 · Personal profile currency</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        .settings-wrap {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .setting-card {
+            padding: 22px;
+        }
+
+        .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin: 20px 0 24px;
+        }
+
+        .profile-avatar {
+            height: 46px;
+            width: 46px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: #28633f;
+            background: #e7f2ea;
+            font-weight: 800;
+        }
+
+        .profile-name {
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .profile-email {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #78847d;
+        }
+
+        .setting-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: #78847d;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .select-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 750;
+            margin-bottom: 6px;
+        }
+
+        .currency-select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dce5df;
+            border-radius: 9px;
+            padding: 0 11px;
+            color: #34483a;
+            background: white;
+            font: inherit;
+            font-size: 13px;
+        }
+
+        .formfield .input {
+            width: 100%;
+        }
+
+        .preview {
+            margin-top: 14px;
+            padding: 13px;
+            border-radius: 10px;
+            background: #f4f8f5;
+            border: 1px solid #e5ede7;
+        }
+
+        .preview-title {
+            color: #758078;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .preview-values {
+            display: flex;
+            gap: 25px;
+            margin-top: 8px;
+        }
+
+        .preview-values b {
+            font-size: 13px;
+        }
+
+        .preview-values small {
+            display: block;
+            color: #78847d;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .save-row {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 17px;
+            margin-top: 17px;
+            border-top: 1px solid #edf1ee;
+        }
+
+        .topnav a.profile-active {
+            color: #1f6841;
+            background: #edf6ef;
+            font-weight: 750;
+        }
+
+        @media (max-width: 600px) {
+            .setting-card {
+                padding: 17px
+            }
+
+            .preview-values {
+                justify-content: space-between;
+                gap: 8px
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=profile&amp;context=personal"></iframe>
+    <div class="body settings-wrap">
+        <h1 class="title">Your profile</h1>
+        <div class="sub">Manage your personal preferences.</div>
+
+        <section class="card setting-card" style="margin-top:18px">
+            <div class="profile-row" id="profile">
+                <div class="profile-avatar">F</div>
+                <div>
+                    <div class="profile-name">Personal account</div>
+                    <div class="profile-email">Account details and sign-in settings</div>
+                </div>
+            </div>
+            <div class="setting-title">Password</div>
+            <div class="setting-desc">Change the password used to sign in to your account.</div>
+            <div class="formgrid">
+                <div class="formfield full"><label for="current-password">Current password</label><input class="input" id="current-password" type="password" placeholder="Enter current password"></div>
+                <div class="formfield"><label for="new-password">New password</label><input class="input" id="new-password" type="password" placeholder="At least 8 characters"></div>
+                <div class="formfield"><label for="confirm-password">Confirm new password</label><input class="input" id="confirm-password" type="password" placeholder="Enter it again"></div>
+            </div>
+            <div class="save-row" style="padding-top:12px;margin-top:12px">
+                <button class="button outline">Update password</button>
+            </div>
+            <div style="height:1px;background:#edf1ee;margin:20px 0"></div>
+            <div id="preferences" class="setting-title">Default currency</div>
+            <div class="setting-desc">Choose the currency used to display subscription costs throughout ValuTir.
+                Original prices remain available in each subscription’s details.
+            </div>
+            <label class="select-label" for="currency">Display costs in</label>
+            <select class="currency-select" id="currency">
+                <option selected>EUR · Euro (€)</option>
+                <option>USD · US Dollar ($)</option>
+                <option>RON · Romanian Leu (lei)</option>
+            </select>
+            <div class="preview">
+                <div class="preview-title">Preview · current subscriptions</div>
+                <div class="preview-values">
+                    <div><b>€85.00 / month</b><small>Monthly equivalent</small></div>
+                    <div><b>€1,020.00 / year</b><small>Annual equivalent</small></div>
+                </div>
+            </div>
+            <div class="save-row">
+                <button class="button">Save preference</button>
+            </div>
+        </section>
+        <div class="foot">Currency preference applies to dashboard summaries, subscription lists, renewal details, and
+            calendar totals. Individual subscription records keep their original currency and amount.
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

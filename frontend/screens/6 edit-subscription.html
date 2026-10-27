@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>06 · Edit subscription</title>
+    <link rel="stylesheet" href="personal-screens.css">
+    <style>
+        .body {
+            max-width: 1000px;
+            padding-top: 28px
+        }
+
+        .scope {
+            padding: 14px 15px;
+            background: #f7faf8;
+            border: 1px solid #e5ece7;
+            border-radius: 11px;
+            margin: 0 0 15px
+        }
+
+        .scope label {
+            font-size: 12px;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        .scope-options {
+            display: flex;
+            gap: 7px
+        }
+
+        .scope-option {
+            min-width: 100px;
+            text-align: center;
+            border: 1px solid #dfe7e1;
+            background: white;
+            border-radius: 99px;
+            padding: 7px 11px;
+            font-size: 11px;
+            color: #53645a;
+            cursor: pointer
+        }
+
+        .scope-option[aria-pressed="true"] {
+            background: #eaf5ed;
+            color: #246a42;
+            border-color: #b9dcc3;
+            font-weight: 750
+        }
+
+        .scope-note {
+            font-size: 11px;
+            color: #78847d;
+            margin-top: 7px;
+            line-height: 1.5
+        }
+
+        .formgrid {
+            margin-top: 10px
+        }
+
+        .context-alert {
+            padding: 10px 12px;
+            border-radius: 9px;
+            background: #f5f7fc;
+            border: 1px solid #e5e9f2;
+            color: #59647c;
+            font-size: 11px;
+            line-height: 1.5;
+            margin-bottom: 14px
+        }
+
+        @media (max-width: 700px) {
+            .scope-options {
+                flex-wrap: wrap
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Account navigation"
+            src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=business"></iframe>
+    <div class="body">
+        <div class="heading">
+            <div>
+                <h1 class="title">Update GitHub</h1>
+                <div class="sub">Keep the price, renewal date, and dashboard assignment accurate.</div>
+            </div>
+        </div>
+        <section class="card section">
+            <div class="context-alert"><b>Changing tracker details only.</b> This does not change your plan with GitHub
+                or move provider billing.
+            </div>
+            <div class="scope"><label>Where should this subscription appear?</label>
+                <div class="scope-options" role="group" aria-label="Subscription context">
+                    <button type="button" class="scope-option" data-context="personal" aria-pressed="false">Personal
+                    </button>
+                    <button type="button" class="scope-option" data-context="business" aria-pressed="true">Business
+                    </button>
+                </div>
+                <div class="scope-note" id="scope-note">This subscription is currently in Business. It was opened from
+                    the Business dashboard, so Business is selected. Choose Personal to move it when you save.
+                </div>
+            </div>
+            <div class="formgrid">
+                <div class="formfield full"><label>Service name *</label>
+                    <div class="input">GitHub</div>
+                </div>
+                <div class="formfield"><label>Price *</label>
+                    <div class="input">18.00</div>
+                </div>
+                <div class="formfield"><label>Currency *</label>
+                    <div class="input">EUR</div>
+                </div>
+                <div class="formfield full"><label>Billing cadence *</label>
+                    <div class="chips"><span class="chip">Weekly</span><span class="chip sel">Monthly</span><span
+                            class="chip">Quarterly</span><span class="chip">Yearly</span></div>
+                </div>
+                <div class="formfield"><label>Category</label>
+                    <div class="input">Development⌄</div>
+                </div>
+                <div class="formfield"><label>Status</label>
+                    <div class="chips"><span class="chip sel">Active</span><span class="chip">Trial</span></div>
+                </div>
+                <div class="formfield"><label>Next billing date *</label>
+                    <div class="input">2026-11-01 ▦</div>
+                </div>
+                <div class="formfield"><label>Auto-renew</label>
+                    <div class="chips"><span class="chip sel">On</span><span class="chip">Off</span></div>
+                </div>
+                <div class="formfield full"><label>Notes</label>
+                    <div class="input" style="height:54px">Code hosting for client work</div>
+                </div>
+                <div class="formfield full" id="household-option" hidden>
+                    <div class="toggle"><span><b>Household shared</b><br><span class="small">For family or household services</span></span><b>NO
+                        ○</b></div>
+                </div>
+            </div>
+            <div class="actions"><a class="button outline" id="cancel-link" href="4 business-dashboard-switch.html">Discard
+                changes</a>
+                <button class="button">Save changes</button>
+            </div>
+        </section>
+        <p class="foot">This subscription appears in one dashboard at a time. Saving a context change moves the tracker
+            record; it does not change the provider account.</p></div>
+    <iframe class="chrome-footer" title="Account footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+<script>
+    let context = 'business';
+    const options = [...document.querySelectorAll('[data-context]')];
+    const note = document.querySelector('#scope-note');
+    const household = document.querySelector('#household-option');
+    const cancel = document.querySelector('#cancel-link');
+
+    function setContext(next) {
+        context = next;
+        options.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.context === context)));
+        household.hidden = context === 'business';
+        note.textContent = context === 'business' ? 'This subscription is currently in Business. Business is selected. Choose Personal to move it when you save.' : 'You selected Personal. Saving will move this subscription from Business to Personal.';
+        cancel.href = context === 'business' ? '4 business-dashboard-switch.html' : '3 personal-dashboard-with-business-switch.html';
+    }
+
+    options.forEach(o => o.addEventListener('click', () => setContext(o.dataset.context)));
+    setContext(context);
+</script>
+</body>
+</html>

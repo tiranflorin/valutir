@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <title>07 · Subscription details</title>
+    <link rel="stylesheet" href="personal-screens.css">
+</head>
+<body>
+<main class="app">
+    <iframe class="chrome-header" title="Member navigation"
+            src="partials/header.html?mode=member&amp;active=subscriptions&amp;context=personal"></iframe>
+    <div class="body">
+        <div class="heading">
+            <button class="button outline">← Back to subscriptions</button>
+        </div>
+        <section class="card section">
+            <div class="heading" style="margin-bottom:10px">
+                <div style="display:flex;gap:12px;align-items:center">
+                    <div class="logo" style="height:46px;width:46px;font-size:17px">N</div>
+                    <div><h1 class="title" style="font-size:23px">Netflix</h1>
+                        <div class="sub">Active · Entertainment · Auto-renew on</div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="button outline">Edit</button>
+                    <button class="button outline danger">Remove</button>
+                </div>
+            </div>
+            <div class="detailgrid">
+                <div class="detailstat"><small>Price</small><b>€13.99 / month</b></div>
+                <div class="detailstat"><small>Next billing date</small><b>09 Nov 2026</b></div>
+                <div class="detailstat"><small>Annual run rate</small><b>€167.88</b></div>
+            </div>
+            <div class="subhead">Subscription details</div>
+            <div class="row">
+                <div class="name">Billing cadence</div>
+                <div class="muted">Monthly</div>
+                <span class="money">›</span></div>
+            <div class="row">
+                <div class="name">Household shared</div>
+                <div class="muted">Yes</div>
+                <span class="money">›</span></div>
+            <div class="row">
+                <div class="name">Provider group</div>
+                <div class="muted">Netflix Standard</div>
+                <span class="money">›</span></div>
+            <div class="row">
+                <div class="name">Notes</div>
+                <div class="muted">Shared with family</div>
+                <span class="money">›</span></div>
+            <div class="banner">Upcoming charge: €13.99 on 09 Nov. Reminder status: not configured yet.</div>
+        </section>
+        <div class="foot">Use Edit to update the tracked information. Removing a record from ValuTir does not cancel
+            service at Netflix.
+        </div>
+    </div>
+    <iframe class="chrome-footer" title="Member footer" src="partials/footer.html?mode=member"></iframe>
+</main>
+</body>
+</html>

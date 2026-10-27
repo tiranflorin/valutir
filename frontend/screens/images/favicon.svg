@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+
+<defs>
+  <linearGradient id="vBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#1677FF"/>
+    <stop offset="100%" stop-color="#0753D8"/>
+  </linearGradient>
+  <linearGradient id="vAqua" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#32D583"/>
+    <stop offset="48%" stop-color="#12D6C9"/>
+    <stop offset="100%" stop-color="#0EA5E9"/>
+  </linearGradient>
+</defs><rect width="64" height="64" rx="15" fill="#0F172A"/>
+<g transform="translate(6 7) scale(0.43)">
+<g>
+  <path d="M18 15 H43 C48 15 52 18 55 23 L79 62 L62 87 C59 91 55 93 50 93 H46 C41 93 37 90 34 85 L8 39 C3 30 8 15 18 15 Z" fill="url(#vBlue)"/>
+  <path d="M82 15 H108 C118 15 123 25 118 34 L84 85 C81 90 76 93 70 93 H47 C42 93 39 89 42 84 L69 42 L77 26 C79 20 80 17 82 15 Z" fill="url(#vAqua)"/>
+</g></g>
+</svg>
