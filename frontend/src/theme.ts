@@ -1,27 +1,27 @@
-import { createTheme, PaletteMode } from '@mui/material';
+import { createTheme, type PaletteMode } from '@mui/material';
 
 export const getDesignTokens = (mode: PaletteMode) => ({
     palette: {
         mode,
         primary: {
-            main: '#1565C0',      // React blue
-            light: '#1E88E5',
-            dark: '#0D47A1',
+            main: '#176B43',
+            light: '#258653',
+            dark: '#105A37',
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#2ECC71',      // light green
-            light: '#52D68A',
-            dark: '#27AE60',
+            main: '#1677FF',
+            light: '#22D3EE',
+            dark: '#0753D8',
             contrastText: '#ffffff',
         },
         background: {
-            default: mode === 'dark' ? '#0A0E1A' : '#F0F4FF',
-            paper: mode === 'dark' ? '#111827' : '#ffffff',
+            default: mode === 'dark' ? '#0F172A' : '#F2F6F3',
+            paper: mode === 'dark' ? '#172033' : '#ffffff',
         },
         text: {
-            primary: mode === 'dark' ? '#E8EAF6' : '#0D1B2A',
-            secondary: mode === 'dark' ? '#90A4AE' : '#546E7A',
+            primary: mode === 'dark' ? '#F1F5F9' : '#17241D',
+            secondary: mode === 'dark' ? '#A8B4C8' : '#69776E',
         },
     },
     typography: {
@@ -30,7 +30,7 @@ export const getDesignTokens = (mode: PaletteMode) => ({
         h5: { fontWeight: 700 },
         button: { textTransform: 'none' as const, fontWeight: 600 },
     },
-    shape: { borderRadius: 12 },
+        shape: { borderRadius: 12 },
     components: {
         MuiButton: {
             styleOverrides: {

@@ -8,7 +8,6 @@ import {
     InputAdornment,
     LinearProgress,
     Link,
-    Paper,
     TextField,
     Typography,
     useTheme,
@@ -20,10 +19,10 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Navigate, useNavigate } from 'react-router-dom';
-import AppShell from '../../components/AppShell';
-import BrandLogo from '../../components/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { registerRequest } from '../../services/auth';
+import ThemeModeToggle from '../../components/ThemeModeToggle';
+import '../RecurringScreens.css';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
 
@@ -50,7 +49,7 @@ const RegisterPage: React.FC = () => {
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
     if (isAuthenticated) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/my-subs" replace />;
     }
 
     const passwordChecks = useMemo(() => {
@@ -152,84 +151,46 @@ const RegisterPage: React.FC = () => {
 
     if (success) {
         return (
-            <AppShell mode="auth" maxWidth="sm" showThemeToggle>
-                <Paper
-                    elevation={theme.palette.mode === 'dark' ? 0 : 6}
-                    sx={{
-                        width: '100%',
-                        maxWidth: 460,
-                        p: { xs: 3, sm: 4 },
-                        borderRadius: 4,
-                        textAlign: 'center',
-                        border: theme.palette.mode === 'dark'
-                            ? `1px solid ${theme.palette.divider}`
-                            : 'none',
-                    }}
-                >
-                    <CheckCircleOutlineIcon color="success" sx={{ fontSize: 72, mb: 2 }} />
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                        Account created
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>
-                        Your account is ready. You can now sign in with your credentials.
-                    </Typography>
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        size="large"
-                        onClick={() => navigate('/login')}
-                        sx={{
-                            py: 1.4,
-                            borderRadius: 999,
-                            fontWeight: 700,
-                            background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
-                        }}
-                    >
-                        Go to login
-                    </Button>
-                </Paper>
-            </AppShell>
+            <Box className="auth-page">
+                <ThemeModeToggle placement="floating" />
+            <main className="login-layout register-layout">
+                    <section className="login-panel auth-success-panel">
+                        <img className="login-logo" src={theme.palette.mode === 'dark' ? '/brand/logo-dark.svg' : '/brand/logo.svg'} alt="ValuTir — Track. Control. More value." />
+                        <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 1.5 }} />
+                        <div className="login-intro">
+                            <h1>Account created</h1>
+                            <p>Your account is ready. Sign in to start tracking.</p>
+                        </div>
+                        <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login')}>
+                            Go to sign in
+                        </Button>
+                    </section>
+                    <aside className="login-side">
+                        <div className="section-kicker">A clearer recurring bill list</div>
+                        <h2>Your next renewal is easier to see.</h2>
+                        <p>Add services as you go, then check their costs and dates in one place.</p>
+                    </aside>
+                </main>
+            </Box>
         );
     }
 
     return (
-        <AppShell mode="auth" maxWidth="sm" showThemeToggle>
-            <Paper
-                elevation={theme.palette.mode === 'dark' ? 0 : 6}
-                sx={{
-                    width: '100%',
-                    maxWidth: 520,
-                    p: { xs: 3, sm: 4 },
-                    borderRadius: 4,
-                    border: theme.palette.mode === 'dark'
-                        ? `1px solid ${theme.palette.divider}`
-                        : 'none',
-                }}
-            >
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                    <BrandLogo
-                        size="auth"
-                        sx={{
-                            mb: 1.5,
-                            display: 'block',
-                            textAlign: 'center',
-                        }}
-                    />
-                    <Typography variant="h5" sx={{ mt: 1.5, fontWeight: 700 }}>
-                        Create account
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                        Set up your ValuTir account
-                    </Typography>
-                </Box>
+        <Box className="auth-page">
+            <ThemeModeToggle placement="floating" />
+            <main className="login-layout register-layout">
+                <section className="login-panel">
+                    <a href="/" aria-label="ValuTir home">
+                    <img className="login-logo" src={theme.palette.mode === 'dark' ? '/brand/logo-dark.svg' : '/brand/logo.svg'} alt="ValuTir — Track. Control. More value." />
+                    </a>
+                        <div className="login-intro">
+                        <h1>Create account</h1>
+                        <p>Set up your account</p>
+                    </div>
 
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
-                        {error}
-                    </Alert>
-                )}
+                    {error && <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>{error}</Alert>}
 
-                <Box component="form" onSubmit={handleSubmit} noValidate>
+                    <Box component="form" className="login-form" onSubmit={handleSubmit} noValidate>
                     <TextField
                         label="Full name"
                         fullWidth
@@ -369,36 +330,35 @@ const RegisterPage: React.FC = () => {
                         fullWidth
                         variant="contained"
                         size="large"
+                        className="login-submit"
                         disabled={loading}
                         sx={{
                             mt: 2,
-                            py: 1.4,
-                            borderRadius: 999,
-                            fontWeight: 700,
-                            background: `linear-gradient(135deg, ${theme.palette.secondary.dark}, ${theme.palette.secondary.main})`,
-                            '&:hover': {
-                                background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.success.light})`,
-                            },
                         }}
                     >
-                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Create Account'}
+                        {loading ? <CircularProgress size={22} color="inherit" /> : 'Create account'}
                     </Button>
 
-                    <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 3 }}>
+                    <div className="login-signup">
                         Already have an account?{' '}
-                        <Link
-                            component="button"
-                            type="button"
-                            underline="hover"
-                            fontWeight={600}
-                            onClick={() => navigate('/login')}
-                        >
+                        <Link component="button" type="button" underline="hover" fontWeight={700} onClick={() => navigate('/login')}>
                             Sign in
                         </Link>
-                    </Typography>
+                    </div>
                 </Box>
-            </Paper>
-        </AppShell>
+                </section>
+                <aside className="login-side">
+                    <div className="section-kicker">Free to start</div>
+                    <h2>Make room for the subscriptions that matter.</h2>
+                    <p>Keep personal costs and renewals in view. No bank connection or payment card is needed to get started.</p>
+                    <div className="login-proof">
+                        <span>Track trial end dates and first charges</span>
+                        <span>See monthly and yearly costs together</span>
+                        <span>Personal and Business views included</span>
+                    </div>
+                </aside>
+            </main>
+        </Box>
     );
 };
 

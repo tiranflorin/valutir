@@ -5,7 +5,7 @@ import React, {
     useMemo,
     useState,
 } from 'react';
-import { CssBaseline, PaletteMode, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider, type PaletteMode } from '@mui/material';
 import { createAppTheme } from '../theme';
 
 type ThemeContextValue = {
