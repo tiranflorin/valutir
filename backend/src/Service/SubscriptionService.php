@@ -95,6 +95,7 @@ class SubscriptionService
         $subscription->setPaymentMethod(null !== $dto->paymentMethod ? trim($dto->paymentMethod) : null);
         $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
+        $subscription->setB2b($dto->b2b);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
         $subscription->setTrialEndsAt($this->parseDate($dto->trialEndsAt));
         $subscription->setTrialReminderSentAt($this->parseDateTime($dto->trialReminderSentAt));

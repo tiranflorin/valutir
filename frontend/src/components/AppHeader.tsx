@@ -62,8 +62,12 @@ const AppHeader: React.FC = () => {
                             >
                                 <MenuItem disabled className="account-menu-email">{user?.email}</MenuItem>
                                 <Divider />
-                                <MenuItem disabled>Profile</MenuItem>
-                                <MenuItem disabled>Preferences</MenuItem>
+                                <MenuItem component={RouterLink} to="/profile" selected={pathname === '/profile'} onClick={closeMenu}>
+                                    Profile
+                                </MenuItem>
+                                <MenuItem component={RouterLink} to="/preferences" selected={pathname === '/preferences'} onClick={closeMenu}>
+                                    Preferences
+                                </MenuItem>
                                 <Divider />
                                 <MenuItem
                                     onClick={() => {

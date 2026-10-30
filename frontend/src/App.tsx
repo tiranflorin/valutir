@@ -11,6 +11,8 @@ import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import AddSubscriptionPage from './pages/AddSubscriptionPage';
 import CalendarPage from './pages/CalendarPage';
+import ProfilePage from './pages/ProfilePage';
+import PreferencesPage from './pages/PreferencesPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
@@ -89,6 +91,24 @@ const AppRoutes: React.FC = () => {
                 element={
                     <ProtectedRoute>
                         <CalendarPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/preferences"
+                element={
+                    <ProtectedRoute>
+                        <PreferencesPage />
                     </ProtectedRoute>
                 }
             />

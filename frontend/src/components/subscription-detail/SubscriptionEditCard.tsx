@@ -5,6 +5,7 @@ import SubscriptionFormCard, {
     type SubscriptionFormValues,
     type SubscriptionStatus,
 } from '../subscription-form/SubscriptionFormCard';
+import type { Currency } from '../CurrencySelect';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -37,7 +38,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
     const [values, setValues] = useState<SubscriptionFormValues>({
         serviceName: subscription.serviceName,
         amount: String(subscription.amount),
-        currency: subscription.currency,
+        currency: subscription.currency as Currency,
         billingInterval: subscription.billingCadence as BillingInterval,
         renewalDate: subscription.nextBillingDate ?? '',
         category: subscription.category ?? 'Other',
@@ -46,6 +47,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
         providerGroup: '',
         householdShared: false,
         autoRenew: subscription.autoRenew,
+        b2b: subscription.b2b || window.localStorage.getItem('valutir_dashboard_view') === 'business',
     });
 
     const [saving, setSaving] = useState(false);
@@ -94,6 +96,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     notes: values.notes.trim() || null,
                     status: statusPayload,
                     autoRenew: !isOther && values.autoRenew,
+                    b2b: values.b2b,
                     cancelledAt,
                 }),
             });
@@ -121,6 +124,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     notes: values.notes.trim() || null,
                     status: statusPayload,
                     autoRenew: !isOther && values.autoRenew,
+                    b2b: values.b2b,
                     cancelledAt,
                 }
             );

@@ -9,12 +9,13 @@ import {
     Chip,
     Divider,
     Stack,
+    Switch,
     TextField,
     Typography,
     useTheme,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import CurrencySelect from '../CurrencySelect';
+import CurrencySelect, { type Currency } from '../CurrencySelect';
 import AppSurfaceCard from '../AppSurfaceCard';
 
 export type BillingInterval = 'monthly' | 'yearly' | 'quarterly' | 'weekly';
@@ -23,7 +24,7 @@ export type SubscriptionStatus = 'Active' | 'Trial' | 'Other';
 export type SubscriptionFormValues = {
     serviceName: string;
     amount: string;
-    currency: string;
+    currency: Currency;
     billingInterval: BillingInterval;
     renewalDate: string;
     category: string;
@@ -32,6 +33,7 @@ export type SubscriptionFormValues = {
     providerGroup: string;
     householdShared: boolean;
     autoRenew: boolean;
+    b2b: boolean;
 };
 
 type Props = {
@@ -44,6 +46,7 @@ type Props = {
     submitLabel: string;
     onSubmit: () => void;
     onCancel: () => void;
+    showHeader?: boolean;
     showCurrency?: boolean;
     showProviderGroup?: boolean;
     showHouseholdShared?: boolean;
@@ -84,6 +87,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                    submitLabel,
                                                    onSubmit,
                                                    onCancel,
+                                                   showHeader = true,
                                                    showCurrency = true,
                                                    showProviderGroup = true,
                                                    showHouseholdShared = true,
@@ -148,17 +152,19 @@ const SubscriptionFormCard: React.FC<Props> = ({
 
     return (
         <Stack
-            direction={{ xs: 'column', lg: 'row' }}
+            className="subscription-form-layout"
+            direction={{ xs: 'column', md: 'row' }}
             spacing={3}
             alignItems="flex-start"
             sx={{ width: '100%' }}
         >
             <AppSurfaceCard
                 sx={{
-                    flex: 1.38,
+                    flex: 1.65,
                     width: '100%',
-                    p: { xs: 2.5, md: 3 },
-                    borderRadius: 2,
+                    p: { xs: 2.25, md: 3.25 },
+                    borderRadius: 3,
+                    backgroundColor: 'background.paper',
                 }}
             >
                 <Box
@@ -169,12 +175,12 @@ const SubscriptionFormCard: React.FC<Props> = ({
                     }}
                 >
                     <Stack spacing={3}>
-                        <Stack spacing={0.75}>
-                            <Typography variant="h6" fontWeight={800}>
+                        {showHeader && <Stack spacing={0.75} className="subscription-form-card-heading">
+                            <Typography variant="h5" fontWeight={800}>
                                 {title}
                             </Typography>
                             <Typography color="text.secondary">{description}</Typography>
-                        </Stack>
+                        </Stack>}
 
                         {error && (
                             <Alert severity="error" sx={{ borderRadius: 3 }}>
@@ -183,7 +189,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                         )}
 
                         <Stack spacing={0.5}>
-                            <Typography variant="subtitle2" fontWeight={800}>
+                            <Typography variant="subtitle1" fontWeight={800}>
                                 Core details
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
@@ -199,6 +205,20 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             fullWidth
                             required
                         />
+
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 0.25 }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={800}>Business subscription</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Track this subscription as a business expense.
+                                </Typography>
+                            </Box>
+                            <Switch
+                                checked={values.b2b}
+                                onChange={(event) => patch({ b2b: event.target.checked })}
+                                inputProps={{ 'aria-label': 'Business subscription' }}
+                            />
+                        </Stack>
 
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                             <TextField
@@ -443,8 +463,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
                 sx={{
                     flex: 0.62,
                     width: '100%',
-                    p: { xs: 2.5, md: 3 },
-                    borderRadius: 2,
+                    p: { xs: 2.25, md: 3 },
+                    borderRadius: 3,
+                    backgroundColor: 'background.paper',
                     position: { lg: 'sticky' },
                     top: { lg: 96 },
                 }}

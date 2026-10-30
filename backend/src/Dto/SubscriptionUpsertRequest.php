@@ -38,6 +38,8 @@ class SubscriptionUpsertRequest
 
     public ?bool $autoRenew = true;
 
+    public bool $b2b = false;
+
     #[Assert\Date]
     public ?string $cancelledAt = null;
 

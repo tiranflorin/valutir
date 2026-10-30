@@ -12,8 +12,12 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 - Account registration and JWT login
 - User-scoped subscription create, read, update, and soft-delete operations
-- Subscription fields for amount, currency, cadence, category, payment method, status, dates, notes, and trial details
+- Subscription fields for amount, currency, cadence, category, payment method, status, dates, notes, trial details, and a `b2b` business classification
+- Personal and business dashboard views, with a business toggle on subscription create and edit forms
+- Protected Profile and Preferences pages, including authenticated password changes and a saved default currency for new subscriptions
 - Calendar renewal view with recurring events, selected-day details, and filters for status, category, billing cadence, and active subscriptions
+
+The dashboard defaults to Personal. Creating a subscription from the Business view preselects the business classification; editing keeps a saved business classification, and the Business view also preselects it for the edit form.
 
 ## Local development
 
@@ -59,10 +63,16 @@ Public endpoints:
 
 Password-reset routes exist but are not yet functional: reset tokens are not persisted or validated, and submitting a new password does not update the account.
 
+Authenticated account endpoint:
+
+- `PATCH /api/profile/password`
+
 Authenticated subscription endpoints:
 
 - `GET`, `POST /api/subs`
 - `GET`, `PUT`, `PATCH`, `DELETE /api/subs/{id}`
+
+The Profile and Preferences pages are available from the account menu at `/profile` and `/preferences`. The default currency is stored in the current browser for the signed-in email and preselected on new subscriptions. Existing subscription amounts remain in their recorded currencies.
 
 Use an `Authorization: Bearer <token>` header for authenticated requests. `GET /health` is available for service health checks.
 

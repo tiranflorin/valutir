@@ -62,3 +62,5 @@ frontend/dist/
 
 # Embedded web-server pid file
 /backend/.web-server-pid
+
+.DS_Store

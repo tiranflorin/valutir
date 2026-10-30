@@ -1,8 +1,7 @@
 import React from 'react';
-import { Box, Button, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import AppSurfaceCard from '../AppSurfaceCard';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 
 export type SubscriptionCardModel = {
     id: number;
@@ -15,7 +14,12 @@ export type SubscriptionCardModel = {
     notes: string | null;
     status: string;
     autoRenew: boolean;
+    b2b: boolean;
     cancelledAt: string | null;
+    startedAt?: string | null;
+    paymentMethod?: string | null;
+    trialEndsAt?: string | null;
+    trialReminderSentAt?: string | null;
 };
 
 type Props = {
@@ -23,6 +27,7 @@ type Props = {
     isEditMode: boolean;
     onStartEdit: () => void;
     onCancelEdit: () => void;
+    onStartCancel?: () => void;
 };
 
 const formatBillingCadence = (value: string) => {
@@ -35,17 +40,20 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
                                                      isEditMode,
                                                      onStartEdit,
                                                      onCancelEdit,
+                                                     onStartCancel,
                                                  }) => {
     return (
-        <AppSurfaceCard sx={{ p: { xs: 3, md: 4 } }}>
+        <Paper className="subscription-detail-hero">
             <Stack
+                className="subscription-detail-hero-layout"
                 direction={{ xs: 'column', md: 'row' }}
                 spacing={2}
                 justifyContent="space-between"
                 alignItems={{ xs: 'flex-start', md: 'center' }}
             >
-                <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                <Box className="subscription-detail-hero-copy">
+                    {/*<span className="subscription-detail-kicker">SUBSCRIPTION</span>*/}
+                    <Typography component="h1" variant="h4" sx={{ fontWeight: 800 }}>
                         {subscription.serviceName}
                     </Typography>
 
@@ -70,24 +78,34 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
                         />
                     </Stack>
 
-                    <Typography variant="h5" sx={{ fontWeight: 800, mt: 2 }}>
+                    <Typography component="p" variant="h5" className="subscription-detail-cost" sx={{ fontWeight: 800 }}>
                         {Number(subscription.amount).toFixed(2)} {subscription.currency}
+                        <small> / {formatBillingCadence(subscription.billingCadence)}</small>
                     </Typography>
                 </Box>
 
                 {subscription.status !== 'cancelled' && (
-                    <Button
-                        variant={isEditMode ? 'outlined' : 'contained'}
-                        color={isEditMode ? 'inherit' : 'primary'}
-                        startIcon={isEditMode ? <CloseRoundedIcon /> : <EditRoundedIcon />}
-                        onClick={isEditMode ? onCancelEdit : onStartEdit}
-                        sx={{ borderRadius: 999, px: 3, fontWeight: 700, whiteSpace: 'nowrap' }}
-                    >
-                        {isEditMode ? 'Cancel editing' : 'Edit subscription'}
-                    </Button>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} className="subscription-detail-actions">
+                        <Button
+                            variant="contained"
+                            startIcon={<EditRoundedIcon />}
+                            onClick={isEditMode ? onCancelEdit : onStartEdit}
+                            className="subscription-edit-button"
+                        >
+                            {isEditMode ? 'Cancel editing' : 'Edit subscription'}
+                        </Button>
+                        {!isEditMode && onStartCancel && <Button
+                            variant="outlined"
+                            startIcon={<CancelOutlinedIcon />}
+                            onClick={onStartCancel}
+                            className="subscription-cancel-button"
+                        >
+                            Cancel subscription
+                        </Button>}
+                    </Stack>
                 )}
             </Stack>
-        </AppSurfaceCard>
+        </Paper>
     );
 };
 

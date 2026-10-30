@@ -20,8 +20,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 30;
-    width: min(100%, 1440px);
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     height: 84px;
     background: rgba(255, 255, 255, .96);
     border-bottom: 1px solid #e4ebe6;
@@ -1122,6 +1122,663 @@ body {
     padding-bottom: 52px;
 }
 
+.subscription-editor-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f2f6f3;
+}
+
+.subscription-editor-container.MuiContainer-root {
+    flex: 1 0 auto;
+    max-width: 1220px;
+    padding-top: 22px;
+    padding-bottom: 56px;
+}
+
+.subscription-back-link.MuiButton-root {
+    min-height: 36px;
+    margin: 0 0 13px -8px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: #5f7165;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.subscription-back-link.MuiButton-root:hover {
+    background: #e7f0e9;
+    color: #176b43;
+}
+
+.subscription-editor-heading {
+    margin: 0 0 20px;
+}
+
+.subscription-editor-heading .section-kicker {
+    color: #378156;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+
+.subscription-editor-heading h1 {
+    margin: 4px 0 5px;
+    color: #17241d;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1.2;
+}
+
+.subscription-editor-heading p {
+    max-width: 680px;
+    margin: 0;
+    color: #758078;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.subscription-form-layout {
+    align-items: flex-start;
+    gap: 14px !important;
+}
+
+.subscription-form-layout > .MuiCard-root {
+    border-color: #e3eae5;
+    background: #fff;
+    box-shadow: 0 5px 18px #1e362608;
+    backdrop-filter: none;
+}
+
+.subscription-form-card-heading {
+    margin-bottom: 4px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.subscription-form-layout .MuiTypography-root {
+    letter-spacing: normal;
+}
+
+.subscription-form-layout .MuiTypography-subtitle1 {
+    color: #263a2d;
+    font-size: 15px;
+}
+
+.subscription-form-layout .MuiTypography-subtitle2 {
+    color: #34483a;
+    font-size: 13px;
+}
+
+.subscription-form-layout .MuiTypography-body2 {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.subscription-form-layout .MuiInputBase-root {
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.subscription-form-layout .MuiInputLabel-root {
+    font-size: 13px;
+}
+
+.subscription-form-layout .MuiChip-root {
+    height: 32px;
+    border-radius: 8px !important;
+    font-size: 12px;
+    font-weight: 700 !important;
+}
+
+.subscription-form-layout .MuiChip-root.MuiChip-colorPrimary.MuiChip-filled {
+    background: #eaf5ed;
+    color: #21683f;
+}
+
+.subscription-form-layout .MuiChip-outlined {
+    border-color: #dfe7e1;
+    color: #5c6b61;
+}
+
+.subscription-form-layout .MuiAccordion-root {
+    border-top: 1px solid #edf1ee;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.subscription-form-layout .MuiAccordionSummary-root {
+    min-height: 62px;
+}
+
+.subscription-form-layout .MuiButton-root {
+    min-height: 42px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.subscription-form-layout .MuiButton-contained {
+    background: #176b43;
+}
+
+.subscription-form-layout .MuiButton-contained:hover {
+    background: #105a37;
+}
+
+.subscription-form-layout .MuiCard-root:last-child {
+    border-color: #dcebe0;
+    background: #f8fbf8;
+}
+
+.subscription-form-layout .MuiCard-root:last-child > .MuiStack-root > .MuiTypography-h6 {
+    color: #20382a;
+    font-size: 17px;
+}
+
+.subscription-detail-content {
+    margin-top: 8px;
+}
+
+.subscription-detail-hero.MuiPaper-root,
+.subscription-info-panel.MuiPaper-root,
+.subscription-review-panel.MuiPaper-root {
+    border: 1px solid #e3eae5;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 5px 18px #1e362608;
+}
+
+.subscription-detail-hero.MuiPaper-root {
+    padding: 24px 26px;
+}
+
+.subscription-detail-hero-layout {
+    min-height: 126px;
+}
+
+.subscription-detail-kicker,
+.subscription-review-kicker {
+    color: #378156;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+
+.subscription-detail-hero-copy h1.MuiTypography-root {
+    margin: 4px 0 0;
+    color: #17241d;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1.2;
+}
+
+.subscription-detail-hero-copy .MuiChip-root {
+    height: 27px;
+    border-color: #dfe7e1;
+    border-radius: 7px;
+    color: #526359;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.subscription-detail-hero-copy .MuiChip-colorSuccess {
+    border-color: #cce4d2;
+    background: #edf7ef;
+    color: #246a42;
+}
+
+.subscription-detail-hero-copy .MuiChip-colorPrimary {
+    border-color: #cddff3;
+    background: #eff6fc;
+    color: #28639b;
+}
+
+.subscription-detail-cost.MuiTypography-root {
+    margin: 14px 0 0;
+    color: #1f5939;
+    font-size: 22px;
+    font-weight: 850;
+    letter-spacing: -.035em;
+}
+
+.subscription-detail-cost small {
+    color: #78857d;
+    font-size: 13px;
+    font-weight: 550;
+    letter-spacing: 0;
+}
+
+.subscription-edit-button.MuiButton-root {
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 9px;
+    background: #176b43;
+    color: white;
+    font-size: 13px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.subscription-edit-button.MuiButton-root:hover {
+    background: #105a37;
+}
+
+.subscription-cancel-button.MuiButton-root {
+    min-height: 42px;
+    padding: 0 15px;
+    border-color: #e1c9c5;
+    border-radius: 9px;
+    color: #925148;
+    font-size: 13px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.subscription-cancel-button.MuiButton-root:hover {
+    border-color: #c9938a;
+    background: #fff7f5;
+}
+
+.subscription-info-panel.MuiPaper-root {
+    overflow: hidden;
+}
+
+.subscription-info-heading {
+    padding: 17px 20px 14px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.subscription-info-heading h2 {
+    margin: 0;
+    color: #20382a;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.subscription-info-heading p {
+    margin: 4px 0 0;
+    color: #829087;
+    font-size: 12px;
+}
+
+.subscription-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.subscription-detail-item {
+    min-height: 84px;
+    padding: 15px 20px;
+    border-right: 1px solid #edf1ee;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.subscription-detail-item:nth-child(3n) {
+    border-right: 0;
+}
+
+.subscription-detail-item > span {
+    display: block;
+    color: #7e8b82;
+    font-size: 11px;
+}
+
+.subscription-detail-item > strong {
+    display: block;
+    margin-top: 5px;
+    color: #34483a;
+    font-size: 13px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.subscription-detail-item > small {
+    display: block;
+    margin-top: 3px;
+    color: #829087;
+    font-size: 11px;
+}
+
+.subscription-notes-empty {
+    margin: 0;
+    padding: 12px 20px;
+    color: #87928a;
+    font-size: 11px;
+}
+
+.subscription-review-panel.MuiPaper-root {
+    padding: 20px 22px;
+    border-color: #dcebe0;
+}
+
+.subscription-review-stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    color: #929c95;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .05em;
+}
+
+.subscription-review-stepper > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.subscription-review-stepper small {
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.subscription-review-stepper > span.current,
+.subscription-review-stepper > span.complete {
+    color: #287448;
+}
+
+.subscription-review-stepper > i {
+    width: 38px;
+    height: 1px;
+    background: #dfe7e1;
+}
+
+.subscription-review-title.MuiTypography-root {
+    margin: 5px 0 4px;
+    color: #20382a;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+}
+
+.subscription-review-copy.MuiTypography-root {
+    color: #758078;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.subscription-review-choice.MuiButton-root {
+    min-height: 43px;
+    flex: 1;
+    border-color: #dfe7e1;
+    border-radius: 9px;
+    color: #526359;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: none;
+}
+
+.subscription-review-choice.MuiButton-root:hover {
+    border-color: #9bc7a7;
+    background: #f5faf6;
+}
+
+.subscription-review-choice.selected-useful.MuiButton-root {
+    border-color: #176b43;
+    background: #176b43;
+    color: #fff;
+}
+
+.subscription-review-choice.selected-not-useful.MuiButton-root {
+    border-color: #b95d4d;
+    background: #b95d4d;
+    color: #fff;
+}
+
+.subscription-review-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid #edf1ee;
+}
+
+.subscription-review-footer p {
+    margin: 0;
+    color: #87928a;
+    font-size: 11px;
+}
+
+.subscription-review-footer .MuiButton-root {
+    min-height: 40px;
+    padding: 0 15px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.subscription-review-footer .MuiButton-containedPrimary {
+    background: #176b43;
+}
+
+.subscription-review-footer .MuiButton-containedError {
+    background: #b54135;
+}
+
+.subscription-review-footer .MuiButton-containedError:hover {
+    background: #982e25;
+}
+
+.settings-page {
+    min-height: 100vh;
+    background: #f2f6f3;
+}
+
+.settings-container.MuiContainer-root {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 900px;
+    padding-top: 34px;
+    padding-bottom: 54px;
+}
+
+.settings-page-heading {
+    margin-bottom: 18px;
+}
+
+.settings-page-heading h1 {
+    margin: 4px 0 5px;
+    color: #17241d;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+}
+
+.settings-page-heading p {
+    margin: 0;
+    color: #758078;
+    font-size: 14px;
+}
+
+.settings-card.MuiPaper-root {
+    padding: 22px;
+    border: 1px solid #e3eae5;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 5px 18px #1e362608;
+}
+
+.settings-profile-row {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 0 0 22px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.settings-avatar.MuiAvatar-root {
+    width: 46px;
+    height: 46px;
+    background: #e7f2ea;
+    color: #28633f;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.settings-profile-row strong,
+.settings-profile-row span {
+    display: block;
+}
+
+.settings-profile-row strong {
+    color: #263a2d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.settings-profile-row span {
+    margin-top: 4px;
+    color: #78847d;
+    font-size: 12px;
+}
+
+.settings-section-heading {
+    margin-bottom: 15px;
+}
+
+.settings-section-heading h2 {
+    margin: 0 0 5px;
+    color: #263a2d;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.settings-section-heading p {
+    margin: 0;
+    color: #78847d;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.settings-password-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.settings-password-grid > :first-child {
+    grid-column: 1 / -1;
+}
+
+.settings-password-grid .MuiInputBase-root,
+.settings-card .MuiInputBase-root {
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.settings-password-grid .MuiInputLabel-root,
+.settings-card .MuiInputLabel-root {
+    font-size: 13px;
+}
+
+.settings-password-grid .MuiFormHelperText-root {
+    margin-left: 2px;
+    font-size: 10px;
+}
+
+.password-requirements {
+    margin-top: 2px;
+}
+
+.password-requirements span {
+    padding: 5px 8px;
+    border: 1px solid #e0e7e2;
+    border-radius: 7px;
+    color: #77837b;
+    font-size: 10px;
+}
+
+.password-requirements span.met {
+    border-color: #cce4d2;
+    background: #edf7ef;
+    color: #246a42;
+}
+
+.settings-save-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #edf1ee;
+}
+
+.settings-save-row .MuiButton-root {
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 9px;
+    background: #176b43;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.settings-save-row .MuiButton-root:hover {
+    background: #105a37;
+}
+
+.currency-preview {
+    display: grid;
+    gap: 5px;
+    margin-top: 15px;
+    padding: 13px 14px;
+    border: 1px solid #e5ede7;
+    border-radius: 10px;
+    background: #f4f8f5;
+}
+
+.currency-preview span {
+    color: #758078;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.currency-preview strong {
+    color: #34483a;
+    font-size: 13px;
+}
+
+.currency-preview small {
+    color: #78847d;
+    font-size: 11px;
+}
+
+.subscription-cancel-question.MuiFormLabel-root {
+    margin-bottom: 5px;
+    color: #34483a;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.subscription-cancel-panel .MuiFormControlLabel-label {
+    color: #526359;
+    font-size: 12px;
+}
+
+.subscription-cancel-panel .MuiFormControlLabel-root {
+    margin-right: 18px;
+}
+
+.subscription-cancel-info.MuiAlert-root {
+    border-radius: 9px;
+    font-size: 12px;
+}
+
+.subscription-reenable-card.MuiCard-root {
+    border-color: #dcebe0 !important;
+    border-radius: 14px;
+    background: #fff !important;
+    box-shadow: 0 5px 18px #1e362608 !important;
+    backdrop-filter: none !important;
+}
+
 .dashboard-heading {
     margin-bottom: 18px;
     display: flex;
@@ -1176,6 +1833,223 @@ body {
 .view-switch button:disabled {
     color: #929c95;
     cursor: not-allowed;
+}
+
+.view-switch button:not(:disabled):hover {
+    color: #236b43;
+}
+
+.business-overview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 18px 0 12px;
+    padding: 22px 24px;
+    border: 1px solid #dcebe0;
+    border-radius: 15px;
+    background: linear-gradient(115deg, #f3faf5 0%, #fff 72%);
+}
+
+.business-eyebrow {
+    color: #43805a;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+
+.business-overview-copy h2 {
+    margin: 6px 0 4px;
+    color: #20382a;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+
+.business-overview-copy p {
+    margin: 0;
+    color: #758078;
+    font-size: 13px;
+}
+
+.business-overview-total {
+    min-width: 210px;
+    padding-left: 24px;
+    border-left: 1px solid #dfe9e1;
+}
+
+.business-overview-total span,
+.business-overview-total small {
+    display: block;
+    color: #758078;
+    font-size: 12px;
+}
+
+.business-overview-total strong {
+    display: block;
+    margin: 3px 0;
+    color: #1f5939;
+    font-size: 25px;
+    font-weight: 850;
+    letter-spacing: -.04em;
+}
+
+.business-metrics {
+    margin-top: 12px;
+}
+
+.business-insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.business-panel.MuiPaper-root {
+    margin-top: 0;
+    min-width: 0;
+}
+
+.business-panel-heading {
+    min-height: 66px;
+    padding: 16px 18px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.business-panel-heading h2 {
+    margin: 0;
+    color: #20382a;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.business-panel-heading p {
+    margin: 4px 0 0;
+    color: #829087;
+    font-size: 11px;
+}
+
+.business-category-list {
+    padding: 4px 18px 8px;
+}
+
+.business-category {
+    padding: 12px 0 8px;
+    border-bottom: 1px solid #f0f3f1;
+}
+
+.business-category:last-child {
+    border-bottom: 0;
+}
+
+.business-category-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #34483a;
+    font-size: 12px;
+}
+
+.business-category-top span {
+    color: #526359;
+    font-weight: 750;
+}
+
+.business-category-track {
+    height: 6px;
+    margin: 8px 0 4px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #edf3ee;
+}
+
+.business-category-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #61a878, #247448);
+}
+
+.business-category small {
+    color: #8a958d;
+    font-size: 10px;
+}
+
+.business-panel-footnote {
+    padding: 11px 18px;
+    border-top: 1px solid #edf1ee;
+    color: #87928a;
+    font-size: 10px;
+}
+
+.business-renewal-list {
+    padding: 2px 18px 7px;
+}
+
+.business-renewal-row {
+    min-height: 59px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f0f3f1;
+    color: inherit;
+    text-decoration: none;
+}
+
+.business-renewal-row:last-child {
+    border-bottom: 0;
+}
+
+.business-renewal-row:hover .business-renewal-name strong {
+    color: #247448;
+}
+
+.business-renewal-name {
+    min-width: 0;
+    flex: 1;
+}
+
+.business-renewal-name strong,
+.business-renewal-name small,
+.business-renewal-price small {
+    display: block;
+}
+
+.business-renewal-name strong {
+    overflow: hidden;
+    color: #34483a;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.business-renewal-name small,
+.business-renewal-price small {
+    margin-top: 3px;
+    color: #849088;
+    font-size: 10px;
+}
+
+.business-renewal-price {
+    color: #34483a;
+    font-size: 12px;
+    font-weight: 750;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.business-inventory.MuiPaper-root {
+    margin-top: 12px;
+}
+
+.business-empty {
+    padding: 24px 18px;
+    color: #829087;
+    font-size: 12px;
 }
 
 .add-subscription.MuiButton-root {
@@ -1751,6 +2625,93 @@ body {
         padding-bottom: 32px;
     }
 
+    .subscription-editor-container.MuiContainer-root {
+        padding-top: 18px;
+        padding-bottom: 34px;
+    }
+
+    .settings-container.MuiContainer-root {
+        padding-top: 24px;
+        padding-bottom: 34px;
+    }
+
+    .settings-card.MuiPaper-root {
+        padding: 17px;
+    }
+
+    .subscription-editor-heading {
+        margin-bottom: 16px;
+    }
+
+    .subscription-editor-heading h1 {
+        font-size: 26px;
+    }
+
+    .settings-page-heading h1 {
+        font-size: 26px;
+    }
+
+    .subscription-form-layout > .MuiCard-root {
+        flex: 1 1 auto !important;
+    }
+
+    .settings-password-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-password-grid > :first-child {
+        grid-column: auto;
+    }
+
+    .subscription-form-layout .MuiCard-root:last-child {
+        position: static;
+    }
+
+    .subscription-detail-hero.MuiPaper-root {
+        padding: 20px 18px;
+    }
+
+    .subscription-detail-hero-copy h1.MuiTypography-root {
+        font-size: 26px;
+    }
+
+    .subscription-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .subscription-detail-item:nth-child(3n) {
+        border-right: 1px solid #edf1ee;
+    }
+
+    .subscription-detail-item:nth-child(2n) {
+        border-right: 0;
+    }
+
+    .subscription-review-panel.MuiPaper-root {
+        padding: 18px 16px;
+    }
+
+    .subscription-detail-actions.MuiStack-root {
+        width: 100%;
+    }
+
+    .subscription-detail-actions .MuiButton-root {
+        width: 100%;
+    }
+
+    .subscription-cancel-panel .MuiFormGroup-root {
+        align-items: flex-start;
+    }
+
+    .subscription-review-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .subscription-review-footer .MuiButton-root {
+        width: 100%;
+    }
+
     .dashboard-heading {
         flex-direction: column;
         align-items: stretch;
@@ -1770,6 +2731,24 @@ body {
 
     .view-switch {
         margin-top: 11px;
+    }
+
+    .business-overview {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+        padding: 18px;
+    }
+
+    .business-overview-total {
+        width: 100%;
+        padding: 12px 0 0;
+        border-top: 1px solid #dfe9e1;
+        border-left: 0;
+    }
+
+    .business-insights-grid {
+        grid-template-columns: 1fr;
     }
 
     .metric-grid {
@@ -1928,6 +2907,51 @@ body {
     background: #10271f;
 }
 
+:root[data-theme='dark'] .business-overview {
+    border-color: #344d3d;
+    background: linear-gradient(115deg, #172b21 0%, #172033 80%);
+}
+
+:root[data-theme='dark'] .business-overview-copy h2,
+:root[data-theme='dark'] .business-panel-heading h2,
+:root[data-theme='dark'] .business-category-top,
+:root[data-theme='dark'] .business-category-top span,
+:root[data-theme='dark'] .business-renewal-name strong,
+:root[data-theme='dark'] .business-renewal-price {
+    color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .business-overview-copy p,
+:root[data-theme='dark'] .business-overview-total span,
+:root[data-theme='dark'] .business-overview-total small,
+:root[data-theme='dark'] .business-panel-heading p,
+:root[data-theme='dark'] .business-category small,
+:root[data-theme='dark'] .business-renewal-name small,
+:root[data-theme='dark'] .business-renewal-price small,
+:root[data-theme='dark'] .business-panel-footnote,
+:root[data-theme='dark'] .business-empty {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .business-overview-total {
+    border-color: #344d3d;
+}
+
+:root[data-theme='dark'] .business-overview-total strong {
+    color: #8dd5a3;
+}
+
+:root[data-theme='dark'] .business-category,
+:root[data-theme='dark'] .business-renewal-row,
+:root[data-theme='dark'] .business-panel-heading,
+:root[data-theme='dark'] .business-panel-footnote {
+    border-color: #2b374c;
+}
+
+:root[data-theme='dark'] .business-category-track {
+    background: #26354a;
+}
+
 :root[data-theme='dark'] .business-preview {
     border-color: #3a5948;
     background: #183328;
@@ -1942,8 +2966,179 @@ body {
 }
 
 :root[data-theme='dark'] .auth-page,
-:root[data-theme='dark'] .dashboard-page {
+:root[data-theme='dark'] .dashboard-page,
+:root[data-theme='dark'] .subscription-editor-page,
+:root[data-theme='dark'] .settings-page {
     background: #0f172a;
+}
+
+:root[data-theme='dark'] .settings-page-heading h1,
+:root[data-theme='dark'] .settings-profile-row strong,
+:root[data-theme='dark'] .settings-section-heading h2,
+:root[data-theme='dark'] .currency-preview strong {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .settings-page-heading p,
+:root[data-theme='dark'] .settings-profile-row span,
+:root[data-theme='dark'] .settings-section-heading p,
+:root[data-theme='dark'] .currency-preview small,
+:root[data-theme='dark'] .currency-preview span {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .settings-card.MuiPaper-root {
+    border-color: #344157;
+    background: #172033;
+}
+
+:root[data-theme='dark'] .settings-profile-row,
+:root[data-theme='dark'] .settings-save-row {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .currency-preview {
+    border-color: #344157;
+    background: #14251d;
+}
+
+:root[data-theme='dark'] .password-requirements span {
+    border-color: #344157;
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .password-requirements span.met {
+    border-color: #316a4d;
+    background: #1d3a2a;
+    color: #b8e0c3;
+}
+
+:root[data-theme='dark'] .subscription-editor-heading h1,
+:root[data-theme='dark'] .subscription-form-layout .MuiTypography-subtitle1,
+:root[data-theme='dark'] .subscription-form-layout .MuiTypography-subtitle2,
+:root[data-theme='dark'] .subscription-form-layout .MuiCard-root:last-child > .MuiStack-root > .MuiTypography-h6 {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .subscription-editor-heading p,
+:root[data-theme='dark'] .subscription-back-link.MuiButton-root {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .subscription-form-layout > .MuiCard-root {
+    border-color: #344157;
+    background: #172033;
+    color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .subscription-form-layout .MuiCard-root:last-child {
+    background: #14251d;
+}
+
+:root[data-theme='dark'] .subscription-form-card-heading,
+:root[data-theme='dark'] .subscription-form-layout .MuiAccordion-root {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .subscription-form-layout .MuiChip-root.MuiChip-colorPrimary.MuiChip-filled {
+    background: #1d3a2a;
+    color: #b8e0c3;
+}
+
+:root[data-theme='dark'] .subscription-form-layout .MuiChip-root.MuiChip-outlined {
+    border-color: #344157;
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .subscription-detail-hero.MuiPaper-root,
+:root[data-theme='dark'] .subscription-info-panel.MuiPaper-root,
+:root[data-theme='dark'] .subscription-review-panel.MuiPaper-root,
+:root[data-theme='dark'] .subscription-reenable-card.MuiCard-root {
+    border-color: #344157 !important;
+    background: #172033 !important;
+    color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .subscription-detail-hero-copy h1.MuiTypography-root,
+:root[data-theme='dark'] .subscription-info-heading h2,
+:root[data-theme='dark'] .subscription-detail-item > strong,
+:root[data-theme='dark'] .subscription-review-title.MuiTypography-root {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .subscription-detail-cost.MuiTypography-root {
+    color: #8dd5a3;
+}
+
+:root[data-theme='dark'] .subscription-detail-cost small,
+:root[data-theme='dark'] .subscription-info-heading p,
+:root[data-theme='dark'] .subscription-detail-item > span,
+:root[data-theme='dark'] .subscription-detail-item > small,
+:root[data-theme='dark'] .subscription-notes-empty,
+:root[data-theme='dark'] .subscription-review-copy.MuiTypography-root,
+:root[data-theme='dark'] .subscription-review-footer p {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .subscription-info-heading,
+:root[data-theme='dark'] .subscription-detail-item,
+:root[data-theme='dark'] .subscription-review-footer {
+    border-color: #2b374c;
+}
+
+:root[data-theme='dark'] .subscription-detail-hero-copy .MuiChip-root {
+    border-color: #344157;
+    background: #1c2940;
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .subscription-detail-hero-copy .MuiChip-colorSuccess {
+    border-color: #316a4d;
+    background: #1d3a2a;
+    color: #b8e0c3;
+}
+
+:root[data-theme='dark'] .subscription-detail-hero-copy .MuiChip-colorPrimary {
+    border-color: #34577a;
+    background: #1c3047;
+    color: #b9d6f2;
+}
+
+:root[data-theme='dark'] .subscription-review-stepper > i {
+    background: #344157;
+}
+
+:root[data-theme='dark'] .subscription-review-choice.MuiButton-root {
+    border-color: #344157;
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .subscription-cancel-button.MuiButton-root {
+    border-color: #5b3d3b;
+    color: #e2aaa3;
+}
+
+:root[data-theme='dark'] .subscription-cancel-button.MuiButton-root:hover {
+    background: #302322;
+}
+
+:root[data-theme='dark'] .subscription-cancel-question.MuiFormLabel-root,
+:root[data-theme='dark'] .subscription-cancel-panel .MuiFormControlLabel-label {
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .subscription-review-choice.MuiButton-root:hover {
+    background: #1d3a2a;
+}
+
+:root[data-theme='dark'] .subscription-review-choice.selected-useful.MuiButton-root {
+    background: #176b43;
+    color: #fff;
+}
+
+:root[data-theme='dark'] .subscription-review-choice.selected-not-useful.MuiButton-root {
+    background: #a63c32;
+    color: #fff;
 }
 
 :root[data-theme='dark'] .login-form .MuiOutlinedInput-root {

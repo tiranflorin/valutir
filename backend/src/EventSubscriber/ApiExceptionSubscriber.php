@@ -46,6 +46,25 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
         }
 
         $content = $request->getContent();
+        $decodedContent = json_decode($content, true);
+        if (JSON_ERROR_NONE === json_last_error() && is_array($decodedContent)) {
+            $redactSensitiveValues = static function (array $value) use (&$redactSensitiveValues): array {
+                foreach ($value as $key => $item) {
+                    if (preg_match('/password|token|secret/i', (string) $key)) {
+                        $value[$key] = '[REDACTED]';
+                    } elseif (is_array($item)) {
+                        $value[$key] = $redactSensitiveValues($item);
+                    }
+                }
+
+                return $value;
+            };
+
+            $content = json_encode($redactSensitiveValues($decodedContent)) ?: '[REDACTED]';
+        } elseif (preg_match('~^/api/(login_check|profile/password|reset-password(?:/|$))~', $request->getPathInfo())) {
+            $content = '[REDACTED sensitive request body]';
+        }
+
         if (strlen($content) > 4000) {
             $content = substr($content, 0, 4000).'... [truncated]';
         }

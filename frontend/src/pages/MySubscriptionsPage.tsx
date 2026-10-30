@@ -28,11 +28,12 @@ type Subscription = {
     notes: string | null;
     status: string;
     autoRenew: boolean;
+    b2b: boolean;
     cancelledAt: string | null;
     trialEndsAt?: string | null;
 };
 
-type Filter = 'all' | 'upcoming' | 'trials' | 'cancelled';
+type Filter = 'all' | 'upcoming' | 'trials' | 'review' | 'cancelled';
 type SortKey = 'category' | 'amount' | 'billingCadence' | 'nextBillingDate' | 'status';
 
 const normalizeStatus = (status: string) => status.toLowerCase();
@@ -112,6 +113,119 @@ const statusLabel = (status: string) => {
     }
 };
 
+type BusinessDashboardProps = {
+    subscriptions: Subscription[];
+    loading: boolean;
+    monthlyTotal: string;
+    activeSubscriptions: Subscription[];
+    dueSoon: Subscription[];
+    trialSubscriptions: Subscription[];
+    trialsEndingSoon: Subscription[];
+    cancelledSubscriptions: Subscription[];
+};
+
+const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
+    subscriptions,
+    loading,
+    monthlyTotal,
+    activeSubscriptions,
+    dueSoon,
+    trialSubscriptions,
+    trialsEndingSoon,
+    cancelledSubscriptions,
+}) => {
+    const annualCommitments = activeSubscriptions.filter((subscription) => {
+        const offset = dayOffset(subscription.nextBillingDate);
+        return subscription.billingCadence.toLowerCase() === 'yearly'
+            && offset !== null && offset >= 0 && offset <= 90;
+    });
+    const renewalAttention = dueSoon.filter((subscription) => !isTrial(subscription));
+    const businessFilters: [Filter, string][] = [
+        ['all', `All ${subscriptions.length}`],
+        ['upcoming', `Upcoming ${dueSoon.length}`],
+        ['trials', `Trials ${trialSubscriptions.length}`],
+        ['review', `Needs review ${subscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other').length}`],
+        ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
+    ];
+    const [filter, setFilter] = useState<Filter>('all');
+    const filteredSubscriptions = useMemo(() => {
+        if (filter === 'upcoming') return dueSoon;
+        if (filter === 'trials') return trialSubscriptions;
+        if (filter === 'review') return subscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other');
+        if (filter === 'cancelled') return cancelledSubscriptions;
+        return subscriptions;
+    }, [filter, dueSoon, trialSubscriptions, cancelledSubscriptions, subscriptions]);
+
+    return (
+        <>
+            <section className="metric-grid" aria-label="Business recurring costs">
+                <Paper className="metric-card">
+                    <span className="metric-label">Due in next 7 days</span>
+                    <div className="metric-value">{groupedMoney(dueSoon, (subscription) => Number(subscription.amount) || 0)}</div>
+                    <div className="metric-hint">{dueSoon.length} expected charge{dueSoon.length === 1 ? '' : 's'}</div>
+                </Paper>
+                <Paper className="metric-card trial-warning">
+                    <span className="metric-label">Trial ending soon</span>
+                    <div className="metric-value">{trialsEndingSoon.length} <small>{trialsEndingSoon.length === 1 ? 'subscription' : 'subscriptions'}</small></div>
+                    <div className="metric-hint">Review before the first charge</div>
+                </Paper>
+                <Paper className="metric-card primary-metric">
+                    <span className="metric-label">Business monthly equivalent</span>
+                    <div className="metric-value">{monthlyTotal}</div>
+                    <div className="metric-hint">{groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription) * 12)} annual run rate</div>
+                </Paper>
+            </section>
+
+            <section className="metric-grid" aria-label="Business subscription counts">
+                <Paper className="metric-card">
+                    <span className="metric-label">Annual commitments · next 90 days</span>
+                    <div className="metric-value">{groupedMoney(annualCommitments, (subscription) => Number(subscription.amount) || 0)} <small>due</small></div>
+                    <div className="metric-hint">{annualCommitments.length} annual renewal{annualCommitments.length === 1 ? '' : 's'}</div>
+                </Paper>
+                <Paper className="metric-card">
+                    <span className="metric-label">Trial subscriptions</span>
+                    <div className="metric-value">{trialSubscriptions.length} <small>tracked</small></div>
+                    <div className="metric-hint">{trialsEndingSoon.length} need attention soon</div>
+                </Paper>
+                <Paper className="metric-card">
+                    <span className="metric-label">Active business subscriptions</span>
+                    <div className="metric-value">{activeSubscriptions.length} <small>including trials</small></div>
+                    <div className="metric-hint">{cancelledSubscriptions.length} cancelled · available in the filter</div>
+                </Paper>
+            </section>
+
+            <Paper className="dashboard-list business-inventory">
+                <div className="list-head"><h2>All business subscriptions</h2><span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span></div>
+                <div className="dashboard-filters" aria-label="Filter business subscriptions">
+                    {businessFilters.map(([key, label]) => <Chip key={key} label={label} onClick={() => setFilter(key)} className={filter === key ? 'selected' : ''} />)}
+                </div>
+                <div className="list-labels"><strong>Needs attention · {trialsEndingSoon.length + renewalAttention.length}</strong><span>Trial conversion first, then upcoming renewals</span></div>
+                {trialsEndingSoon.map((subscription) => <div className="attention-row" key={subscription.id}>
+                    <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
+                    <div><div className="attention-name">{subscription.serviceName}</div><div className="attention-meta">TRIAL ENDS · {formatDate(subscription.trialEndsAt || subscription.nextBillingDate)}</div></div>
+                    <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
+                    <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review trial →</RouterLink>
+                </div>)}
+                {renewalAttention.map((subscription) => <div className="attention-row business-renewal-attention" key={subscription.id}>
+                    <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
+                    <div><div className="attention-name">{subscription.serviceName}</div><div className="attention-meta">RENEWS · {formatDate(subscription.nextBillingDate)}</div></div>
+                    <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
+                    <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review →</RouterLink>
+                </div>)}
+                {loading ? <Box sx={{ py: 4, display: 'grid', placeItems: 'center' }}><CircularProgress size={28} /></Box>
+                    : filteredSubscriptions.length ? <div className="subscriptions-table-wrap"><table className="subscriptions-table">
+                        <thead><tr><th>Service</th><th>Category</th><th>Cost</th><th>Cadence</th><th>Next renewal</th><th>Status</th></tr></thead>
+                        <tbody>{filteredSubscriptions.map((subscription) => {
+                            const status = normalizeStatus(subscription.status);
+                            const statusClass = status === 'trial' ? 'trial' : status === 'cancelled' ? 'cancelled' : status === 'other' ? 'review' : '';
+                            return <tr key={subscription.id}><td><RouterLink className="subscription-row-link" to={`/subscriptions/${subscription.id}`}><span className="service-cell"><img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" /><span className="service-name">{subscription.serviceName}</span></span></RouterLink></td><td>{subscription.category || 'Uncategorized'}</td><td>{formatCurrency(Number(subscription.amount) || 0, subscription.currency)}</td><td>{subscription.billingCadence}</td><td>{formatDate(subscription.nextBillingDate)}</td><td><span className={`status-tag ${statusClass}`}>{statusLabel(subscription.status)}</span></td></tr>;
+                        })}</tbody>
+                    </table></div> : <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>No subscriptions match this filter.</Box>}
+            </Paper>
+        </>
+    );
+};
+
 const MySubscriptionsPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -122,6 +236,14 @@ const MySubscriptionsPage: React.FC = () => {
     const [filter, setFilter] = useState<Filter>('all');
     const [sortKey, setSortKey] = useState<SortKey>('nextBillingDate');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [view, setView] = useState<'personal' | 'business'>(() =>
+        window.localStorage.getItem('valutir_dashboard_view') === 'business' ? 'business' : 'personal'
+    );
+
+    const selectView = (nextView: 'personal' | 'business') => {
+        setView(nextView);
+        window.localStorage.setItem('valutir_dashboard_view', nextView);
+    };
 
     const deletedSubscriptionMessage =
         (location.state as { deletedSubscriptionMessage?: string } | null)?.deletedSubscriptionMessage ?? '';
@@ -159,13 +281,17 @@ const MySubscriptionsPage: React.FC = () => {
         loadSubscriptions();
     }, [token, logout, navigate]);
 
+    const contextSubscriptions = useMemo(
+        () => subscriptions.filter((subscription) => view === 'business' ? subscription.b2b === true : subscription.b2b !== true),
+        [subscriptions, view]
+    );
     const activeSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => !isCancelled(subscription)),
-        [subscriptions]
+        () => contextSubscriptions.filter((subscription) => !isCancelled(subscription)),
+        [contextSubscriptions]
     );
     const cancelledSubscriptions = useMemo(
-        () => subscriptions.filter(isCancelled),
-        [subscriptions]
+        () => contextSubscriptions.filter(isCancelled),
+        [contextSubscriptions]
     );
     const trialSubscriptions = useMemo(
         () => activeSubscriptions.filter(isTrial),
@@ -191,9 +317,10 @@ const MySubscriptionsPage: React.FC = () => {
     );
 
     const filteredSubscriptions = useMemo(() => {
-        let result = subscriptions;
+        let result = contextSubscriptions;
         if (filter === 'upcoming') result = dueSoon;
         if (filter === 'trials') result = trialSubscriptions;
+        if (filter === 'review') result = contextSubscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other');
         if (filter === 'cancelled') result = cancelledSubscriptions;
         const sorted = [...result].sort((left, right) => {
             let comparison = 0;
@@ -210,7 +337,7 @@ const MySubscriptionsPage: React.FC = () => {
             return sortDirection === 'asc' ? comparison : -comparison;
         });
         return sorted;
-    }, [subscriptions, dueSoon, trialSubscriptions, cancelledSubscriptions, filter, sortKey, sortDirection]);
+    }, [contextSubscriptions, dueSoon, trialSubscriptions, cancelledSubscriptions, filter, sortKey, sortDirection]);
 
     const toggleSort = (nextKey: SortKey) => {
         if (sortKey === nextKey) {
@@ -229,13 +356,13 @@ const MySubscriptionsPage: React.FC = () => {
             <Container className="dashboard-container">
                 <Box className="dashboard-heading">
                     <div>
-                        <h1>Your recurring expenses</h1>
-                        <p>See what you pay, what renews next, and what may need a review.</p>
+                        <h1>{view === 'business' ? 'Business subscriptions' : 'Your recurring expenses'}</h1>
+                        <p>{view === 'business'
+                            ? 'Track business tools, annual commitments, and upcoming renewals.'
+                            : 'See what you pay, what renews next, and what may need a review.'}</p>
                         <nav className="view-switch" aria-label="Subscription view">
-                            <button type="button" aria-current="page">Personal</button>
-                            <Tooltip title="Business view is coming soon">
-                                <span><button type="button" disabled>Business</button></span>
-                            </Tooltip>
+                            <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
+                            <button type="button" aria-current={view === 'business' ? 'page' : undefined} onClick={() => selectView('business')}>Business</button>
                         </nav>
                     </div>
                     <Box className="dashboard-heading-actions">
@@ -248,7 +375,29 @@ const MySubscriptionsPage: React.FC = () => {
                 {deletedSubscriptionMessage && <Alert severity="success" sx={{ mb: 2 }}>{deletedSubscriptionMessage}</Alert>}
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {!error && !loading && subscriptions.length === 0 ? (
+                {view === 'business' && !error && !loading && contextSubscriptions.length === 0 ? (
+                    <Paper className="dashboard-list">
+                        <div className="empty-state">
+                            <div className="empty-symbol" aria-hidden="true">＋</div>
+                            <h2>No business subscriptions yet</h2>
+                            <p>Add a work subscription and mark it as Business to see it in this view.</p>
+                            <Button component={RouterLink} to="/subscriptions/new" variant="contained" className="add-subscription">
+                                Add a business subscription
+                            </Button>
+                        </div>
+                    </Paper>
+                ) : view === 'business' ? (
+                    <BusinessDashboard
+                        subscriptions={contextSubscriptions}
+                        loading={loading}
+                        monthlyTotal={monthlyTotal}
+                        activeSubscriptions={activeSubscriptions}
+                        dueSoon={dueSoon}
+                        trialSubscriptions={trialSubscriptions}
+                        trialsEndingSoon={trialsEndingSoon}
+                        cancelledSubscriptions={cancelledSubscriptions}
+                    />
+                ) : !error && !loading && contextSubscriptions.length === 0 ? (
                     <Paper className="dashboard-list">
                         <div className="empty-state">
                             <div className="empty-symbol" aria-hidden="true">＋</div>
@@ -304,7 +453,7 @@ const MySubscriptionsPage: React.FC = () => {
                             </div>
                             <div className="dashboard-filters" aria-label="Filter subscriptions">
                                 {([
-                                    ['all', `All ${subscriptions.length}`],
+                                    ['all', `All ${contextSubscriptions.length}`],
                                     ['upcoming', `Upcoming ${dueSoon.length}`],
                                     ['trials', `Trials ${trialSubscriptions.length}`],
                                     ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],

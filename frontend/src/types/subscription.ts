@@ -25,6 +25,7 @@ export interface SubscriptionRecord {
     paymentMethod: string | null;
     isActive: boolean;
     autoRenew: boolean;
+    b2b: boolean;
     cancelledAt: string | null;
     createdAt: string;
     updatedAt: string;

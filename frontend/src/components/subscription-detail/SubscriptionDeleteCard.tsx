@@ -3,12 +3,11 @@ import {
     Alert,
     Box,
     Button,
-    Chip,
     Stack,
     Typography,
+    Paper,
 } from '@mui/material';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AppSurfaceCard from '../AppSurfaceCard';
 import { VITE_API_URL } from '../../services/auth';
 
 type Props = {
@@ -25,6 +24,7 @@ const SubscriptionDeleteCard: React.FC<Props> = ({
                                                      onDeleted,
                                                  }) => {
     const [usedAndUseful, setUsedAndUseful] = useState<boolean | null>(null);
+    const [step, setStep] = useState<1 | 2>(1);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState('');
 
@@ -67,60 +67,84 @@ const SubscriptionDeleteCard: React.FC<Props> = ({
     };
 
     return (
-        <AppSurfaceCard
-            sx={{
-                p: { xs: 3, md: 4 },
-                border: (theme) => `1px solid ${theme.palette.error.light}`,
-            }}
-        >
-            <Stack spacing={2.5}>
-                <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        Delete subscription
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Before removing it from your list, record whether it was actually used and useful for you.
-                    </Typography>
-                </Box>
+        <Paper className="subscription-review-panel">
+            <div className="subscription-review-stepper" aria-label={`Step ${step} of 2`}>
+                <span className={step === 1 ? 'current' : 'complete'}>01 <small>Review</small></span>
+                <i aria-hidden="true" />
+                <span className={step === 2 ? 'current' : ''}>02 <small>Remove</small></span>
+            </div>
 
-                <Box>
-                    <Typography sx={{ fontWeight: 700, mb: 1.25 }}>
-                        Was this subscription actually used and useful?
-                    </Typography>
-                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                        <Chip
-                            label="Yes"
-                            clickable
-                            color={usedAndUseful === true ? 'success' : 'default'}
+            {step === 1 ? (
+                <Stack spacing={2.25}>
+                    <Box>
+                        <span className="subscription-review-kicker">QUICK REVIEW</span>
+                        <Typography component="h2" className="subscription-review-title">
+                            Was it useful to you?
+                        </Typography>
+                        <Typography className="subscription-review-copy">
+                            Your answer helps you reflect on the service before removing it from your tracker.
+                        </Typography>
+                    </Box>
+
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+                        <Button
+                            variant={usedAndUseful === true ? 'contained' : 'outlined'}
+                            className={`subscription-review-choice ${usedAndUseful === true ? 'selected-useful' : ''}`}
                             onClick={() => setUsedAndUseful(true)}
-                            sx={{ fontWeight: 700, borderRadius: 999 }}
-                        />
-                        <Chip
-                            label="No"
-                            clickable
-                            color={usedAndUseful === false ? 'error' : 'default'}
+                        >
+                            Yes, I used it and it was useful
+                        </Button>
+                        <Button
+                            variant={usedAndUseful === false ? 'contained' : 'outlined'}
+                            className={`subscription-review-choice ${usedAndUseful === false ? 'selected-not-useful' : ''}`}
                             onClick={() => setUsedAndUseful(false)}
-                            sx={{ fontWeight: 700, borderRadius: 999 }}
-                        />
+                        >
+                            No, it wasn’t useful
+                        </Button>
                     </Stack>
-                </Box>
 
-                {error && <Alert severity="error">{error}</Alert>}
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        startIcon={<DeleteOutlineRoundedIcon />}
-                        disabled={deleting || usedAndUseful === null}
-                        onClick={handleDelete}
-                        sx={{ borderRadius: 999, px: 3, fontWeight: 700 }}
-                    >
-                        {deleting ? 'Deleting...' : 'Delete subscription'}
-                    </Button>
+                    <div className="subscription-review-footer">
+                        <p>Your answer is only saved if you remove this subscription.</p>
+                        <Button
+                            variant="contained"
+                            disabled={usedAndUseful === null}
+                            onClick={() => setStep(2)}
+                        >
+                            Continue to removal
+                        </Button>
+                    </div>
                 </Stack>
-            </Stack>
-        </AppSurfaceCard>
+            ) : (
+                <Stack spacing={2.25}>
+                    <Box>
+                        <span className="subscription-review-kicker">FINAL STEP</span>
+                        <Typography component="h2" className="subscription-review-title">
+                            Remove it from ValuTir?
+                        </Typography>
+                        <Typography className="subscription-review-copy">
+                            This removes the subscription from your tracker. It does not cancel your plan with the provider.
+                        </Typography>
+                    </Box>
+
+                    {error && <Alert severity="error">{error}</Alert>}
+
+                    <div className="subscription-review-footer">
+                        <Button variant="outlined" color="inherit" disabled={deleting} onClick={() => setStep(1)}>
+                            Back to review
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            startIcon={<DeleteOutlineRoundedIcon />}
+                            disabled={deleting}
+                            onClick={handleDelete}
+                        >
+                            {deleting ? 'Removing...' : 'Remove subscription'}
+                        </Button>
+                    </div>
+                </Stack>
+            )}
+        </Paper>
     );
 };
 

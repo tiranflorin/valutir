@@ -66,9 +66,13 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                     billingCadence: subscription.billingCadence,
                     nextBillingDate: subscription.nextBillingDate,
                     notes: subscription.notes,
-                    status: string,
+                    paymentMethod: subscription.paymentMethod ?? null,
+                    status: 'active',
                     autoRenew: true,
+                    b2b: subscription.b2b,
                     cancelledAt: null,
+                    trialEndsAt: null,
+                    trialReminderSentAt: null,
                     startedAt: reenabledFromDate,
                 }),
             });
@@ -100,6 +104,7 @@ const SubscriptionReenableCard: React.FC<Props> = ({
 
     return (
         <AppSurfaceCard
+            className="subscription-reenable-card"
             sx={{
                 p: { xs: 3, md: 4 },
                 border: (theme) => `1px solid ${theme.palette.success.light}`,

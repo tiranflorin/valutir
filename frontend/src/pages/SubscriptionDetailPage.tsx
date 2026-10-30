@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Box, Button, CircularProgress, Stack } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Container, Stack } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
-import AppShell from '../components/AppShell';
 import SubscriptionDeleteCard from '../components/subscription-detail/SubscriptionDeleteCard';
+import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
 import SubscriptionEditCard from '../components/subscription-detail/SubscriptionEditCard';
-import SubscriptionHeaderCard, { SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
+import SubscriptionHeaderCard, { type SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
 import SubscriptionReenableCard from '../components/subscription-detail/SubscriptionReenableCard';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +22,7 @@ const SubscriptionDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isCancelMode, setIsCancelMode] = useState(false);
 
     useEffect(() => {
         const loadSubscription = async () => {
@@ -78,6 +80,12 @@ const SubscriptionDetailPage: React.FC = () => {
     const handleSaved = (updatedSubscription: SubscriptionCardModel) => {
         setSubscription(updatedSubscription);
         setIsEditMode(false);
+        setIsCancelMode(false);
+    };
+
+    const handleCancelled = (updatedSubscription: SubscriptionCardModel) => {
+        setSubscription(updatedSubscription);
+        setIsCancelMode(false);
     };
 
     const handleDeleted = () => {
@@ -90,21 +98,22 @@ const SubscriptionDetailPage: React.FC = () => {
     };
 
     return (
-        <AppShell mode="content" maxWidth="lg">
+        <Box className="dashboard-page subscription-editor-page">
             <AppHeader />
 
-            <Button
-                component={RouterLink}
-                to="/my-subs"
-                variant="text"
-                startIcon={<ArrowBackRoundedIcon />}
-                sx={{ alignSelf: 'flex-start', borderRadius: 999, fontWeight: 700 }}
-            >
-                Back to My Subs
-            </Button>
+            <Container className="dashboard-container subscription-editor-container">
+                <Button
+                    component={RouterLink}
+                    to="/my-subs"
+                    variant="text"
+                    startIcon={<ArrowBackRoundedIcon />}
+                    className="subscription-back-link"
+                >
+                    Back to subscriptions
+                </Button>
 
             {loading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
                     <CircularProgress />
                 </Box>
             )}
@@ -116,49 +125,66 @@ const SubscriptionDetailPage: React.FC = () => {
             )}
 
             {!loading && subscription && (
-                <Stack spacing={3}>
-                    <SubscriptionHeaderCard
-                        subscription={subscription}
-                        isEditMode={isEditMode}
-                        onStartEdit={() => setIsEditMode(true)}
-                        onCancelEdit={() => setIsEditMode(false)}
-                    />
-
-                    {subscription.status !== 'cancelled' ? (
-                        isEditMode ? (
-                            <SubscriptionEditCard
-                                subscription={subscription}
-                                token={token ?? ''}
-                                onUnauthorized={handleUnauthorized}
-                                onSaved={handleSaved}
-                                onCancel={() => setIsEditMode(false)}
-                            />
-                        ) : (
-                            <SubscriptionInfoCard subscription={subscription} />
-                        )
+                <Stack className="subscription-detail-content" spacing={2}>
+                    {isEditMode ? (
+                        <Box className="subscription-editor-heading">
+                            <span className="section-kicker">SUBSCRIPTION DETAILS</span>
+                            <h1>Edit subscription</h1>
+                            <p>Update the details for {subscription.serviceName}. Changes will be saved to your account.</p>
+                        </Box>
                     ) : (
+                        <SubscriptionHeaderCard
+                            subscription={subscription}
+                            isEditMode={false}
+                            onStartEdit={() => setIsEditMode(true)}
+                            onCancelEdit={() => setIsEditMode(false)}
+                            onStartCancel={isCancelMode ? undefined : () => setIsCancelMode(true)}
+                        />
+                    )}
+
+                    {isEditMode && (
+                        <SubscriptionEditCard
+                            subscription={subscription}
+                            token={token ?? ''}
+                            onUnauthorized={handleUnauthorized}
+                            onSaved={handleSaved}
+                            onCancel={() => setIsEditMode(false)}
+                        />
+                    )}
+
+                    {!isEditMode && <SubscriptionInfoCard subscription={subscription} />}
+
+                    {!isEditMode && subscription.status !== 'cancelled' && isCancelMode && (
+                        <SubscriptionCancelCard
+                            subscription={subscription}
+                            token={token ?? ''}
+                            onUnauthorized={handleUnauthorized}
+                            onCancelled={handleCancelled}
+                            onKeepTracking={() => setIsCancelMode(false)}
+                        />
+                    )}
+
+                    {!isEditMode && subscription.status === 'cancelled' && (
                         <>
-                            <SubscriptionInfoCard subscription={subscription} />
                             <SubscriptionReenableCard
                                 subscription={subscription}
                                 token={token ?? ''}
                                 onUnauthorized={handleUnauthorized}
                                 onReenabled={handleSaved}
                             />
+                            <SubscriptionDeleteCard
+                                subscriptionId={subscription.id}
+                                token={token ?? ''}
+                                onUnauthorized={handleUnauthorized}
+                                onDeleted={handleDeleted}
+                            />
                         </>
-                    )}
-
-                    {subscription.status !== 'cancelled' && !isEditMode && (
-                        <SubscriptionDeleteCard
-                            subscriptionId={subscription.id}
-                            token={token ?? ''}
-                            onUnauthorized={handleUnauthorized}
-                            onDeleted={handleDeleted}
-                        />
                     )}
                 </Stack>
             )}
-        </AppShell>
+            </Container>
+            <AppFooter />
+        </Box>
     );
 };
 

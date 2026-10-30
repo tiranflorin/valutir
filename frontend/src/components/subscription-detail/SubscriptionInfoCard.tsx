@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Divider, Stack, Typography } from '@mui/material';
-import AppSurfaceCard from '../AppSurfaceCard';
+import { Box, Paper, Typography } from '@mui/material';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -22,35 +21,33 @@ const formatDate = (value: string | null) => {
     }).format(date);
 };
 
-const DetailRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-    <Box>
-        <Typography variant="body2" color="text.secondary">
-            {label}
-        </Typography>
-        <Typography sx={{ fontWeight: 700, mt: 0.5 }}>{value}</Typography>
+const DetailRow: React.FC<{ label: string; value: string; helper?: string }> = ({ label, value, helper }) => (
+    <Box className="subscription-detail-item">
+        <Typography component="span" variant="body2" color="text.secondary">{label}</Typography>
+        <Typography component="strong">{value}</Typography>
+        {helper && <Typography component="small">{helper}</Typography>}
     </Box>
 );
 
 const SubscriptionInfoCard: React.FC<Props> = ({ subscription }) => {
     return (
-        <AppSurfaceCard sx={{ p: { xs: 3, md: 4 } }}>
-            <Stack spacing={2.25}>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                    Subscription details
-                </Typography>
-
-                <Divider />
-
-                <DetailRow label="Category" value={subscription.category ?? '—'} />
+        <Paper className="subscription-info-panel">
+            <div className="subscription-info-heading">
+                <h2>Subscription details</h2>
+                <p>Billing and account context</p>
+            </div>
+            <div className="subscription-detail-grid">
+                <DetailRow label="Category" value={subscription.category ?? 'Uncategorized'} />
                 <DetailRow label="Billing cadence" value={subscription.billingCadence || '—'} />
                 <DetailRow label="Next billing date" value={formatDate(subscription.nextBillingDate)} />
-                <DetailRow label="Auto renew" value={subscription.autoRenew ? 'Yes' : 'No'} />
-                <DetailRow label="Notes" value={subscription.notes ?? '—'} />
+                <DetailRow label="Auto renew" value={subscription.autoRenew ? 'On' : 'Off'} />
+                <DetailRow label="Subscription view" value={subscription.b2b ? 'Business' : 'Personal'} />
+                <DetailRow label="Notes" value={subscription.notes?.trim() || '—'} />
                 {subscription.status === 'cancelled' && (
                     <DetailRow label="Cancelled at" value={formatDate(subscription.cancelledAt)} />
                 )}
-            </Stack>
-        </AppSurfaceCard>
+            </div>
+        </Paper>
     );
 };
 

@@ -1,26 +1,27 @@
 import React, { useMemo, useState } from 'react';
-import {Button, Stack, Box, CircularProgress, Alert} from '@mui/material';
+import { Box, Button, Container } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
-import AppShell from '../components/AppShell';
 import SubscriptionFormCard, {
     type BillingInterval,
     type SubscriptionFormValues,
     type SubscriptionStatus,
 } from '../components/subscription-form/SubscriptionFormCard';
 import { useAuth } from '../context/AuthContext';
+import { getDefaultCurrency } from '../services/preferences';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const AddSubscriptionPage: React.FC = () => {
     const navigate = useNavigate();
-    const { token, logout } = useAuth();
+    const { token, logout, user } = useAuth();
 
     const [values, setValues] = useState<SubscriptionFormValues>({
         serviceName: '',
         amount: '15.99',
-        currency: 'EUR',
+        currency: getDefaultCurrency(user?.email),
         billingInterval: 'monthly' as BillingInterval,
         renewalDate: '',
         category: 'Entertainment',
@@ -29,11 +30,11 @@ const AddSubscriptionPage: React.FC = () => {
         providerGroup: '',
         householdShared: false,
         autoRenew: true,
+        b2b: window.localStorage.getItem('valutir_dashboard_view') === 'business',
     });
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [loading] = useState(true);
 
     const isTrial = values.status === 'Trial';
     const isOther = values.status === 'Other';
@@ -88,6 +89,7 @@ const AddSubscriptionPage: React.FC = () => {
                 paymentMethod: values.providerGroup.trim() || null,
                 householdShared: values.householdShared,
                 autoRenew: !isOther && values.autoRenew,
+                b2b: values.b2b,
                 cancelledAt: isOther ? today : null,
             };
 
@@ -121,23 +123,29 @@ const AddSubscriptionPage: React.FC = () => {
     };
 
     return (
-        <AppShell mode="content" maxWidth="lg">
+        <Box className="dashboard-page subscription-editor-page">
             <AppHeader />
-
-            <Stack spacing={0}>
+            <Container className="dashboard-container subscription-editor-container">
                 <Button
                     component={RouterLink}
                     to="/my-subs"
                     variant="text"
                     startIcon={<ArrowBackRoundedIcon />}
-                    sx={{ alignSelf: 'flex-start', borderRadius: 999, fontWeight: 700 }}
+                    className="subscription-back-link"
                 >
-                    Back to My Subs
+                    Back to subscriptions
                 </Button>
+
+                <Box className="subscription-editor-heading">
+                    <span className="section-kicker">SUBSCRIPTION DETAILS</span>
+                    <h1>Add a subscription</h1>
+                    <p>Add the essentials first. You can include extra context when it helps.</p>
+                </Box>
 
                 <SubscriptionFormCard
                     title="Add subscription"
                     description="Add the essentials first. Optional details stay hidden until you need them."
+                    showHeader={false}
                     values={values}
                     onChange={setValues}
                     error={error}
@@ -151,8 +159,9 @@ const AddSubscriptionPage: React.FC = () => {
                     showProviderGroup
                     showHouseholdShared
                 />
-            </Stack>
-        </AppShell>
+            </Container>
+            <AppFooter />
+        </Box>
     );
 };
 

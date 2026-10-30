@@ -72,6 +72,9 @@ class Subscription
     #[ORM\Column(nullable: true)]
     private ?bool $autoRenew = true;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $b2b = false;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
@@ -243,6 +246,18 @@ class Subscription
         return $this;
     }
 
+    public function isB2b(): bool
+    {
+        return $this->b2b;
+    }
+
+    public function setB2b(bool $b2b): static
+    {
+        $this->b2b = $b2b;
+
+        return $this;
+    }
+
     public function getCancelledAt(): ?\DateTimeImmutable
     {
         return $this->cancelledAt;
@@ -335,6 +350,7 @@ class Subscription
             'paymentMethod' => $this->getPaymentMethod(),
             'isActive' => $this->isActive(),
             'autoRenew' => $this->isAutoRenew(),
+            'b2b' => $this->isB2b(),
             'cancelledAt' => $this->getCancelledAt()?->format('Y-m-d'),
             'createdAt' => $this->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
