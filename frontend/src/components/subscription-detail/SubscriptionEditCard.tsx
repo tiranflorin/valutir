@@ -148,7 +148,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                 void handleSave();
             }}
             onCancel={onCancel}
-            showCurrency={false}
+            showHeader={false}
             showProviderGroup={false}
             showHouseholdShared={false}
         />

@@ -77,6 +77,12 @@ const requiredFieldSx = {
     },
 };
 
+const FormFieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, required = false }) => (
+    <Typography component="div" variant="subtitle2" className="subscription-form-field-label">
+        {label}{required && <span className="subscription-form-required-marker" aria-hidden="true">*</span>}
+    </Typography>
+);
+
 const SubscriptionFormCard: React.FC<Props> = ({
                                                    title,
                                                    description,
@@ -206,20 +212,6 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             required
                         />
 
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 0.25 }}>
-                            <Box>
-                                <Typography variant="subtitle2" fontWeight={800}>Business subscription</Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Track this subscription as a business expense.
-                                </Typography>
-                            </Box>
-                            <Switch
-                                checked={values.b2b}
-                                onChange={(event) => patch({ b2b: event.target.checked })}
-                                inputProps={{ 'aria-label': 'Business subscription' }}
-                            />
-                        </Stack>
-
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                             <TextField
                                 label="Price"
@@ -243,9 +235,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                         </Stack>
 
                         <Stack spacing={1}>
-                            <Typography variant="subtitle2" fontWeight={700}>
-                                Billing cadence
-                            </Typography>
+                            <FormFieldLabel label="Billing cadence" required />
 
                             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                                 {intervalOptions.map((option) => (
@@ -263,9 +253,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                         </Stack>
 
                         <Stack spacing={1}>
-                            <Typography variant="subtitle2" fontWeight={700}>
-                                Category
-                            </Typography>
+                            <FormFieldLabel label="Category" />
 
                             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                                 {categoryOptions.map((option) => (
@@ -282,24 +270,54 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             </Stack>
                         </Stack>
 
-                        <Stack spacing={1}>
-                            <Typography variant="subtitle2" fontWeight={700}>
-                                Status
-                            </Typography>
-
-                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                {statusOptions.map((option) => (
-                                    <Chip
-                                        key={option}
-                                        label={option}
-                                        clickable
-                                        color={values.status === option ? 'primary' : 'default'}
-                                        variant={values.status === option ? 'filled' : 'outlined'}
-                                        onClick={() => patch({ status: option })}
-                                        sx={{ fontWeight: 600, borderRadius: 999 }}
-                                    />
-                                ))}
+                        <Stack
+                            className="subscription-status-date-row"
+                            direction={{ xs: 'column', sm: 'row' }}
+                            spacing={2}
+                            alignItems="flex-start"
+                        >
+                            <Stack spacing={1} className="subscription-status-field">
+                                <FormFieldLabel label="Status" />
+                                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                    {statusOptions.map((option) => (
+                                        <Chip
+                                            key={option}
+                                            label={option}
+                                            clickable
+                                            color={values.status === option ? 'primary' : 'default'}
+                                            variant={values.status === option ? 'filled' : 'outlined'}
+                                            onClick={() => patch({ status: option })}
+                                            sx={{ fontWeight: 600, borderRadius: 999 }}
+                                        />
+                                    ))}
+                                </Stack>
                             </Stack>
+                            <TextField
+                                className="subscription-date-field"
+                                label={billingDateLabel}
+                                type="date"
+                                value={values.renewalDate}
+                                onChange={(e) => patch({ renewalDate: e.target.value })}
+                                fullWidth
+                                required
+                                helperText={billingDateHelperText}
+                                InputLabelProps={{ shrink: true }}
+                                sx={requiredFieldSx}
+                            />
+                        </Stack>
+
+                        <Stack className="subscription-business-toggle" direction="row" alignItems="center" justifyContent="space-between">
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={800}>Business subscription</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Track this subscription as a business expense.
+                                </Typography>
+                            </Box>
+                            <Switch
+                                checked={values.b2b}
+                                onChange={(event) => patch({ b2b: event.target.checked })}
+                                inputProps={{ 'aria-label': 'Business subscription' }}
+                            />
                         </Stack>
 
                         {isOther && (
@@ -307,18 +325,6 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 “Other” is treated as partially active in the current flow. (TODO)
                             </Alert>
                         )}
-
-                        <TextField
-                            label={billingDateLabel}
-                            type="date"
-                            value={values.renewalDate}
-                            onChange={(e) => patch({ renewalDate: e.target.value })}
-                            fullWidth
-                            required
-                            helperText={billingDateHelperText}
-                            InputLabelProps={{ shrink: true }}
-                            sx={requiredFieldSx}
-                        />
 
                         {isTrial && (
                             <Alert severity="info" sx={{ borderRadius: 3 }}>

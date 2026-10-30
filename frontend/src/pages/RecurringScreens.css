@@ -1241,6 +1241,40 @@ body {
 
 .subscription-form-layout .MuiInputLabel-root {
     font-size: 13px;
+    font-weight: 600;
+    color: #34483a;
+}
+
+.subscription-form-layout .subscription-form-field-label {
+    color: #34483a;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4375;
+}
+
+.subscription-form-required-marker {
+    margin-left: 3px;
+    color: #d32f2f;
+}
+
+.subscription-status-field {
+    flex: .9 1 0;
+    min-width: 0;
+}
+
+@media (min-width: 600px) {
+    .subscription-status-field {
+        transform: translateY(-14px);
+    }
+}
+
+.subscription-date-field.MuiFormControl-root {
+    flex: 1.1 1 0;
+    min-width: 0;
+}
+
+.subscription-business-toggle {
+    padding: 2px 4px 0;
 }
 
 .subscription-form-layout .MuiChip-root {
@@ -3075,6 +3109,14 @@ body {
 :root[data-theme='dark'] .subscription-form-card-heading,
 :root[data-theme='dark'] .subscription-form-layout .MuiAccordion-root {
     border-color: #344157;
+}
+
+:root[data-theme='dark'] .subscription-form-layout .MuiInputLabel-root {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .subscription-form-layout .subscription-form-field-label {
+    color: #a8b4c8;
 }
 
 :root[data-theme='dark'] .subscription-form-layout .MuiChip-root.MuiChip-colorPrimary.MuiChip-filled {
