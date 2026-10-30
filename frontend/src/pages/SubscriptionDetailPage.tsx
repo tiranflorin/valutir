@@ -128,7 +128,7 @@ const SubscriptionDetailPage: React.FC = () => {
                 <Stack className="subscription-detail-content" spacing={2}>
                     {isEditMode ? (
                         <Box className="subscription-editor-heading">
-                            <span className="section-kicker">SUBSCRIPTION DETAILS</span>
+                            {/*<span className="section-kicker">SUBSCRIPTION DETAILS</span>*/}
                             <h1>Edit subscription</h1>
                             <p>Update the details for {subscription.serviceName}. Changes will be saved to your account.</p>
                         </Box>

@@ -4,21 +4,25 @@ import AppHeader from '../components/AppHeader';
 import AppShell from '../components/AppShell';
 import SubscriptionCalendar from '../components/calendar/SubscriptionCalendar';
 import CalendarDayDetails from '../components/calendar/CalendarDayDetails';
+import AppFooter from '../components/AppFooter';
 import CalendarFiltersBar from '../components/calendar/CalendarFiltersBar';
 import type { CalendarFilters } from '../components/calendar/CalendarFiltersBar';
 import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
 import { VITE_API_URL } from '../services/auth';
 import type { SubscriptionRecord } from '../types/subscription';
+import { useSearchParams } from 'react-router-dom';
 import './CalendarPage.css';
 
 const CalendarPage: React.FC = () => {
     const { token, logout } = useAuth();
+    const [searchParams] = useSearchParams();
+    const initialDate = searchParams.get('date') || undefined;
 
     const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedDate, setSelectedDate] = useState<string>();
+    const [selectedDate, setSelectedDate] = useState<string>(initialDate);
     const [selectedEventId, setSelectedEventId] = useState<string>();
     const [visibleRange, setVisibleRange] = useState<{ start: string; end: string }>();
     const [filters, setFilters] = useState<CalendarFilters>({
@@ -118,10 +122,16 @@ const CalendarPage: React.FC = () => {
 
     return (
         <>
-            <AppHeader title="Calendar" subtitle="Track renewals and upcoming billing dates." />
+            <AppHeader />
 
             <AppShell mode="content" maxWidth="lg">
                 <Stack spacing={3} className="calendar-page">
+                    <Box className="calendar-page__heading">
+                        <Box>
+                            <h1>Your renewal calendar</h1>
+                            <p>See when recurring charges are scheduled. Select a date to inspect what’s due.</p>
+                        </Box>
+                    </Box>
                     {loading && (
                         <Box display="flex" justifyContent="center" py={8}>
                             <CircularProgress />
@@ -136,6 +146,7 @@ const CalendarPage: React.FC = () => {
                                 <Paper className="calendar-page__calendar-card" elevation={0}>
                                     <SubscriptionCalendar
                                         events={calendarEvents}
+                                        initialDate={initialDate}
                                         filters={(
                                             <CalendarFiltersBar
                                                 filters={filters}
@@ -171,6 +182,7 @@ const CalendarPage: React.FC = () => {
                     )}
                 </Stack>
             </AppShell>
+            <AppFooter />
         </>
     );
 };

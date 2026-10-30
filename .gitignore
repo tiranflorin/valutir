@@ -11,6 +11,9 @@ backend/config/jwt/
 #FE:
 /frontend/node_modules/
 frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
 
 #BE:
 # Email spool folder

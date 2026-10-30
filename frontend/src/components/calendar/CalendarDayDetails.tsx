@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { CalendarEvent } from '../../types/calendar';
+import type { CalendarEvent } from '../../types/calendar';
 
 interface CalendarDayDetailsProps {
     selectedDate?: string;
@@ -53,72 +53,51 @@ const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                     </Typography>
                 </Box>
 
-                <Stack spacing={1.5}>
-                    {sortedEvents.map((event) => {
-                        const props = event.extendedProps;
-                        const isSelected = event.id === selectedEventId;
+                {events.length > 0 && (
+                    <>
+                        <Stack spacing={0} divider={<Divider flexItem />}>
+                            {sortedEvents.slice(0, 6).map((event) => {
+                                const props = event.extendedProps;
 
-                        return (
-                            <Box
-                                key={event.id}
-                                className={`calendar-day-details__item${isSelected ? ' calendar-day-details__item--selected' : ''}`}
-                            >
-                                <Stack spacing={1.25}>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-                                        <Typography variant="subtitle1" fontWeight={800}>
-                                            {event.title}
-                                        </Typography>
-
-                                        <Chip
-                                            size="small"
-                                            label={props.status}
-                                            className={`calendar-status-chip calendar-status-chip--${props.status}`}
-                                        />
+                                return (
+                                    <Stack
+                                        key={event.id}
+                                        className="calendar-day-details__preview-row"
+                                        direction="row"
+                                        justifyContent="space-between"
+                                        alignItems="center"
+                                        gap={1.5}
+                                    >
+                                        <Box minWidth={0}>
+                                            <Typography variant="body2" fontWeight={750} noWrap>{event.title}</Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {props.billingCadence || 'Recurring'}{props.category ? ` · ${props.category}` : ''}
+                                            </Typography>
+                                        </Box>
+                                        <Stack alignItems="flex-end" spacing={0.5} flexShrink={0}>
+                                            <Typography variant="body2" fontWeight={700}>{props.amount} {props.currency}</Typography>
+                                            <Chip size="small" label={props.status} className={`calendar-status-chip calendar-status-chip--${props.status}`} />
+                                        </Stack>
                                     </Stack>
-
-                                    <Typography variant="body2" color="text.secondary">
-                                        {props.amount} {props.currency}
-                                    </Typography>
-
-                                    {props.category && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Category: {props.category}
-                                        </Typography>
-                                    )}
-
-                                    {props.billingCadence && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Cadence: {props.billingCadence}
-                                        </Typography>
-                                    )}
-
-                                    {props.paymentMethod && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Payment: {props.paymentMethod}
-                                        </Typography>
-                                    )}
-
-                                    {props.notes && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Notes: {props.notes}
-                                        </Typography>
-                                    )}
-
-                                    <Box pt={0.5}>
-                                        <Button
-                                            component={RouterLink}
-                                            to={`/subscriptions/${props.subscriptionId}`}
-                                            size="small"
-                                            variant={isSelected ? 'contained' : 'outlined'}
-                                        >
-                                            Open subscription
-                                        </Button>
-                                    </Box>
-                                </Stack>
-                            </Box>
-                        );
-                    })}
-                </Stack>
+                                );
+                            })}
+                        </Stack>
+                        {events.length > 6 && (
+                            <Typography variant="caption" color="text.secondary" className="calendar-day-details__more">
+                                +{events.length - 6} more renewal{events.length - 6 === 1 ? '' : 's'}
+                            </Typography>
+                        )}
+                        <Button
+                            className="calendar-day-details__open-day"
+                            component={RouterLink}
+                            to={`/calendar/day/${selectedDate}`}
+                            variant="outlined"
+                            fullWidth
+                        >
+                            Open day schedule
+                        </Button>
+                    </>
+                )}
             </Stack>
         </Paper>
     );

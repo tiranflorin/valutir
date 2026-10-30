@@ -6,6 +6,7 @@ services:
             target: dev
         environment:
             VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+            VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
         ports:
             - "5173:5173"  # Changed from 3000 to match Vite default
         volumes:
@@ -28,6 +29,7 @@ services:
             target: dev
         environment:
             VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+            VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
             CI: "true"
         volumes:
             - .:/app

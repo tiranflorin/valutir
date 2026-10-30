@@ -56,6 +56,83 @@
     padding-top: 12px;
 }
 
+.calendar-page__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 4px 2px 0;
+}
+
+.calendar-page__heading h1,
+.calendar-day-page__heading h1 {
+    margin: 0 0 7px;
+    color: var(--calendar-title);
+    font-size: clamp(1.55rem, 2.4vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+}
+
+.calendar-page__heading p {
+    margin: 0;
+    color: var(--calendar-text);
+    font-size: 0.96rem;
+}
+
+.calendar-day-page__card {
+    padding: 22px;
+}
+
+.calendar-day-page__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.calendar-day-page__list {
+    min-width: 0;
+}
+
+.calendar-day-page__list-heading {
+    padding: 4px 2px 16px;
+    border-bottom: 1px solid var(--calendar-grid-border);
+}
+
+.calendar-day-page__item {
+    display: flex;
+    min-height: 82px;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--calendar-grid-border);
+}
+
+.calendar-day-page__service-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--calendar-item-border);
+    border-radius: 13px;
+    background: var(--calendar-item-bg);
+    color: var(--calendar-title);
+    font-weight: 800;
+}
+
+.calendar-day-page__service-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.calendar-day-page__empty {
+    display: grid;
+    min-height: 160px;
+    align-content: center;
+    justify-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
 .calendar-page__layout {
     width: 100%;
     display: grid;
@@ -163,6 +240,20 @@
 .calendar-day-details__item--selected {
     border-color: var(--calendar-selected-border);
     background: var(--calendar-selected-bg);
+}
+
+.calendar-day-details__preview-row {
+    min-height: 64px;
+    padding: 10px 0;
+}
+
+.calendar-day-details__more {
+    display: block;
+    margin-top: -8px;
+}
+
+.calendar-day-details__open-day {
+    margin-bottom: 8px !important;
 }
 
 .calendar-day--selected,
@@ -344,5 +435,35 @@ tr:last-child
 
     .calendar-page__side > * {
         padding-inline: 0;
+    }
+}
+
+@media (max-width: 760px) {
+    .calendar-day-page__content {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-day-page__heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 540px) {
+    .calendar-day-page__card {
+        padding: 14px;
+    }
+
+    .calendar-day-page__item {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .calendar-day-page__service-copy {
+        flex-basis: calc(100% - 60px);
+    }
+
+    .calendar-day-page__item .MuiChip-root {
+        margin-left: 54px;
     }
 }

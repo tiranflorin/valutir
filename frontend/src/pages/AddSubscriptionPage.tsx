@@ -137,9 +137,9 @@ const AddSubscriptionPage: React.FC = () => {
                 </Button>
 
                 <Box className="subscription-editor-heading">
-                    <span className="section-kicker">SUBSCRIPTION DETAILS</span>
+                    {/*<span className="section-kicker">SUBSCRIPTION DETAILS</span>*/}
                     <h1>Add a subscription</h1>
-                    <p>Add the essentials first. You can include extra context when it helps.</p>
+                    <p>Fill in the essentials first. You can include extra context when it helps.</p>
                 </Box>
 
                 <SubscriptionFormCard

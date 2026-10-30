@@ -163,7 +163,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                     flex: 1.65,
                     width: '100%',
                     p: { xs: 2.25, md: 3.25 },
-                    borderRadius: 3,
+                    borderRadius: '14px',
                     backgroundColor: 'background.paper',
                 }}
             >
@@ -464,7 +464,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                     flex: 0.62,
                     width: '100%',
                     p: { xs: 2.25, md: 3 },
-                    borderRadius: 3,
+                    borderRadius: '14px',
                     backgroundColor: 'background.paper',
                     position: { lg: 'sticky' },
                     top: { lg: 96 },

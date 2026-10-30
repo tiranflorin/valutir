@@ -1,0 +1,230 @@
+.plans-container.MuiContainer-root {
+    width: 100%;
+    max-width: 980px;
+    flex: 1 0 auto;
+    padding-top: 30px;
+    padding-bottom: 44px;
+}
+
+.plans-hero {
+    max-width: 670px;
+    margin: 8px auto 26px;
+    text-align: center;
+}
+
+.plans-hero h1 {
+    margin: 0 0 8px;
+    color: #17241d;
+    font-size: clamp(1.8rem, 3vw, 2.25rem);
+    font-weight: 850;
+    letter-spacing: -.04em;
+    line-height: 1.16;
+}
+
+.plans-hero p {
+    margin: 0;
+    color: #69776e;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 16px;
+}
+
+.plan-card.MuiPaper-root {
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    border: 1px solid #e3eae5;
+    border-radius: 14px;
+    background: #fff;
+    color: #17241d;
+    box-shadow: 0 5px 18px #1e362608;
+}
+
+.plan-card--featured.MuiPaper-root {
+    border: 2px solid #7ab58e;
+}
+
+.plan-label {
+    color: #28764b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.plan-card h2 {
+    margin: 9px 0 5px;
+    color: #20382a;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.plan-description {
+    min-height: 36px;
+    margin: 0;
+    color: #758078;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.plan-price {
+    margin: 15px 0 4px;
+    color: #17241d;
+    font-size: 25px;
+    font-weight: 850;
+}
+
+.plan-price span {
+    color: #738078;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.plan-rule {
+    height: 1px;
+    margin: 17px 0;
+    background: #edf1ee;
+}
+
+.plan-features {
+    flex: 1;
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+}
+
+.plan-features li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f3f1;
+    color: #4f6156;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.plan-features li::before {
+    margin-right: 8px;
+    color: #26754a;
+    content: '✓';
+    font-weight: 900;
+}
+
+.plan-card .MuiButton-root {
+    min-height: 42px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: none;
+}
+
+.plan-card:not(.plan-card--featured) .MuiButton-outlined {
+    border-color: #dce6df;
+    color: #375346;
+}
+
+.plan-card--featured .MuiButton-contained {
+    background: #176b43;
+}
+
+.plan-card--featured .MuiButton-contained:hover {
+    background: #105a37;
+}
+
+.plans-business-note {
+    margin-top: 19px;
+    padding: 13px 16px;
+    border: 1px solid #e5e9f2;
+    border-radius: 11px;
+    background: #f5f7fc;
+    color: #59647c;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.plans-business-note strong {
+    color: #35445f;
+}
+
+.plans-upgrade-notice {
+    margin-top: 12px;
+}
+
+.plans-footnote {
+    margin: 17px auto 0;
+    color: #748078;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+:root[data-theme='dark'] .plans-hero h1,
+:root[data-theme='dark'] .plan-card h2,
+:root[data-theme='dark'] .plan-price {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .plans-hero p,
+:root[data-theme='dark'] .plan-description,
+:root[data-theme='dark'] .plan-price span,
+:root[data-theme='dark'] .plans-footnote {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .plan-card.MuiPaper-root {
+    border-color: #344157;
+    background: #172033;
+    color: #e2e8f0;
+}
+
+:root[data-theme='dark'] .plan-card--featured.MuiPaper-root {
+    border: 2px solid #47775a;
+}
+
+:root[data-theme='dark'] .plan-label,
+:root[data-theme='dark'] .plan-features li::before {
+    color: #8dd5a3;
+}
+
+:root[data-theme='dark'] .plan-features li {
+    border-color: #2b374c;
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .plan-rule {
+    background: #2b374c;
+}
+
+:root[data-theme='dark'] .plan-card:not(.plan-card--featured) .MuiButton-outlined {
+    border-color: #46546b;
+    color: #dbe5f2;
+}
+
+:root[data-theme='dark'] .plans-business-note {
+    border-color: #344157;
+    background: #1c2940;
+    color: #b6c2d5;
+}
+
+:root[data-theme='dark'] .plans-business-note strong {
+    color: #e2e8f0;
+}
+
+@media (max-width: 700px) {
+    .plans-container.MuiContainer-root {
+        padding-top: 22px;
+        padding-bottom: 34px;
+    }
+
+    .plans-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plan-description {
+        min-height: 0;
+    }
+}

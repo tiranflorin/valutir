@@ -8,6 +8,7 @@ import CalendarToolbar from './CalendarToolbar';
 interface SubscriptionCalendarProps {
     events: CalendarEvent[];
     title: string;
+    initialDate?: string;
     filters?: React.ReactNode;
     selectedDate?: string;
     onDateClick?: (date: string) => void;
@@ -18,6 +19,7 @@ interface SubscriptionCalendarProps {
 const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
     events,
     title,
+    initialDate,
     filters,
     selectedDate,
     onDateClick,
@@ -50,6 +52,7 @@ const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
                 ref={calendarRef}
                 plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
+                initialDate={initialDate}
                 headerToolbar={false}
                 height="auto"
                 fixedWeekCount={false}

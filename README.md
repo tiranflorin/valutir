@@ -15,7 +15,9 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Subscription fields for amount, currency, cadence, category, payment method, status, dates, notes, trial details, and a `b2b` business classification
 - Personal and business dashboard views, with a business toggle on subscription create and edit forms
 - Protected Profile and Preferences pages, including authenticated password changes and a saved default currency for new subscriptions
-- Calendar renewal view with recurring events, selected-day details, and filters for status, category, billing cadence, and active subscriptions
+- Calendar month view with recurring events and filters, plus a selected-day page for scheduled payments with a direct return to the highlighted calendar date
+- Plans page describing free tracking and the proposed one-time unlock; the upgrade action is a mock and does not start checkout
+- Contact page with required email and message fields, an optional Cloudflare Turnstile widget, and a honeypot; message delivery is not connected yet
 
 The dashboard defaults to Personal. Creating a subscription from the Business view preselects the business classification; editing keeps a saved business classification, and the Business view also preselects it for the edit form.
 
@@ -73,6 +75,10 @@ Authenticated subscription endpoints:
 - `GET`, `PUT`, `PATCH`, `DELETE /api/subs/{id}`
 
 The Profile and Preferences pages are available from the account menu at `/profile` and `/preferences`. The default currency is stored in the current browser for the signed-in email and preselected on new subscriptions. Existing subscription amounts remain in their recorded currencies.
+
+The plans page is available at `/plans` to signed-in and signed-out visitors. Its one-time upgrade button only shows an informational message; payment and Stripe checkout are not connected.
+
+The contact form is available at `/contact` and is frontend-only. It validates the required email and message fields but does not send or store messages. Set the public `VITE_TURNSTILE_SITE_KEY` to display Turnstile; the widget stays hidden when no site key is configured. The honeypot and widget token are only frontend preparation until Symfony verifies submissions server-side. Keep the Turnstile secret in backend configuration, never in Vite environment variables.
 
 Use an `Authorization: Bearer <token>` header for authenticated requests. `GET /health` is available for service health checks.
 

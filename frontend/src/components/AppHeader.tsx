@@ -39,8 +39,11 @@ const AppHeader: React.FC = () => {
                             <Button component={RouterLink} to="/my-subs" className={pathname === '/my-subs' ? 'active' : ''}>
                                 Subs
                             </Button>
-                            <Button component={RouterLink} to="/calendar" className={pathname === '/calendar' ? 'active' : ''}>
+                            <Button component={RouterLink} to="/calendar" className={pathname.startsWith('/calendar') ? 'active' : ''}>
                                 Calendar
+                            </Button>
+                            <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>
+                                Plan
                             </Button>
                             <ThemeModeToggle />
                             <Button
@@ -85,6 +88,7 @@ const AppHeader: React.FC = () => {
                             {isLanding && <a href="#how-it-works">How it works</a>}
                             {isLanding && <a href="#business">For business</a>}
                             {isLanding && <a href="#free">Free plan</a>}
+                            {!isLanding && <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>Plans</Button>}
                             <ThemeModeToggle />
                             <Button component={RouterLink} to="/login" className="signin-link">Sign in</Button>
                             <Button component={RouterLink} to="/register" variant="contained" className="header-cta">
