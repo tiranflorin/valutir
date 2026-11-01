@@ -81,6 +81,6 @@ final class ContactController extends AbstractController
             ->subject('ValuTir contact form message')
             ->text("From: {$email}\n\n{$message}"));
 
-        return $this->json(['message' => 'Your message has been sent.']);
+        return $this->json(['message' => 'Your message has been successfully sent.']);
     }
 }

@@ -9,7 +9,7 @@ describe('AddSubscriptionPage', () => {
     it('renders the main form fields and sections', () => {
         renderWithMemoryRoute(<AddSubscriptionPage />, { route: '/my-subs/new' });
 
-        expect(screen.getByText(/add subscription/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /add a subscription/i })).toBeInTheDocument();
         expect(screen.getByLabelText(/service name/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/price/i)).toBeInTheDocument();
         expect(screen.getByText(/core details/i)).toBeInTheDocument();

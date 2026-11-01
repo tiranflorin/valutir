@@ -9,7 +9,7 @@ describe('MySubscriptionsPage', () => {
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
 
         expect(
-            screen.getByRole('heading', { name: /my subs/i })
+            screen.getByRole('heading', { name: /your recurring expenses/i })
         ).toBeInTheDocument();
     });
 
@@ -17,7 +17,7 @@ describe('MySubscriptionsPage', () => {
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
 
         expect(
-            screen.getByRole('heading', { name: /my subs/i })
+            screen.getByRole('heading', { name: /your recurring expenses/i })
         ).toBeInTheDocument();
     });
 

@@ -6,6 +6,9 @@ import { renderWithMemoryRoute } from './test-utils';
 
 const mockUseAuth = vi.fn();
 
+vi.mock('../pages/CalendarPage', () => ({ default: () => <div>Calendar</div> }));
+vi.mock('../pages/CalendarDayPage', () => ({ default: () => <div>Calendar day</div> }));
+
 vi.mock('../context/AuthContext', async () => {
     const actual = await vi.importActual<typeof import('../context/AuthContext')>(
         '../context/AuthContext'
@@ -23,13 +26,13 @@ describe('App routes', () => {
         mockUseAuth.mockReset();
     });
 
-    it('redirects unauthenticated users from /my-subs/new to login', () => {
+    it('redirects unauthenticated users from /subscriptions/new to login', () => {
         mockUseAuth.mockReturnValue({ isAuthenticated: false });
 
-        renderWithMemoryRoute(<App />, { route: '/my-subs/new' });
+        renderWithMemoryRoute(<App />, { route: '/subscriptions/new' });
 
-        expect(screen.getAllByRole('link', { name: /login/i }).length).toBeGreaterThan(0);
-        expect(screen.getAllByRole('link', { name: /create account/i }).length).toBeGreaterThan(0);
+        expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
     it('redirects unauthenticated users from /my-subs to login', () => {
@@ -44,9 +47,9 @@ describe('App routes', () => {
     it('renders add subscription page for authenticated users', () => {
         mockUseAuth.mockReturnValue({ isAuthenticated: true });
 
-        renderWithMemoryRoute(<App />, { route: '/my-subs/new' });
+        renderWithMemoryRoute(<App />, { route: '/subscriptions/new' });
 
-        expect(screen.getByText(/add subscription/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /add a subscription/i })).toBeInTheDocument();
     });
 
     it('renders subscriptions page for authenticated users', () => {
@@ -54,6 +57,6 @@ describe('App routes', () => {
 
         renderWithMemoryRoute(<App />, { route: '/my-subs' });
 
-        expect(screen.getByRole('heading', { name: /my subs/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /your recurring expenses/i })).toBeInTheDocument();
     });
 });

@@ -4,7 +4,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 ## Stack
 
-- Symfony 7.4, PHP 8.3, Doctrine ORM, PostgreSQL 16, JWT authentication, and Symfony HttpClient for server-side Turnstile verification
+- Symfony 7.4, PHP 8.3, Doctrine ORM, PostgreSQL 16, JWT authentication, and server-side Turnstile verification
 - React 18, TypeScript, Vite, MUI, and FullCalendar
 - Docker Compose for local development, with MailDev for local email inspection
 

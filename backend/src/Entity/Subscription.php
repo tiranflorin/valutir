@@ -231,7 +231,7 @@ class Subscription
 
     public function isActive(): ?bool
     {
-        return $this->status === 'active';
+        return 'active' === $this->status;
     }
 
     public function isAutoRenew(): ?bool
