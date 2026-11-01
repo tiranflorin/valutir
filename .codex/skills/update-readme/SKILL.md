@@ -15,3 +15,4 @@ Keep the project README accurate when a feature, route, or dependency changes.
 3. Follow the README's existing structure and writing style. If it has no suitable section, add the smallest clear section rather than duplicating information.
 4. Remove or correct documentation made stale by the change. Do not document secrets, local environment values, or unverified behavior.
 5. Review the final README for accuracy, concise wording, valid Markdown, and consistent headings.
+6. Never read or transmit anything from any .env files.

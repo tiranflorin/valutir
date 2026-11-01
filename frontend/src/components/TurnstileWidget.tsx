@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 type TurnstileRenderOptions = {
     sitekey: string;
+    action: string;
     theme: 'auto' | 'light' | 'dark';
     callback: (token: string) => void;
     'error-callback': () => void;
@@ -62,6 +63,7 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({ siteKey, onTokenChang
 
                 widgetId = window.turnstile.render(containerRef.current, {
                     sitekey: siteKey,
+                    action: 'contact',
                     theme: 'auto',
                     callback: (token) => onTokenChange(token),
                     'error-callback': () => {

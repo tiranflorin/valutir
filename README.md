@@ -4,7 +4,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 ## Stack
 
-- Symfony 7.4, PHP 8.3, Doctrine ORM, PostgreSQL 16, and JWT authentication
+- Symfony 7.4, PHP 8.3, Doctrine ORM, PostgreSQL 16, JWT authentication, and Symfony HttpClient for server-side Turnstile verification
 - React 18, TypeScript, Vite, MUI, and FullCalendar
 - Docker Compose for local development, with MailDev for local email inspection
 
@@ -17,7 +17,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Protected Profile and Preferences pages, including authenticated password changes and a saved default currency for new subscriptions
 - Calendar month view with recurring events and filters, plus a selected-day page for scheduled payments with a direct return to the highlighted calendar date
 - Plans page describing free tracking and the proposed one-time unlock; the upgrade action is a mock and does not start checkout
-- Contact page with required email and message fields, an optional Cloudflare Turnstile widget, and a honeypot; message delivery is not connected yet
+- Contact page with server-verified Cloudflare Turnstile, a honeypot, and email delivery
 
 The dashboard defaults to Personal. Creating a subscription from the Business view preselects the business classification; editing keeps a saved business classification, and the Business view also preselects it for the edit form.
 
@@ -62,6 +62,7 @@ Public endpoints:
 
 - `POST /api/register`
 - `POST /api/login_check`
+- `POST /api/contact`
 
 Password reset uses a random, single-use token whose SHA-256 hash is stored for one hour. A successful reset updates the password through Symfony's password hasher and consumes the token. Requests are rate limited by client IP. Set `FRONTEND_URL` in deployed environments so reset emails link to the correct frontend; it defaults to `http://localhost:5173` for local development. Apply the new Doctrine migration before using the flow. Symfony's RateLimiter component backs reset and login throttling.
 
@@ -78,7 +79,7 @@ The Profile and Preferences pages are available from the account menu at `/profi
 
 The plans page is available at `/plans` to signed-in and signed-out visitors. Its one-time upgrade button only shows an informational message; payment and Stripe checkout are not connected.
 
-The contact form is available at `/contact` and is frontend-only. It validates the required email and message fields but does not send or store messages. Set the public `VITE_TURNSTILE_SITE_KEY` to display Turnstile; the widget stays hidden when no site key is configured. The honeypot and widget token are only frontend preparation until Symfony verifies submissions server-side. Keep the Turnstile secret in backend configuration, never in Vite environment variables.
+The contact form is available at `/contact`. It posts the email, message, honeypot, and Turnstile token to `POST /api/contact`; Symfony verifies the token with Cloudflare Siteverify and rate-limits submissions. The backend's Symfony HttpClient dependency is installed with the normal Composer install and makes the Siteverify request. Set `VITE_TURNSTILE_SITE_KEY` for the frontend and `TURNSTILE_SECRET_KEY` in the backend environment. Optionally set `TURNSTILE_ALLOWED_HOSTNAMES` to a comma-separated hostname allowlist; when set, the hostname returned by Cloudflare must match. Set `CONTACT_RECIPIENT` in the backend environment to the mailbox that should receive contact messages. Delivery uses the configured `MAILER_DSN`; the sender is `noreply@valutir.com` and the submitter's address is set as Reply-To. Keep the Turnstile secret out of Vite variables.
 
 Use an `Authorization: Bearer <token>` header for authenticated requests. `GET /health` is available for service health checks.
 

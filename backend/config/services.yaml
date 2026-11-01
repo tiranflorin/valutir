@@ -9,6 +9,12 @@
 parameters:
     frontend_url_default: 'http://localhost:5173'
     frontend_url: '%env(default:frontend_url_default:FRONTEND_URL)%'
+    turnstile_secret_default: ''
+    turnstile_secret: '%env(default:turnstile_secret_default:TURNSTILE_SECRET_KEY)%'
+    turnstile_allowed_hostnames_default: ''
+    turnstile_allowed_hostnames: '%env(default:turnstile_allowed_hostnames_default:TURNSTILE_ALLOWED_HOSTNAMES)%'
+    contact_recipient_default: ''
+    contact_recipient: '%env(default:contact_recipient_default:CONTACT_RECIPIENT)%'
 
 services:
     # default configuration for services in *this* file

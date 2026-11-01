@@ -3,6 +3,7 @@ import { Alert, Box, Button, Container, Paper, Stack, TextField } from '@mui/mat
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import TurnstileWidget from '../components/TurnstileWidget';
+import { submitContactForm } from '../services/contact';
 import './RecurringScreens.css';
 import './ContactPage.css';
 
@@ -15,6 +16,8 @@ const ContactPage: React.FC = () => {
     const [turnstileToken, setTurnstileToken] = useState('');
     const [notice, setNotice] = useState('');
     const [verificationError, setVerificationError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [widgetKey, setWidgetKey] = useState(0);
 
     const handleTokenChange = useCallback((token: string) => {
         setTurnstileToken(token);
@@ -24,19 +27,37 @@ const ContactPage: React.FC = () => {
         setVerificationError(error);
     }, []);
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setNotice('');
+        setVerificationError('');
 
         if (honeypot.trim()) return;
-        if (turnstileSiteKey && !turnstileToken) {
+        if (!turnstileSiteKey) {
+            setVerificationError('Bot verification is not configured. Your message was not sent.');
+            return;
+        }
+        if (!turnstileToken) {
             setVerificationError('Complete the bot verification before continuing.');
             return;
         }
 
-        setNotice(turnstileToken
-            ? 'Verification is ready, but message sending is not connected yet. Your message has not been sent.'
-            : 'Message sending and bot verification are not configured yet. Your message has not been sent.');
+        setIsSubmitting(true);
+        try {
+            const result = await submitContactForm({
+                email,
+                message,
+                website: honeypot,
+                turnstileToken,
+            });
+            setNotice(result.message);
+        } catch (error) {
+            setVerificationError(error instanceof Error ? error.message : 'Could not verify your message. Please try again.');
+        } finally {
+            setTurnstileToken('');
+            setWidgetKey((key) => key + 1);
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -89,6 +110,7 @@ const ContactPage: React.FC = () => {
                             </Box>
                             {turnstileSiteKey ? (
                                 <TurnstileWidget
+                                    key={widgetKey}
                                     siteKey={turnstileSiteKey}
                                     onTokenChange={handleTokenChange}
                                     onError={handleVerificationError}
@@ -101,7 +123,7 @@ const ContactPage: React.FC = () => {
                             {verificationError && <Alert severity="error" role="alert">{verificationError}</Alert>}
                             {notice && <Alert severity="info" role="status">{notice}</Alert>}
                             <Box className="settings-save-row">
-                                <Button type="submit" variant="contained">
+                                <Button type="submit" variant="contained" disabled={isSubmitting}>
                                     Send message
                                 </Button>
                             </Box>

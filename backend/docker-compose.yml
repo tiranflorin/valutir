@@ -35,6 +35,9 @@ services:
             JWT_PASSPHRASE: ${JWT_PASSPHRASE}
             APP_DEBUG: "1"
             MAILER_DSN: smtp://maildev:1025
+            CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
+            TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+            TURNSTILE_ALLOWED_HOSTNAMES: ${TURNSTILE_ALLOWED_HOSTNAMES:-}
             PHP_IDE_CONFIG: ${PHP_IDE_CONFIG:-serverName=valutir-backend}
         volumes:
             - .:/var/www/html
