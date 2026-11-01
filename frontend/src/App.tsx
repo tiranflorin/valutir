@@ -20,6 +20,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
+    const newPasswordPage = isAuthenticated ? <Navigate to="/my-subs" replace /> : <NewPasswordPage />;
 
     return (
         <Routes>
@@ -54,9 +55,12 @@ const AppRoutes: React.FC = () => {
 
             <Route
                 path="/new-password"
-                element={
-                    isAuthenticated ? <Navigate to="/my-subs" replace /> : <NewPasswordPage />
-                }
+                element={newPasswordPage}
+            />
+
+            <Route
+                path="/reset-password"
+                element={newPasswordPage}
             />
 
             <Route

@@ -1,5 +1,14 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
+    rate_limiter:
+        password_reset_request:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+        password_reset_submit:
+            policy: fixed_window
+            limit: 10
+            interval: '15 minutes'
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.

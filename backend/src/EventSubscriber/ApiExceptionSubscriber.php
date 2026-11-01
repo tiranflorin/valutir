@@ -39,6 +39,7 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $exception = $event->getThrowable();
         $user = $this->security->getUser();
+        $isSensitiveRoute = (bool) preg_match('~^/api/(login_check|profile/password|reset-password(?:/|$))~', $request->getPathInfo());
 
         $headers = $request->headers->all();
         if (isset($headers['authorization'])) {
@@ -61,7 +62,7 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
             };
 
             $content = json_encode($redactSensitiveValues($decodedContent)) ?: '[REDACTED]';
-        } elseif (preg_match('~^/api/(login_check|profile/password|reset-password(?:/|$))~', $request->getPathInfo())) {
+        } elseif ($isSensitiveRoute) {
             $content = '[REDACTED sensitive request body]';
         }
 
@@ -71,15 +72,15 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $context = [
             'exception_class' => $exception::class,
-            'exception_message' => $exception->getMessage(),
+            'exception_message' => $isSensitiveRoute ? '[REDACTED sensitive exception details]' : $exception->getMessage(),
             'exception_code' => $exception->getCode(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
-            'trace' => $exception->getTraceAsString(),
+            'trace' => $isSensitiveRoute ? '[Omitted for sensitive route]' : $exception->getTraceAsString(),
             'route' => $request->attributes->get('_route'),
             'method' => $request->getMethod(),
             'path' => $request->getPathInfo(),
-            'query' => $request->query->all(),
+            'query' => $isSensitiveRoute ? '[REDACTED]' : $request->query->all(),
             'request_body' => $content,
             'headers' => $headers,
             'client_ip' => $request->getClientIp(),

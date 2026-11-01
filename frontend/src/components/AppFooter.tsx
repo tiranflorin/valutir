@@ -21,7 +21,7 @@ const AppFooter: React.FC = () => {
                     )}
                 </nav>
                 <div className="site-footer-registration">
-                    <span>® </span>
+                    <span>&copy; </span>
                     <a href="https://techdivision.eu/" target="_blank" rel="noreferrer">TechDivision</a>
                 </div>
             </div>

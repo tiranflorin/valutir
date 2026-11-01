@@ -63,7 +63,7 @@ Public endpoints:
 - `POST /api/register`
 - `POST /api/login_check`
 
-Password-reset routes exist but are not yet functional: reset tokens are not persisted or validated, and submitting a new password does not update the account.
+Password reset uses a random, single-use token whose SHA-256 hash is stored for one hour. A successful reset updates the password through Symfony's password hasher and consumes the token. Requests are rate limited by client IP. Set `FRONTEND_URL` in deployed environments so reset emails link to the correct frontend; it defaults to `http://localhost:5173` for local development. Apply the new Doctrine migration before using the flow. Symfony's RateLimiter component backs reset and login throttling.
 
 Authenticated account endpoint:
 
