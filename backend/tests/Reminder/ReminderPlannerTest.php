@@ -33,6 +33,12 @@ final class ReminderPlannerTest extends TestCase
         self::assertSame([0, 1, 3, 7], array_map(static fn (DueReminder $r): int => $r->daysUntil, $due));
     }
 
+    public function testSkipsUnsupportedCadencesLeftInOlderData(): void
+    {
+        // "daily" is no longer accepted, but rows saved before then may still hold it.
+        self::assertSame([], $this->plan([$this->subscription(1, 'Legacy daily', 'daily', self::TODAY)]));
+    }
+
     public function testUsesTheRealNextChargeWhenTheStoredDateIsStale(): void
     {
         // Stored 21 Jul, monthly: the next charge is 21 Nov (19 days away) - not due, and never "21 Jul".

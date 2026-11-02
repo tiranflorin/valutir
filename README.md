@@ -1,6 +1,6 @@
 # ValuTir
 
-ValuTir is a subscription tracker with a Symfony JSON API and a React single-page application. Track subscriptions, their billing cycles, and upcoming renewal dates in a calendar.
+ValuTir is a subscription tracker with a Symfony JSON API and a React single-page application. Track subscriptions, what they really cost you, and when they renew, and get an email before each payment.
 
 ## Stack
 
@@ -10,23 +10,38 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 ## Current capabilities
 
-- Account registration and JWT login
-- User-scoped subscription create, read, update, and soft-delete operations (soft-deleted subscriptions are kept in the database but hidden from the API)
-- Subscription fields for amount, currency, cadence, category, payment method, status, dates, notes, trial details, and a `b2b` business classification
-- Personal and business dashboard views, with a business toggle on subscription create and edit forms
-- Protected Profile and Preferences pages, including authenticated password changes and a saved default currency for new subscriptions
-- Calendar month view with recurring events and filters, plus a selected-day page for scheduled payments with a direct return to the highlighted calendar date
-- Plans page describing free tracking and the proposed one-time unlock; the upgrade action is a mock and does not start checkout
-- Contact page with server-verified Cloudflare Turnstile, a honeypot, and email delivery
+**Accounts and security**
+- Registration with validated email, name, and password (8+ characters plus two of uppercase, number, or symbol), rate limited, and without revealing whether an email is already registered. Emails are case-insensitive.
+- JWT sign-in with login throttling; sign out of this device or all devices (revoked tokens are rejected server-side).
+- Password reset by emailed one-hour link; changing or resetting the password signs out other devices.
+- Profile page: change name, change email (confirmed by a link sent to the new address), change password, sign out everywhere, and permanently delete the account and its data.
+- Preferences page: default currency for new subscriptions, payment reminders on or off, and time zone. All stored on the account.
 
-The dashboard defaults to Personal. Creating a subscription from the Business view preselects the business classification; editing keeps a saved business classification, and the Business view also preselects it for the edit form.
+**Subscriptions**
+- Create, read, update, cancel, re-enable, and soft-delete (deleted subscriptions stay in the database but are hidden from the API).
+- Amount, currency, cadence (weekly, monthly, quarterly, or yearly), category, payment method, status (active, trial, other), dates, notes, trial end date, auto-renew, and Personal or Business classification.
+- Household sharing for personal subscriptions: split a bill equally between 2–10 people and see your share.
+- Next billing and first-charge dates can't be in the past; a provider cancellation date can't be in the future.
+
+**Dashboard and calendar**
+- Personal and Business views (Business is a filter on the classification), each with cost and count cards, "Needs attention" trials and renewals, **My subscriptions**, and a separate **Cancelled** section, with filters and sorting.
+- Personal view: a SHARED tag, a Shared filter, a household metric, and a **Full bills / My share** switch for the cost totals.
+- Calendar month view with recurring charges and filters, plus a selected-day page.
+
+**Reminders**
+- At most one email a day per user, and only on days when a payment needs attention (a trial ending or a renewal coming up). Sent after 01:00 in their time zone, with one-click unsubscribe. See [Scheduled commands](#scheduled-commands).
+
+**Other pages**
+- Plans page describing free tracking and the proposed one-time unlock (the upgrade is a mock and doesn't start checkout).
+- Contact page with server-verified Cloudflare Turnstile, a honeypot, and email delivery.
 
 ## Local development
 
-Prerequisites: Docker Desktop (or Docker Engine with Compose). The backend requires local environment values for the database password and JWT passphrase, plus JWT key files; keep these values and keys out of version control.
+Prerequisites: Docker Desktop (or Docker Engine with Compose). Create `backend/.env` from `backend/.env.sample` and `frontend/.env` from `frontend/.env.dist`, fill in your own values, and generate the JWT key pair. Keep these files and keys out of version control.
 
 ```bash
 docker compose up -d --build
+docker compose exec backend php bin/console lexik:jwt:generate-keypair --skip-if-exists
 docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
@@ -46,49 +61,51 @@ Useful commands:
 docker compose logs -f backend
 docker compose logs -f frontend
 
-# Backend tests
+# Backend tests and code style
 docker compose exec backend php vendor/bin/phpunit
+docker compose exec backend vendor/bin/php-cs-fixer fix --dry-run --diff
 
-# Frontend checks
-docker compose run --rm frontend-test npm run test:run
+# Frontend checks (all four run in CI)
 docker compose run --rm frontend-test npm run type-check
 docker compose run --rm frontend-test npm run lint
+docker compose run --rm frontend-test npm run test:run
 docker compose run --rm frontend-test npm run build
+
+# After changing frontend dependencies, refresh the test container's node_modules volume
+docker compose up -d --build --renew-anon-volumes frontend-test
 ```
+
+## Configuration
+
+Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist`. Never commit real values.
+
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL`, `DB_PASSWORD` | backend | PostgreSQL connection |
+| `APP_SECRET` | backend | Symfony secret (also signs reminder unsubscribe links) |
+| `JWT_SECRET_KEY`, `JWT_PUBLIC_KEY`, `JWT_PASSPHRASE` | backend | JWT key pair and its passphrase |
+| `MAILER_DSN` | backend | Email transport (MailDev locally, Amazon SES in production) |
+| `FRONTEND_URL` | backend | The app's origin (`scheme://host[:port]`, no trailing slash): base URL for links in emails and the only CORS-allowed origin |
+| `DEFAULT_URI` | backend | The API's public URL, used for URLs built in console commands (one-click unsubscribe) |
+| `CONTACT_RECIPIENT` | backend | Mailbox for contact-form messages |
+| `TURNSTILE_SECRET_KEY`, `TURNSTILE_ALLOWED_HOSTNAMES` | backend | Cloudflare Turnstile verification |
+| `VITE_API_URL` | frontend | API base URL; required for builds (Docker build argument in production) |
+| `VITE_TURNSTILE_SITE_KEY` | frontend | Cloudflare Turnstile site key (public) |
 
 ## API
 
-Public endpoints:
+Send `Authorization: Bearer <token>` with authenticated requests. Errors are always JSON; validation failures return 422 with per-field `errors`.
 
-- `POST /api/register`
-- `POST /api/login_check`
-- `POST /api/contact`
+- **Public:** `POST /api/register`, `POST /api/login_check`, `POST /api/contact`, `POST /api/reset-password/request`, `POST /api/reset-password/new`, `POST /api/profile/email/confirm` (link token), `POST /api/reminders/unsubscribe` (signed link token), and `GET /health`.
+- **Account (authenticated):** `GET`/`PATCH`/`DELETE /api/profile`, `PATCH /api/profile/password`, `POST /api/profile/email`, `POST /api/logout`, `POST /api/logout/all`.
+- **Subscriptions (authenticated, owner only):** `GET`/`POST /api/subs`, `GET`/`PUT`/`PATCH`/`DELETE /api/subs/{id}`. Updates replace every field, so send the full subscription.
 
-Password reset uses a random, single-use token whose SHA-256 hash is stored for one hour. A successful reset updates the password through Symfony's password hasher and consumes the token. Requests are rate limited by client IP. Set `FRONTEND_URL` in deployed environments so reset emails link to the correct frontend; it defaults to `http://localhost:5173` for local development. Apply the new Doctrine migration before using the flow. Symfony's RateLimiter component backs reset and login throttling.
+The full endpoint table with request details is in [AGENTS.md](AGENTS.md#api-endpoints).
 
-Authenticated account endpoint:
-
-- `PATCH /api/profile/password`
-
-Authenticated subscription endpoints:
-
-- `GET`, `POST /api/subs`
-- `GET`, `PUT`, `PATCH`, `DELETE /api/subs/{id}`
-
-The Profile and Preferences pages are available from the account menu at `/profile` and `/preferences`. The default currency is stored in the current browser for the signed-in email and preselected on new subscriptions. Existing subscription amounts remain in their recorded currencies.
-
-The plans page is available at `/plans` to signed-in and signed-out visitors. Its one-time upgrade button only shows an informational message; payment and Stripe checkout are not connected.
-
-The contact form is available at `/contact`. It posts the email, message, honeypot, and Turnstile token to `POST /api/contact`; Symfony verifies the token with Cloudflare Siteverify and rate-limits submissions. The backend's Symfony HttpClient dependency is installed with the normal Composer install and makes the Siteverify request. Set `VITE_TURNSTILE_SITE_KEY` for the frontend and `TURNSTILE_SECRET_KEY` in the backend environment. Optionally set `TURNSTILE_ALLOWED_HOSTNAMES` to a comma-separated hostname allowlist; when set, the hostname returned by Cloudflare must match. Set `CONTACT_RECIPIENT` in the backend environment to the mailbox that should receive contact messages. Delivery uses the configured `MAILER_DSN`; the sender is `noreply@valutir.com` and the submitter's address is set as Reply-To. Keep the Turnstile secret out of Vite variables.
-
-Use an `Authorization: Bearer <token>` header for authenticated requests. `GET /health` is available for service health checks.
-
-## Repository layout
-
-```text
-backend/   Symfony API, Doctrine migrations, and PHPUnit tests
-frontend/  React application, calendar UI, and Vitest tests
-```
+Notes:
+- Password reset and email-change links use random single-use tokens; only their SHA-256 hash is stored. Reset links expire after one hour, email-change links after 24 hours.
+- Registration, password reset, contact, email confirmation, and password-checking account actions are rate limited.
+- The contact form verifies the Turnstile token with Cloudflare server-side and sends the message to `CONTACT_RECIPIENT`, with the sender as Reply-To. Keep the Turnstile secret out of Vite variables.
 
 ## Scheduled commands
 
@@ -100,18 +117,27 @@ docker compose exec backend php bin/console app:reminders:send
 ```
 
 - `app:subscriptions:advance-billing-dates` moves a past `nextBillingDate` of an auto-renewing subscription to its next charge on or after the owner's local today, and turns a trial whose end date has passed into an active subscription. Cancelled, "other", deleted, and non-renewing subscriptions are left alone.
-- `app:reminders:send` emails each user (with reminders on) one daily digest of upcoming payments, on the first run after 01:00 in their time zone; later runs that day skip them. A charge is reminded once, from its lead time until the charge day:
+- `app:reminders:send` emails each user (with reminders on) a digest of upcoming payments, on the first run after 01:00 in their time zone; later runs that day skip them. No email goes out on a day with nothing new to remind, and a charge is reminded once, from its lead time until the charge day:
 
   | Reminder | Sent |
   |---|---|
   | Trial ending | 2 days before the trial ends |
-  | Renewal, daily or weekly | 1 day before |
+  | Renewal, weekly | 1 day before |
   | Renewal, monthly | 3 days before |
   | Renewal, quarterly or yearly | 7 days before |
 
   It exits with a failure status when a digest can't be sent; that user is retried on the next run.
 
 Charge dates are counted from the stored date: monthly from 31 Jan gives 28 Feb, then 31 Mar (the calendar uses the same rule). Each user's time zone is set in Preferences and defaults to `Europe/Berlin` (Frankfurt, AWS eu-central-1). Servers and the database stay on UTC. Users turn reminders off in Preferences or with the one-click link in every reminder email.
+
+## Repository layout
+
+```text
+backend/   Symfony API, console commands, Doctrine migrations, and PHPUnit tests
+frontend/  React application, calendar UI, and Vitest tests
+```
+
+Coding and security conventions for contributors (and AI agents) are in [AGENTS.md](AGENTS.md).
 
 ## Paid plan
 
@@ -124,20 +150,14 @@ Ideas for the paid plan (pricing and checkout are still a mock, see Status & TOD
 ### Product and data ideas
 
 - Support manual entries first, then consider receipt/email import or bank-transaction sync with recurring-payment detection.
-- Enrich a subscription with provider grouping, source, confidence, merchant name, shared-household flag, and a user-confirmed usage signal.
-- Normalize weekly, monthly, quarterly, and yearly prices into monthly and annual totals.
+- Enrich a subscription with provider grouping, source, confidence, merchant name, and a user-confirmed usage signal.
 - Present savings suggestions as estimates: potential duplicate services, a known cheaper annual option, or subscriptions the user has not recently confirmed as useful.
 
 ### Calendar roadmap
 
-- Add month, week, day, and agenda views.
+- Add week, day, and agenda views.
 - Add an upcoming 30/60/90-day timeline with service, amount, currency, category, and status.
 - Polish empty/loading states, status-colored event chips, mobile layouts, and selected-day details.
-
-### Engineering ideas
-
-- Expand test coverage.
-- Update the CI workflows for backend tests and frontend checks.
 
 ## Status & TODO
 
@@ -145,27 +165,31 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ### Correctness and reliability
 
-1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 112 backend and 54 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
+1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 115 backend and 54 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
 2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see Scheduled commands) but nothing schedules them in production yet:
    - Schedule both commands hourly, `advance-billing-dates` first, for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
    - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
-   - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's URL (links in the email).
+   - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's origin (links in the email, and CORS).
    - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.
+3. **The "Other" status is undefined.** The subscription form shows users a warning ending in "(TODO)": *"Other" is treated as partially active in the current flow.* Whether an "Other" subscription is charged, reminded, or counted in totals has never been decided; the reminder and billing-date commands currently skip it. Decide what it means, or remove it.
+4. **Small date rules still open:** "Re-enabled from" on the re-enable form has no limits, and a provider cancellation date can be earlier than the subscription's start date.
 
 ### Security and operations
 
-3. **The committed backend CI env file contains a JWT passphrase.** Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
-4. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
-5. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
-6. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
+5. **A JWT passphrase was committed.** It's in the backend CI env file and was in `backend/.env.sample` (now a placeholder) and remains in git history. Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
+6. **Dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high), and `composer audit` hasn't been run (AGENTS.md asks for it before releases). Apply safe updates and list anything that needs a major upgrade.
+7. **The dev admin command hard-codes a password** and prints it to the console (`app:create-admin`). Read it from a prompt or option instead.
+8. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
+9. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
+10. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
 
 ### Product gaps and mocks
 
-7. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
-8. **The Business view is only a filter** on the `b2b` flag (no business account or team).
-9. **No account data export** before deletion.
-10. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
-11. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
-12. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.
+11. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
+12. **The Business view is only a filter** on the `b2b` flag (no business account or team).
+13. **No account data export** before deletion.
+14. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
+15. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
+16. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.

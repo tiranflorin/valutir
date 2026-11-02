@@ -6,7 +6,6 @@ export const TRIAL_REMINDER_LEAD_DAYS = 2;
 
 export const renewalReminderLeadDays = (cadence: string): number => {
     switch (cadence) {
-        case 'daily':
         case 'weekly':
             return 1;
         case 'monthly':

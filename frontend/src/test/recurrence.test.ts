@@ -21,10 +21,6 @@ describe('calendar recurrence', () => {
         expect(dates('yearly', '2024-02-29', '2024-01-01', '2029-01-01')).toEqual(['2024-02-29', '2025-02-28', '2026-02-28', '2027-02-28', '2028-02-29']);
     });
 
-    it('supports daily subscriptions (they used to freeze the calendar in an endless loop)', () => {
-        expect(dates('daily', '2026-11-01', '2026-11-01', '2026-11-04')).toEqual(['2026-11-01', '2026-11-02', '2026-11-03']);
-    });
-
     it('starts from the stored date and only returns charges inside the range', () => {
         expect(dates('weekly', '2026-10-01', '2026-11-01', '2026-11-16')).toEqual(['2026-11-05', '2026-11-12']);
         expect(dates('quarterly', '2026-01-15', '2026-03-01', '2027-01-01')).toEqual(['2026-04-15', '2026-07-15', '2026-10-15']);

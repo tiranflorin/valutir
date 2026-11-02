@@ -39,8 +39,6 @@ export const chargeDate = (
     n: number
 ): Date | null => {
     switch (frequency) {
-        case 'daily':
-            return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + n);
         case 'weekly':
             return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 7 * n);
         case 'monthly':

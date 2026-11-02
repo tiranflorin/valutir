@@ -81,8 +81,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | `DELETE /api/subs/{id}` | Soft-delete; body requires boolean `usedAndUseful` |
 
 - Subscription payloads are deserialized into `SubscriptionUpsertRequest`, validated, then mapped by `SubscriptionService`.
-- Supported backend billing cadences are `daily`, `weekly`, `monthly`, `quarterly`, and `yearly`.
-- CORS is configured for the Vite development origin: `http://localhost:5173`.
+- Supported billing cadences are `weekly`, `monthly`, `quarterly`, and `yearly` (frontend form, API validation, `BillingSchedule::CADENCES`). Rows saved earlier may still hold `daily`; the scheduled commands skip unknown cadences.
+- CORS allows only the `FRONTEND_URL` origin (`%frontend_url%`, default `http://localhost:5173`); the same parameter builds links in emails, so keep it an origin without a path or trailing slash.
 - Account endpoints that check the current password are limited to 5 failed attempts per 15 minutes per user; responses never reveal whether another email is registered.
 
 ## Frontend
@@ -111,7 +111,7 @@ Local services:
 - MailDev inbox: `http://localhost:1080`
 - PostgreSQL: `localhost:5432`
 
-The current Docker configuration uses port `5173` for Vite; references to port `3000` in the README are stale.
+The current Docker configuration uses port `5173` for Vite.
 
 Optional development admin:
 

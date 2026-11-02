@@ -56,7 +56,6 @@ const billAmount = (subscription: Subscription, mode: AmountMode = 'full') => {
 const monthlyEquivalent = (subscription: Subscription, mode: AmountMode = 'full') => {
     const amount = billAmount(subscription, mode);
     switch (subscription.billingCadence.toLowerCase()) {
-        case 'daily': return amount * 365 / 12;
         case 'weekly': return amount * 52 / 12;
         case 'quarterly': return amount / 3;
         case 'yearly': return amount / 12;

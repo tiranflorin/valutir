@@ -23,7 +23,6 @@ final class BillingScheduleTest extends TestCase
         yield 'yearly a year later' => ['2026-07-23', 'yearly', '2026-11-02', '2027-07-23'];
         yield 'quarterly' => ['2026-01-15', 'quarterly', '2026-11-02', '2027-01-15'];
         yield 'weekly' => ['2026-10-01', 'weekly', '2026-11-02', '2026-11-05'];
-        yield 'daily' => ['2026-10-01', 'daily', '2026-11-02', '2026-11-02'];
         yield 'month end clamps to February' => ['2026-01-31', 'monthly', '2026-02-01', '2026-02-28'];
         yield 'month end returns to the 31st after February' => ['2026-01-31', 'monthly', '2026-03-01', '2026-03-31'];
         yield 'leap day yearly clamps to 28 Feb' => ['2024-02-29', 'yearly', '2025-01-01', '2025-02-28'];

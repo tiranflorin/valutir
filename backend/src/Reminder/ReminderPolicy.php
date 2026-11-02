@@ -15,7 +15,7 @@ final class ReminderPolicy
     public static function renewalLeadDays(string $cadence): int
     {
         return match ($cadence) {
-            'daily', 'weekly' => 1,
+            'weekly' => 1,
             'monthly' => 3,
             default => 7, // quarterly, yearly
         };

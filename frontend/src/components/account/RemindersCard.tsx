@@ -67,8 +67,9 @@ const RemindersCard: React.FC = () => {
             <div className="settings-section-heading">
                 <h2>Payment reminders</h2>
                 <p>
-                    One email a day, shortly after 1:00 at night in your time zone, listing payments coming up:
-                    2 days before a trial ends, and 1 to 7 days before a renewal depending on how often it bills.
+                    An email only on days when a payment needs your attention, shortly after 1:00 at night in your
+                    time zone: 2 days before a trial ends, and 1 to 7 days before a renewal depending on how often it
+                    bills. Each payment is reminded once.
                 </p>
             </div>
 

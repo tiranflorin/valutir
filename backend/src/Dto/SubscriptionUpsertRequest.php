@@ -22,7 +22,7 @@ final class SubscriptionUpsertRequest
     public ?string $currency = null;
 
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])]
+    #[Assert\Choice(choices: ['weekly', 'monthly', 'quarterly', 'yearly'])]
     public ?string $billingCadence = null;
 
     #[Assert\Length(max: 100)]

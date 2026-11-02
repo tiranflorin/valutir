@@ -40,7 +40,7 @@ class Subscription
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])]
+    #[Assert\Choice(choices: ['weekly', 'monthly', 'quarterly', 'yearly'])]
     private ?string $billingCadence = null;
 
     #[ORM\Column(length: 20)]

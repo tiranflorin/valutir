@@ -13,7 +13,7 @@ namespace App\Billing;
  */
 final class BillingSchedule
 {
-    public const array CADENCES = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
+    public const array CADENCES = ['weekly', 'monthly', 'quarterly', 'yearly'];
 
     /**
      * The first charge on or after $day. Days are midnight-UTC calendar days (see CalendarDay).
@@ -42,7 +42,6 @@ final class BillingSchedule
     public function charge(\DateTimeImmutable $anchor, string $cadence, int $n): \DateTimeImmutable
     {
         return match ($cadence) {
-            'daily' => $anchor->modify(sprintf('+%d days', $n)),
             'weekly' => $anchor->modify(sprintf('+%d days', 7 * $n)),
             'monthly' => $this->addMonthsClamped($anchor, $n),
             'quarterly' => $this->addMonthsClamped($anchor, 3 * $n),
@@ -67,7 +66,6 @@ final class BillingSchedule
         $days = (int) $anchor->diff($day)->days;
 
         return match ($cadence) {
-            'daily' => $days,
             'weekly' => intdiv($days, 7),
             'monthly' => intdiv($days, 31),
             'quarterly' => intdiv($days, 92),

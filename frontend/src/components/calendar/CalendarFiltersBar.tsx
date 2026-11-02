@@ -28,7 +28,6 @@ interface CalendarFiltersBarProps {
 
 const statuses: BackendSubscriptionStatus[] = ['active', 'trial', 'cancelled', 'other'];
 const billingCadences: SubscriptionBillingFrequency[] = [
-    'daily',
     'weekly',
     'monthly',
     'quarterly',
