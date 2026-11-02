@@ -1,4 +1,4 @@
-import { VITE_API_URL } from './auth';
+import { API_URL } from '../config';
 
 export type DefaultCurrency = 'EUR' | 'USD' | 'RON';
 
@@ -47,7 +47,7 @@ const errorMessage = (data: unknown, fallback: string): string => {
 };
 
 async function apiRequest<T>(path: string, { method = 'GET', token, body, fallbackError }: RequestOptions): Promise<T> {
-    const response = await fetch(`${VITE_API_URL}${path}`, {
+    const response = await fetch(`${API_URL}${path}`, {
         method,
         headers: {
             'Content-Type': 'application/json',

@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.*.local)",
+      "Read(**/.env.dev)",
+      "Read(**/.env.ci)",
+      "Read(**/.env.test)",
+      "Read(**/.env.prod)",
+      "Read(**/.env.production)",
+      "Read(**/.env.staging)",
+      "Read(**/config/jwt/*.pem)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.*.local)",
+      "Edit(**/config/jwt/*.pem)",
+      "Bash(printenv*)",
+      "Bash(docker compose config*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Edit|Write|NotebookEdit|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-env-secrets.py\"",
+            "timeout": 10,
+            "onFailure": "block",
+            "statusMessage": "Checking for secret access"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,5 @@
+import { API_URL } from '../config';
 import type { DefaultCurrency } from './account';
-
-export const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 export type LoginPayload = {
     email: string;
@@ -23,7 +22,7 @@ export type AuthUser = {
 };
 
 export async function loginRequest(payload: LoginPayload) {
-    const response = await fetch(`${VITE_API_URL}/api/login_check`, {
+    const response = await fetch(`${API_URL}/api/login_check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -42,7 +41,7 @@ export async function loginRequest(payload: LoginPayload) {
 }
 
 export async function registerRequest(payload: RegisterPayload) {
-    const response = await fetch(`${VITE_API_URL}/api/register`, {
+    const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -62,7 +61,7 @@ export async function registerRequest(payload: RegisterPayload) {
 }
 
 export async function requestPasswordReset(email: string) {
-    const response = await fetch(`${VITE_API_URL}/api/reset-password/request`, {
+    const response = await fetch(`${API_URL}/api/reset-password/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -78,7 +77,7 @@ export async function requestPasswordReset(email: string) {
 }
 
 export async function submitNewPassword(token: string, newPassword: string) {
-    const response = await fetch(`${VITE_API_URL}/api/reset-password/new`, {
+    const response = await fetch(`${API_URL}/api/reset-password/new`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword }),

@@ -14,7 +14,7 @@ import {
     Typography,
 } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import { VITE_API_URL } from '../../services/auth';
+import { API_URL } from '../../config';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -69,7 +69,7 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                 trialEndsAt: subscription.trialEndsAt ?? null,
             };
 
-            const response = await fetch(`${VITE_API_URL}/api/subs/${subscription.id}`, {
+            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

@@ -13,6 +13,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# Vite inlines these at build time: docker build --build-arg VITE_API_URL=https://api.example.com
+ARG VITE_API_URL
+ARG VITE_TURNSTILE_SITE_KEY
 RUN npm run build
 
 # Prod stage

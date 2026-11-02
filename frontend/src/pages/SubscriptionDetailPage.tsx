@@ -11,7 +11,7 @@ import SubscriptionHeaderCard, { type SubscriptionCardModel } from '../component
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
 import SubscriptionReenableCard from '../components/subscription-detail/SubscriptionReenableCard';
 import { useAuth } from '../context/AuthContext';
-import { VITE_API_URL } from '../services/auth';
+import { API_URL } from '../config';
 
 const SubscriptionDetailPage: React.FC = () => {
     const navigate = useNavigate();
@@ -42,7 +42,7 @@ const SubscriptionDetailPage: React.FC = () => {
                 setLoading(true);
                 setError('');
 
-                const response = await fetch(`${VITE_API_URL}/api/subs/${subscriptionId}`, {
+                const response = await fetch(`${API_URL}/api/subs/${subscriptionId}`, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,

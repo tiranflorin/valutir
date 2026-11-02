@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import AppSurfaceCard from '../AppSurfaceCard';
-import { VITE_API_URL } from '../../services/auth';
+import { API_URL } from '../../config';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -52,7 +52,7 @@ const SubscriptionReenableCard: React.FC<Props> = ({
             setSaving(true);
             setError('');
 
-            const response = await fetch(`${VITE_API_URL}/api/subs/${subscription.id}`, {
+            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

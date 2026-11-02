@@ -9,9 +9,9 @@ import SubscriptionFormCard, {
     type SubscriptionFormValues,
     type SubscriptionStatus,
 } from '../components/subscription-form/SubscriptionFormCard';
+import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const AddSubscriptionPage: React.FC = () => {
     const navigate = useNavigate();
@@ -91,7 +91,7 @@ const AddSubscriptionPage: React.FC = () => {
                 cancelledAt: isOther ? today : null,
             };
 
-            const response = await fetch(`${API_BASE}/api/subs`, {
+            const response = await fetch(`${API_URL}/api/subs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

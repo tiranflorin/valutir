@@ -42,7 +42,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Token revocation: `POST /api/logout` adds the current token to Lexik's blocklist (`cache.app`). Every JWT also carries a `tv` claim matching `User::$tokenVersion`; `TokenVersionListener` rejects mismatches. Call `User::revokeAllTokens()` whenever every session must end (sign out everywhere, password change or reset, email change).
 - Public endpoints: `/api/login*`, `/api/register`, `/api/contact`, `/api/reset-password*`, and `/api/profile/email/confirm`. All other `/api` endpoints require a fully authenticated user.
 - `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, and `ApiExceptionSubscriber` keep API errors JSON-shaped.
-- Do not expose, log, commit, or repeat values from local `.env` files or JWT keys.
+- Do not read, print, grep, expose, log, commit, or repeat values from local `.env` files (`.env`, `.env.local`, `.env.ci`, `.env.dev`, `.env.test`, ...), JWT keys (`config/jwt/*.pem`), or environment dumps (`printenv`, `env`, `docker compose config`, `docker inspect`, `debug:dotenv`). Use the committed templates (`.env.dist`, `.env.sample`) for variable names. For AI agents this is enforced by `.claude/settings.json` and `.claude/hooks/block-env-secrets.py`; treat a block as intended and ask the user instead of working around it.
 
 ### Persistence
 
@@ -85,7 +85,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - React Router defines public home/authentication routes and JWT-protected subscription/calendar routes.
 - `AuthContext` stores the JWT in browser `localStorage` under `valutir_auth_token`, loads the account from `GET /api/profile`, and revokes the token on logout; `ProtectedRoute` redirects unauthenticated users to `/login`. Account API calls live in `services/account.ts`.
 - MUI supplies the UI system. `AppThemeProvider` owns light/dark mode, while `AppHeader` and `AppShell` are shared layout primitives.
-- API calls use `fetch` and attach the JWT bearer token. The usual backend URL is `VITE_API_URL`; note that `AddSubscriptionPage` currently uses `VITE_API_BASE_URL` with a localhost fallback, so keep API URL configuration consistent if modifying that page.
+- API calls use `fetch` and attach the JWT bearer token. Build URLs from `API_URL` in `src/config.ts` (the only place that reads `VITE_API_URL`); never read `import.meta.env` directly in components. Production builds require `VITE_API_URL` (Docker build argument in `frontend/docker/Dockerfile`).
 - The calendar uses FullCalendar. It derives recurring events from subscriptions client-side through `useCalendarEvents` and the recurrence utilities.
 - Keep API contracts aligned with `frontend/src/types/subscription.ts` and the backend DTO/entity serialization.
 

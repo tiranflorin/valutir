@@ -9,7 +9,7 @@ import CalendarFiltersBar from '../components/calendar/CalendarFiltersBar';
 import type { CalendarFilters } from '../components/calendar/CalendarFiltersBar';
 import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
-import { VITE_API_URL } from '../services/auth';
+import { API_URL } from '../config';
 import type { SubscriptionRecord } from '../types/subscription';
 import { useSearchParams } from 'react-router-dom';
 import './CalendarPage.css';
@@ -44,7 +44,7 @@ const CalendarPage: React.FC = () => {
                 setLoading(true);
                 setError('');
 
-                const response = await fetch(`${VITE_API_URL}/api/subs`, {
+                const response = await fetch(`${API_URL}/api/subs`, {
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,

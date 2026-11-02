@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { VITE_API_URL } from '../../services/auth';
+import { API_URL } from '../../config';
 import SubscriptionFormCard, {
     type BillingInterval,
     type SubscriptionFormValues,
@@ -78,7 +78,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
 
             const cancelledAt = isOther ? new Date().toISOString().slice(0, 10) : null;
 
-            const response = await fetch(`${VITE_API_URL}/api/subs/${subscription.id}`, {
+            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

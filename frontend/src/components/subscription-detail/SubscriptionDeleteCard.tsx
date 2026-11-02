@@ -8,7 +8,7 @@ import {
     Paper,
 } from '@mui/material';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { VITE_API_URL } from '../../services/auth';
+import { API_URL } from '../../config';
 
 type Props = {
     subscriptionId: number;
@@ -38,7 +38,7 @@ const SubscriptionDeleteCard: React.FC<Props> = ({
             setDeleting(true);
             setError('');
 
-            const response = await fetch(`${VITE_API_URL}/api/subs/${subscriptionId}`, {
+            const response = await fetch(`${API_URL}/api/subs/${subscriptionId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
