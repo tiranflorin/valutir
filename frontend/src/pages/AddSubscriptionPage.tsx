@@ -10,6 +10,7 @@ import SubscriptionFormCard, {
     type SubscriptionStatus,
 } from '../components/subscription-form/SubscriptionFormCard';
 import { API_URL } from '../config';
+import { isBeforeToday, todayIsoDate } from '../utils/dates';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -67,11 +68,16 @@ const AddSubscriptionPage: React.FC = () => {
             return;
         }
 
+        if (isBeforeToday(values.renewalDate)) {
+            setError(`${billingDateLabel} can't be in the past.`);
+            return;
+        }
+
         try {
             setSubmitting(true);
             setError('');
 
-            const today = new Date().toISOString().slice(0, 10);
+            const today = todayIsoDate();
 
             const payload = {
                 serviceName: values.serviceName.trim(),

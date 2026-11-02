@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { API_URL } from '../../config';
+import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -45,6 +46,14 @@ const SubscriptionCancelCard: React.FC<Props> = ({
         }
         if (!cancellationDate) {
             setError('Enter the date you cancelled with the provider.');
+            return;
+        }
+        if (isAfterToday(cancellationDate)) {
+            setError("The provider cancellation date can't be in the future.");
+            return;
+        }
+        if (accessEndsAt && accessEndsAt < cancellationDate) {
+            setError("Access can't end before the provider cancellation date.");
             return;
         }
 
@@ -142,6 +151,8 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                         value={cancellationDate}
                         onChange={(event) => setCancellationDate(event.target.value)}
                         InputLabelProps={{ shrink: true }}
+                        // You can only have cancelled already: today or earlier.
+                        inputProps={{ max: todayIsoDate() }}
                         fullWidth
                         required
                     />
@@ -151,6 +162,8 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                         value={accessEndsAt}
                         onChange={(event) => setAccessEndsAt(event.target.value)}
                         InputLabelProps={{ shrink: true }}
+                        // Access may run into the future, but can't end before the cancellation.
+                        inputProps={{ min: cancellationDate || undefined }}
                         helperText="Keeps the final access date on this record."
                         fullWidth
                     />

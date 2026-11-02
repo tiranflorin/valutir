@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { todayIsoDate } from '../../utils/dates';
 import {
     Accordion,
     AccordionDetails,
@@ -302,6 +303,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 required
                                 helperText={billingDateHelperText}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ min: todayIsoDate() }}
                                 sx={requiredFieldSx}
                             />
                         </Stack>

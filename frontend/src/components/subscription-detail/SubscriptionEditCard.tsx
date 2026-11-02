@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { API_URL } from '../../config';
+import { isBeforeToday, todayIsoDate } from '../../utils/dates';
 import SubscriptionFormCard, {
     type BillingInterval,
     type SubscriptionFormValues,
@@ -72,11 +73,16 @@ const SubscriptionEditCard: React.FC<Props> = ({
             return;
         }
 
+        if (values.renewalDate && isBeforeToday(values.renewalDate)) {
+            setError(`${isTrial ? 'First charge date' : 'Next billing date'} can't be in the past.`);
+            return;
+        }
+
         try {
             setSaving(true);
             setError('');
 
-            const cancelledAt = isOther ? new Date().toISOString().slice(0, 10) : null;
+            const cancelledAt = isOther ? todayIsoDate() : null;
 
             const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
                 method: 'PATCH',

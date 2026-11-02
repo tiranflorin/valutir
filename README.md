@@ -131,6 +131,6 @@ Fixed items are removed from this list; the git history records what changed. It
 ### Product gaps and mocks
 
 7. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
-8. **The Business view is only a filter** on the `b2b` flag (no business account or team). It still mixes cancelled subscriptions into one list, unlike the personal view, which lists them in their own section at the end.
+8. **The Business view is only a filter** on the `b2b` flag (no business account or team).
 9. **Household sharing is a placeholder** (the "Shared with household" metric and the disabled "Shared" filter chip).
 10. **No account data export** before deletion.

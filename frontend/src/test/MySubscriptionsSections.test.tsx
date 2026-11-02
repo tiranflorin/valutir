@@ -76,4 +76,20 @@ describe('MySubscriptionsPage sections', () => {
         expect(screen.queryByText(/^My subscriptions/)).not.toBeInTheDocument();
         expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Hosting']);
     });
+
+    it('splits the business view the same way', async () => {
+        window.localStorage.setItem('valutir_dashboard_view', 'business');
+        const businessSubscriptions = subscriptions.map((item) => ({ ...item, b2b: true }));
+        vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
+            String(url).endsWith('/api/subs')
+                ? businessSubscriptions
+                : { email: 'ada@example.test', name: 'Ada', defaultCurrency: 'EUR', pendingEmail: null },
+        ), { status: 200 })));
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        expect(await screen.findByRole('heading', { name: 'Business subscriptions' })).toBeInTheDocument();
+        await screen.findByText('My subscriptions · 2');
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Netflix', 'Spotify']);
+        expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Hosting']);
+    });
 });

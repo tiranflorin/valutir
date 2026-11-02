@@ -113,6 +113,105 @@ const statusLabel = (status: string) => {
     }
 };
 
+/** The date a row shows: the cancellation date for cancelled subscriptions, otherwise the next renewal. */
+const displayedDate = (subscription: Subscription) =>
+    isCancelled(subscription) ? subscription.cancelledAt : subscription.nextBillingDate;
+
+type SubscriptionSort = {
+    sortSubscriptions: (items: Subscription[]) => Subscription[];
+    toggleSort: (key: SortKey) => void;
+    sortMarker: (key: SortKey) => string;
+};
+
+const useSubscriptionSort = (): SubscriptionSort => {
+    const [sortKey, setSortKey] = useState<SortKey>('nextBillingDate');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    const sortSubscriptions = useCallback((items: Subscription[]) =>
+        [...items].sort((left, right) => {
+            let comparison = 0;
+            if (sortKey === 'amount') comparison = Number(left.amount) - Number(right.amount);
+            else if (sortKey === 'nextBillingDate') {
+                const leftDate = displayedDate(left);
+                const rightDate = displayedDate(right);
+                const a = leftDate ? new Date(leftDate).getTime() : Number.MAX_SAFE_INTEGER;
+                const b = rightDate ? new Date(rightDate).getTime() : Number.MAX_SAFE_INTEGER;
+                comparison = a - b;
+            } else {
+                const a = sortKey === 'category' ? (left.category || '') : sortKey === 'billingCadence' ? left.billingCadence : statusLabel(left.status);
+                const b = sortKey === 'category' ? (right.category || '') : sortKey === 'billingCadence' ? right.billingCadence : statusLabel(right.status);
+                comparison = a.localeCompare(b);
+            }
+            return sortDirection === 'asc' ? comparison : -comparison;
+        }), [sortKey, sortDirection]);
+
+    const toggleSort = (nextKey: SortKey) => {
+        if (sortKey === nextKey) {
+            setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortKey(nextKey);
+            setSortDirection('asc');
+        }
+    };
+
+    const sortMarker = (key: SortKey) => sortKey === key ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+
+    return { sortSubscriptions, toggleSort, sortMarker };
+};
+
+type SubscriptionSectionsProps = {
+    filter: Filter;
+    /** Non-cancelled subscriptions matching the filter. */
+    activeSubscriptions: Subscription[];
+    cancelledSubscriptions: Subscription[];
+    loading: boolean;
+    sort: SubscriptionSort;
+};
+
+/** "My subscriptions" followed by a separate "Cancelled" section; shared by the personal and business views. */
+const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, sort }) => {
+    const { sortSubscriptions, toggleSort, sortMarker } = sort;
+    const mySubscriptions = useMemo(() => sortSubscriptions(activeSubscriptions), [activeSubscriptions, sortSubscriptions]);
+    const sortedCancelled = useMemo(() => sortSubscriptions(cancelledSubscriptions), [cancelledSubscriptions, sortSubscriptions]);
+    const showMySubscriptions = filter !== 'cancelled';
+    const showCancelledSection = (filter === 'all' || filter === 'cancelled') && cancelledSubscriptions.length > 0;
+
+    return (
+        <>
+            {showMySubscriptions && (
+                <>
+                    <div className="list-labels" id="my-subscriptions">
+                        <strong>My subscriptions · {mySubscriptions.length}</strong>
+                        <span>Category, cost, cadence, next renewal and status</span>
+                    </div>
+                    {loading ? (
+                        <Box sx={{ py: 7, display: 'grid', placeItems: 'center' }}><CircularProgress size={30} /></Box>
+                    ) : mySubscriptions.length === 0 ? (
+                        <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>
+                            {filter === 'all' ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
+                        </Box>
+                    ) : (
+                        <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" onSort={toggleSort} sortMarker={sortMarker} />
+                    )}
+                </>
+            )}
+
+            {!loading && showCancelledSection && (
+                <>
+                    <div className="list-labels" id="cancelled">
+                        <strong>Cancelled · {cancelledSubscriptions.length}</strong>
+                        <span>Kept for your records; no further charges expected</span>
+                    </div>
+                    <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" onSort={toggleSort} sortMarker={sortMarker} />
+                </>
+            )}
+            {!loading && filter === 'cancelled' && cancelledSubscriptions.length === 0 && (
+                <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>No cancelled subscriptions.</Box>
+            )}
+        </>
+    );
+};
+
 type BusinessDashboardProps = {
     subscriptions: Subscription[];
     loading: boolean;
@@ -148,13 +247,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
     ];
     const [filter, setFilter] = useState<Filter>('all');
-    const filteredSubscriptions = useMemo(() => {
+    const sort = useSubscriptionSort();
+    // Cancelled subscriptions are listed in their own section at the end, as in the personal view.
+    const filteredActiveSubscriptions = useMemo(() => {
+        if (filter === 'cancelled') return [];
         if (filter === 'upcoming') return dueSoon;
         if (filter === 'trials') return trialSubscriptions;
-        if (filter === 'review') return subscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other');
-        if (filter === 'cancelled') return cancelledSubscriptions;
-        return subscriptions;
-    }, [filter, dueSoon, trialSubscriptions, cancelledSubscriptions, subscriptions]);
+        if (filter === 'review') return activeSubscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other');
+        return activeSubscriptions;
+    }, [filter, dueSoon, trialSubscriptions, activeSubscriptions]);
 
     return (
         <>
@@ -190,7 +291,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 <Paper className="metric-card">
                     <span className="metric-label">Active business subscriptions</span>
                     <div className="metric-value">{activeSubscriptions.length} <small>including trials</small></div>
-                    <div className="metric-hint">{cancelledSubscriptions.length} cancelled · available in the filter</div>
+                    <div className="metric-hint">{cancelledSubscriptions.length} cancelled · listed at the end</div>
                 </Paper>
             </section>
 
@@ -212,15 +313,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
                     <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review →</RouterLink>
                 </div>)}
-                {loading ? <Box sx={{ py: 4, display: 'grid', placeItems: 'center' }}><CircularProgress size={28} /></Box>
-                    : filteredSubscriptions.length ? <div className="subscriptions-table-wrap"><table className="subscriptions-table">
-                        <thead><tr><th>Service</th><th>Category</th><th>Cost</th><th>Cadence</th><th>Next renewal</th><th>Status</th></tr></thead>
-                        <tbody>{filteredSubscriptions.map((subscription) => {
-                            const status = normalizeStatus(subscription.status);
-                            const statusClass = status === 'trial' ? 'trial' : status === 'cancelled' ? 'cancelled' : status === 'other' ? 'review' : '';
-                            return <tr key={subscription.id}><td><RouterLink className="subscription-row-link" to={`/subscriptions/${subscription.id}`}><span className="service-cell"><img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" /><span className="service-name">{subscription.serviceName}</span></span></RouterLink></td><td>{subscription.category || 'Uncategorized'}</td><td>{formatCurrency(Number(subscription.amount) || 0, subscription.currency)}</td><td>{subscription.billingCadence}</td><td>{formatDate(subscription.nextBillingDate)}</td><td><span className={`status-tag ${statusClass}`}>{statusLabel(subscription.status)}</span></td></tr>;
-                        })}</tbody>
-                    </table></div> : <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>No subscriptions match this filter.</Box>}
+                <SubscriptionSections
+                    filter={filter}
+                    activeSubscriptions={filteredActiveSubscriptions}
+                    cancelledSubscriptions={cancelledSubscriptions}
+                    loading={loading}
+                    sort={sort}
+                />
             </Paper>
         </>
     );
@@ -282,8 +381,6 @@ const MySubscriptionsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<Filter>('all');
-    const [sortKey, setSortKey] = useState<SortKey>('nextBillingDate');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [view, setView] = useState<'personal' | 'business'>(() =>
         window.localStorage.getItem('valutir_dashboard_view') === 'business' ? 'business' : 'personal'
     );
@@ -364,47 +461,14 @@ const MySubscriptionsPage: React.FC = () => {
         [activeSubscriptions]
     );
 
-    const sortSubscriptions = useCallback((items: Subscription[]) =>
-        [...items].sort((left, right) => {
-            let comparison = 0;
-            if (sortKey === 'amount') comparison = Number(left.amount) - Number(right.amount);
-            else if (sortKey === 'nextBillingDate') {
-                const a = left.nextBillingDate ? new Date(left.nextBillingDate).getTime() : Number.MAX_SAFE_INTEGER;
-                const b = right.nextBillingDate ? new Date(right.nextBillingDate).getTime() : Number.MAX_SAFE_INTEGER;
-                comparison = a - b;
-            } else {
-                const a = sortKey === 'category' ? (left.category || '') : sortKey === 'billingCadence' ? left.billingCadence : statusLabel(left.status);
-                const b = sortKey === 'category' ? (right.category || '') : sortKey === 'billingCadence' ? right.billingCadence : statusLabel(right.status);
-                comparison = a.localeCompare(b);
-            }
-            return sortDirection === 'asc' ? comparison : -comparison;
-        }), [sortKey, sortDirection]);
-
+    const sort = useSubscriptionSort();
     // "My subscriptions" never includes cancelled ones; they have their own section at the end.
-    const mySubscriptions = useMemo(() => {
+    const filteredActiveSubscriptions = useMemo(() => {
         if (filter === 'cancelled') return [];
-        if (filter === 'upcoming') return sortSubscriptions(dueSoon);
-        if (filter === 'trials') return sortSubscriptions(trialSubscriptions);
-        return sortSubscriptions(activeSubscriptions);
-    }, [filter, dueSoon, trialSubscriptions, activeSubscriptions, sortSubscriptions]);
-
-    const sortedCancelledSubscriptions = useMemo(
-        () => sortSubscriptions(cancelledSubscriptions),
-        [cancelledSubscriptions, sortSubscriptions]
-    );
-    const showMySubscriptions = filter !== 'cancelled';
-    const showCancelledSection = (filter === 'all' || filter === 'cancelled') && cancelledSubscriptions.length > 0;
-
-    const toggleSort = (nextKey: SortKey) => {
-        if (sortKey === nextKey) {
-            setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(nextKey);
-            setSortDirection('asc');
-        }
-    };
-
-    const sortMarker = (key: SortKey) => sortKey === key ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+        if (filter === 'upcoming') return dueSoon;
+        if (filter === 'trials') return trialSubscriptions;
+        return activeSubscriptions;
+    }, [filter, dueSoon, trialSubscriptions, activeSubscriptions]);
 
     return (
         <Box className="dashboard-page">
@@ -547,46 +611,13 @@ const MySubscriptionsPage: React.FC = () => {
                                 <div className="list-labels"><span>No trials are ending in the next 7 days.</span></div>
                             )}
 
-                            {showMySubscriptions && (
-                                <>
-                                    <div className="list-labels" id="my-subscriptions">
-                                        <strong>My subscriptions · {mySubscriptions.length}</strong>
-                                        <span>Category, cost, cadence, next renewal and status</span>
-                                    </div>
-                                    {loading ? (
-                                        <Box sx={{ py: 7, display: 'grid', placeItems: 'center' }}><CircularProgress size={30} /></Box>
-                                    ) : mySubscriptions.length === 0 ? (
-                                        <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>
-                                            {filter === 'all' ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
-                                        </Box>
-                                    ) : (
-                                        <SubscriptionsTable
-                                            subscriptions={mySubscriptions}
-                                            dateColumnLabel="Next renewal"
-                                            onSort={toggleSort}
-                                            sortMarker={sortMarker}
-                                        />
-                                    )}
-                                </>
-                            )}
-
-                            {!loading && showCancelledSection && (
-                                <>
-                                    <div className="list-labels" id="cancelled">
-                                        <strong>Cancelled · {cancelledSubscriptions.length}</strong>
-                                        <span>Kept for your records; no further charges expected</span>
-                                    </div>
-                                    <SubscriptionsTable
-                                        subscriptions={sortedCancelledSubscriptions}
-                                        dateColumnLabel="Cancelled on"
-                                        onSort={toggleSort}
-                                        sortMarker={sortMarker}
-                                    />
-                                </>
-                            )}
-                            {!loading && filter === 'cancelled' && cancelledSubscriptions.length === 0 && (
-                                <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>No cancelled subscriptions.</Box>
-                            )}
+                            <SubscriptionSections
+                                filter={filter}
+                                activeSubscriptions={filteredActiveSubscriptions}
+                                cancelledSubscriptions={cancelledSubscriptions}
+                                loading={loading}
+                                sort={sort}
+                            />
                             <div className="list-labels"><span>Costs are shown using each subscription’s stored currency. Currency preferences can be added without changing these records.</span></div>
                         </Paper>
                     </>
