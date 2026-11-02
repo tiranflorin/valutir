@@ -1,3 +1,5 @@
+import type { DefaultCurrency } from './account';
+
 export const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 export type LoginPayload = {
@@ -15,6 +17,9 @@ export type AuthUser = {
     email: string;
     name?: string;
     roles?: string[];
+    /** Loaded from GET /api/profile once signed in. */
+    defaultCurrency?: DefaultCurrency;
+    pendingEmail?: string | null;
 };
 
 export async function loginRequest(payload: LoginPayload) {

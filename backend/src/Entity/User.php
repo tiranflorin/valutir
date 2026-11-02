@@ -14,6 +14,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public const string DEFAULT_CURRENCY = 'EUR';
+    public const array SUPPORTED_CURRENCIES = ['EUR', 'USD', 'RON'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -36,6 +39,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+
+    #[ORM\Column(length: 3, options: ['default' => self::DEFAULT_CURRENCY])]
+    private string $defaultCurrency = self::DEFAULT_CURRENCY;
+
+    /**
+     * Embedded in every JWT; bumping it revokes all previously issued tokens.
+     */
+    #[ORM\Column(options: ['default' => 1])]
+    private int $tokenVersion = 1;
 
     public function getId(): ?int
     {
@@ -126,6 +138,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getDefaultCurrency(): string
+    {
+        return $this->defaultCurrency;
+    }
+
+    public function setDefaultCurrency(string $defaultCurrency): static
+    {
+        $this->defaultCurrency = $defaultCurrency;
+
+        return $this;
+    }
+
+    public function getTokenVersion(): int
+    {
+        return $this->tokenVersion;
+    }
+
+    /**
+     * Revokes every JWT issued so far ("sign out everywhere", password and email changes).
+     */
+    public function revokeAllTokens(): static
+    {
+        ++$this->tokenVersion;
 
         return $this;
     }

@@ -39,7 +39,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Symfony Security uses the `User` entity as the identity provider, keyed by email.
 - `POST /api/login_check` authenticates JSON `{ "email", "password" }` and LexikJWTAuthenticationBundle returns a JWT.
 - JWTs are stateless, sent as `Authorization: Bearer <token>`, and have a 24-hour TTL.
-- Public endpoints: `/api/login*`, `/api/register`, and `/api/reset-password*`. All other `/api` endpoints require a fully authenticated user.
+- Token revocation: `POST /api/logout` adds the current token to Lexik's blocklist (`cache.app`). Every JWT also carries a `tv` claim matching `User::$tokenVersion`; `TokenVersionListener` rejects mismatches. Call `User::revokeAllTokens()` whenever every session must end (sign out everywhere, password change or reset, email change).
+- Public endpoints: `/api/login*`, `/api/register`, `/api/contact`, `/api/reset-password*`, and `/api/profile/email/confirm`. All other `/api` endpoints require a fully authenticated user.
 - `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, and `ApiExceptionSubscriber` keep API errors JSON-shaped.
 - Do not expose, log, commit, or repeat values from local `.env` files or JWT keys.
 
@@ -59,7 +60,15 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | `POST /api/register` | Create a user |
 | `POST /api/login_check` | Obtain a JWT |
 | `POST /api/reset-password/request` | Request password-reset email |
-| `POST /api/reset-password/new` | Submit a new password |
+| `POST /api/reset-password/new` | Submit a new password (signs out every device) |
+| `POST /api/logout` | Revoke the current token (this device) |
+| `POST /api/logout/all` | Revoke every token for the user (all devices) |
+| `GET /api/profile` | Current user's email, name, default currency, and pending email change |
+| `PATCH /api/profile` | Update `name` and/or `defaultCurrency` (`EUR`, `USD`, `RON`) |
+| `PATCH /api/profile/password` | Change password (current password required); returns a fresh token and signs out other devices |
+| `POST /api/profile/email` | Start an email change (current password required); emails a confirmation link to the new address |
+| `POST /api/profile/email/confirm` | Public; apply an email change from its link token and sign out every device |
+| `DELETE /api/profile` | Permanently delete the account and its data (current password required) |
 | `GET /api/subs` | List the current user's subscriptions |
 | `POST /api/subs` | Create a subscription |
 | `GET /api/subs/{id}` | Read a user-owned subscription |
@@ -69,12 +78,12 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Subscription payloads are deserialized into `SubscriptionUpsertRequest`, validated, then mapped by `SubscriptionService`.
 - Supported backend billing cadences are `daily`, `weekly`, `monthly`, `quarterly`, and `yearly`.
 - CORS is configured for the Vite development origin: `http://localhost:5173`.
-- The password-reset implementation is incomplete: reset tokens are not persisted or validated, and the new-password endpoint does not change the password. Treat this as an implementation limitation when working in that area.
+- Account endpoints that check the current password are limited to 5 failed attempts per 15 minutes per user; responses never reveal whether another email is registered.
 
 ## Frontend
 
 - React Router defines public home/authentication routes and JWT-protected subscription/calendar routes.
-- `AuthContext` stores the JWT in browser `localStorage` under `valutir_auth_token`; `ProtectedRoute` redirects unauthenticated users to `/login`.
+- `AuthContext` stores the JWT in browser `localStorage` under `valutir_auth_token`, loads the account from `GET /api/profile`, and revokes the token on logout; `ProtectedRoute` redirects unauthenticated users to `/login`. Account API calls live in `services/account.ts`.
 - MUI supplies the UI system. `AppThemeProvider` owns light/dark mode, while `AppHeader` and `AppShell` are shared layout primitives.
 - API calls use `fetch` and attach the JWT bearer token. The usual backend URL is `VITE_API_URL`; note that `AddSubscriptionPage` currently uses `VITE_API_BASE_URL` with a localhost fallback, so keep API URL configuration consistent if modifying that page.
 - The calendar uses FullCalendar. It derives recurring events from subscriptions client-side through `useCalendarEvents` and the recurrence utilities.

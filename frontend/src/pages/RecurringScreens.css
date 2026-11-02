@@ -1774,6 +1774,41 @@ body {
     background: #105a37;
 }
 
+.settings-card.MuiPaper-root + .settings-card.MuiPaper-root {
+    margin-top: 16px;
+}
+
+.settings-card-danger.MuiPaper-root {
+    border-color: #f1d4d1;
+}
+
+.settings-card-danger .settings-section-heading h2 {
+    color: #a3352b;
+}
+
+.settings-save-row .MuiButton-root.MuiButton-containedError {
+    background: #b3372c;
+}
+
+.settings-save-row .MuiButton-root.MuiButton-containedError:hover {
+    background: #962c23;
+}
+
+.settings-save-row .MuiButton-root.MuiButton-outlined {
+    border-color: #cfd9d2;
+    background: transparent;
+    color: #263a2d;
+}
+
+.settings-save-row .MuiButton-root.MuiButton-outlined:hover {
+    background: #f3f6f4;
+}
+
+.settings-save-row .MuiButton-root.Mui-disabled {
+    background: #dfe5e1;
+    color: #8a958e;
+}
+
 .currency-preview {
     display: grid;
     gap: 5px;
@@ -3056,6 +3091,23 @@ body {
 :root[data-theme='dark'] .currency-preview small,
 :root[data-theme='dark'] .currency-preview span {
     color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .settings-card.settings-card-danger.MuiPaper-root {
+    border-color: #5a2a26;
+}
+
+:root[data-theme='dark'] .settings-card-danger .settings-section-heading h2 {
+    color: #f0948a;
+}
+
+:root[data-theme='dark'] .settings-save-row .MuiButton-root.MuiButton-outlined {
+    border-color: #3b4a40;
+    color: #dfe8e2;
+}
+
+:root[data-theme='dark'] .settings-save-row .MuiButton-root.MuiButton-outlined:hover {
+    background: #1f2a23;
 }
 
 :root[data-theme='dark'] .settings-card.MuiPaper-root {

@@ -52,6 +52,8 @@ final readonly class PasswordResetService
 
             $user = $token->getUser();
             $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
+            // A reset usually means the account may be compromised: sign out every device.
+            $user->revokeAllTokens();
             $this->entityManager->remove($token);
 
             return true;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Validator\PasswordPolicy;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class ChangePasswordRequest
@@ -13,6 +14,7 @@ final class ChangePasswordRequest
     public ?string $currentPassword = null;
 
     #[Assert\NotBlank]
-    #[Assert\Length(min: 8, max: 4096)]
+    #[Assert\Length(max: 4096)]
+    #[PasswordPolicy]
     public ?string $newPassword = null;
 }

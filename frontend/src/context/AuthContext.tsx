@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { AuthUser, loginRequest, parseJwt } from '../services/auth';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { loginRequest, parseJwt, type AuthUser } from '../services/auth';
+import { ApiError, fetchProfile, logoutRequest, type AccountProfile } from '../services/account';
 
 type AuthContextValue = {
     user: AuthUser | null;
@@ -7,49 +8,104 @@ type AuthContextValue = {
     isAuthenticated: boolean;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    /** Revokes the current token on the server (best effort) and clears the local session. */
     logout: () => void;
+    /** Clears the local session only, e.g. after the server already invalidated the token. */
+    clearSession: () => void;
+    /** Stores a freshly issued token, e.g. after a password change signed out other devices. */
+    replaceToken: (token: string) => void;
+    /** Applies profile data returned by the API. */
+    applyProfile: (profile: AccountProfile) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'valutir_auth_token';
 
+const mergeProfile = (user: AuthUser | null, profile: AccountProfile): AuthUser => ({
+    ...user,
+    email: profile.email,
+    name: profile.name ?? user?.name,
+    defaultCurrency: profile.defaultCurrency,
+    pendingEmail: profile.pendingEmail,
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(null);
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const storedToken = window.localStorage.getItem(STORAGE_KEY);
-
-        if (storedToken) {
-            const parsedUser = parseJwt(storedToken);
-
-            if (parsedUser) {
-                setToken(storedToken);
-                setUser(parsedUser);
-            } else {
-                window.localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-
-        setLoading(false);
-    }, []);
-
-    const login = async (email: string, password: string) => {
-        const result = await loginRequest({ email, password });
-        const parsedUser = parseJwt(result.token);
-
-        window.localStorage.setItem(STORAGE_KEY, result.token);
-        setToken(result.token);
-        setUser(parsedUser);
-    };
-
-    const logout = () => {
+    const clearSession = useCallback(() => {
         window.localStorage.removeItem(STORAGE_KEY);
         setToken(null);
         setUser(null);
-    };
+    }, []);
+
+    const startSession = useCallback((newToken: string) => {
+        const parsedUser = parseJwt(newToken);
+        if (!parsedUser) {
+            clearSession();
+            return false;
+        }
+        window.localStorage.setItem(STORAGE_KEY, newToken);
+        setToken(newToken);
+        setUser((current) => (current && current.email === parsedUser.email ? { ...parsedUser, ...current } : parsedUser));
+
+        return true;
+    }, [clearSession]);
+
+    useEffect(() => {
+        const storedToken = window.localStorage.getItem(STORAGE_KEY);
+        if (storedToken) {
+            startSession(storedToken);
+        }
+        setLoading(false);
+    }, [startSession]);
+
+    // Load the real account details (name, currency, pending email) for the current token.
+    useEffect(() => {
+        if (!token) {
+            return;
+        }
+        let cancelled = false;
+        fetchProfile(token)
+            .then((profile) => {
+                if (!cancelled) {
+                    setUser((current) => mergeProfile(current, profile));
+                }
+            })
+            .catch((error: unknown) => {
+                // A revoked or expired token: the session is over.
+                if (!cancelled && error instanceof ApiError && error.status === 401) {
+                    clearSession();
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [token, clearSession]);
+
+    const login = useCallback(async (email: string, password: string) => {
+        const result = await loginRequest({ email, password });
+        startSession(result.token);
+    }, [startSession]);
+
+    const logout = useCallback(() => {
+        if (token) {
+            // Fire and forget: the local session ends either way.
+            void logoutRequest(token).catch(() => undefined);
+        }
+        clearSession();
+    }, [token, clearSession]);
+
+    const replaceToken = useCallback((newToken: string) => {
+        startSession(newToken);
+    }, [startSession]);
+
+    const applyProfile = useCallback((profile: AccountProfile) => {
+        setUser((current) => mergeProfile(current, profile));
+    }, []);
 
     const value = useMemo(
         () => ({
@@ -59,8 +115,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             loading,
             login,
             logout,
+            clearSession,
+            replaceToken,
+            applyProfile,
         }),
-        [user, token, loading]
+        [user, token, loading, login, logout, clearSession, replaceToken, applyProfile]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

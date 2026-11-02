@@ -7,6 +7,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import RequestPasswordResetPage from './pages/auth/RequestPasswordResetPage';
 import NewPasswordPage from './pages/auth/NewPasswordPage';
+import ConfirmEmailPage from './pages/auth/ConfirmEmailPage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import AddSubscriptionPage from './pages/AddSubscriptionPage';
@@ -62,6 +63,8 @@ const AppRoutes: React.FC = () => {
                 path="/reset-password"
                 element={newPasswordPage}
             />
+
+            <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
             <Route
                 path="/my-subs"

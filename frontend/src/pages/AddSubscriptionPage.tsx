@@ -10,7 +10,6 @@ import SubscriptionFormCard, {
     type SubscriptionStatus,
 } from '../components/subscription-form/SubscriptionFormCard';
 import { useAuth } from '../context/AuthContext';
-import { getDefaultCurrency } from '../services/preferences';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -21,7 +20,7 @@ const AddSubscriptionPage: React.FC = () => {
     const [values, setValues] = useState<SubscriptionFormValues>({
         serviceName: '',
         amount: '15.99',
-        currency: getDefaultCurrency(user?.email),
+        currency: user?.defaultCurrency ?? 'EUR',
         billingInterval: 'monthly' as BillingInterval,
         renewalDate: '',
         category: 'Entertainment',

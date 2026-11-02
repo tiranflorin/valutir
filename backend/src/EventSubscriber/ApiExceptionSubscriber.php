@@ -41,7 +41,7 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $exception = $event->getThrowable();
         $user = $this->security->getUser();
-        $isSensitiveRoute = (bool) preg_match('~^/api/(login_check|profile/password|reset-password(?:/|$)|contact(?:/|$))~', $request->getPathInfo());
+        $isSensitiveRoute = (bool) preg_match('~^/api/(login_check|logout|profile|reset-password(?:/|$)|contact(?:/|$))~', $request->getPathInfo());
 
         $headers = $request->headers->all();
         if (isset($headers['authorization'])) {
