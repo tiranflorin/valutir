@@ -22,7 +22,7 @@ const CalendarPage: React.FC = () => {
     const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedDate, setSelectedDate] = useState<string>(initialDate);
+    const [selectedDate, setSelectedDate] = useState<string | undefined>(initialDate);
     const [selectedEventId, setSelectedEventId] = useState<string>();
     const [visibleRange, setVisibleRange] = useState<{ start: string; end: string }>();
     const [filters, setFilters] = useState<CalendarFilters>({

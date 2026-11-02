@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Box, Button, Container, MenuItem, Paper, TextField } from '@mui/material';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
@@ -10,15 +10,13 @@ const PreferencesPage: React.FC = () => {
     const { user, token, applyProfile } = useAuth();
     const handleError = useAccountErrorHandler();
     const savedCurrency = user?.defaultCurrency ?? 'EUR';
-    const [currency, setCurrency] = useState<DefaultCurrency>(savedCurrency);
+    // null until the user picks one, so the saved currency shows as soon as the profile loads.
+    const [draftCurrency, setDraftCurrency] = useState<DefaultCurrency | null>(null);
     const [saved, setSaved] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    // Show the account's saved currency once the profile has loaded.
-    useEffect(() => {
-        setCurrency(savedCurrency);
-    }, [savedCurrency]);
+    const currency = draftCurrency ?? savedCurrency;
 
     const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -29,6 +27,7 @@ const PreferencesPage: React.FC = () => {
         try {
             setSaving(true);
             applyProfile(await updateProfile(token, { defaultCurrency: currency }));
+            setDraftCurrency(null);
             setSaved(true);
         } catch (saveError) {
             const message = handleError(saveError);
@@ -61,7 +60,7 @@ const PreferencesPage: React.FC = () => {
                             label="Default currency"
                             value={currency}
                             onChange={(event) => {
-                                setCurrency(event.target.value as DefaultCurrency);
+                                setDraftCurrency(event.target.value as DefaultCurrency);
                                 setSaved(false);
                             }}
                             fullWidth

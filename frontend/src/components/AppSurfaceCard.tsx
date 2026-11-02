@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardProps, useTheme } from '@mui/material';
+import { Card, useTheme, type CardProps } from '@mui/material';
 
 type AppSurfaceCardProps = CardProps & {
     compact?: boolean;

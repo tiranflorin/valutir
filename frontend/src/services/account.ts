@@ -31,19 +31,23 @@ type RequestOptions = {
     fallbackError: string;
 };
 
-const errorMessage = (data: unknown, fallback: string): string => {
+/** The message to show for a failed API call: the first field error, else the general message. */
+export const apiErrorMessage = (data: unknown, fallback: string): string => {
     if (!data || typeof data !== 'object') {
         return fallback;
     }
-    const { errors, message } = data as { errors?: unknown; message?: unknown };
+    const { errors, message, error } = data as { errors?: unknown; message?: unknown; error?: unknown };
     if (errors && typeof errors === 'object') {
         const first = Object.values(errors).flat().find((item): item is string => typeof item === 'string');
         if (first) {
             return first;
         }
     }
+    if (typeof message === 'string' && message) {
+        return message;
+    }
 
-    return typeof message === 'string' && message ? message : fallback;
+    return typeof error === 'string' && error ? error : fallback;
 };
 
 async function apiRequest<T>(path: string, { method = 'GET', token, body, fallbackError }: RequestOptions): Promise<T> {
@@ -58,7 +62,7 @@ async function apiRequest<T>(path: string, { method = 'GET', token, body, fallba
     const data: unknown = response.status === 204 ? null : await response.json().catch(() => null);
 
     if (!response.ok) {
-        throw new ApiError(response.status, errorMessage(data, fallbackError));
+        throw new ApiError(response.status, apiErrorMessage(data, fallbackError));
     }
 
     return data as T;

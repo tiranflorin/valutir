@@ -1,8 +1,9 @@
 # Dev stage
 FROM node:20-alpine AS dev
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+# Exact locked versions; node_modules/ is excluded by .dockerignore so these aren't overwritten
+RUN npm ci
 COPY . .
 EXPOSE 5173
 CMD ["npm", "run", "dev"]
@@ -10,8 +11,9 @@ CMD ["npm", "run", "dev"]
 # Build stage
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+# Exact locked versions; node_modules/ is excluded by .dockerignore so these aren't overwritten
+RUN npm ci
 COPY . .
 # Vite inlines these at build time: docker build --build-arg VITE_API_URL=https://api.example.com
 ARG VITE_API_URL

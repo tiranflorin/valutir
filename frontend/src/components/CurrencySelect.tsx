@@ -1,9 +1,9 @@
 import React from 'react';
-import { MenuItem, TextField, TextFieldProps, useTheme } from '@mui/material';
+import { MenuItem, TextField, type TextFieldProps } from '@mui/material';
 
 type Currency = 'EUR' | 'USD' | 'RON';
 
-type CurrencySelectProps = Omit<TextFieldProps, 'select' | 'children'> & {
+type CurrencySelectProps = Omit<TextFieldProps, 'select' | 'children' | 'value' | 'onChange'> & {
     value: Currency;
     onChange: (value: Currency) => void;
 };
@@ -22,8 +22,6 @@ const CurrencySelect: React.FC<CurrencySelectProps> = ({
                                                            sx,
                                                            ...props
                                                        }) => {
-    const theme = useTheme();
-
     return (
         <TextField
             {...props}

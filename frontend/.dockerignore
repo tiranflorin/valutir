@@ -1,0 +1,28 @@
+# Keeps the image build context to what `npm ci` and `vite build` need.
+# Dev containers bind-mount this folder, so nothing here affects local development.
+
+# Local environment files: never inside an image. Production builds get their
+# values from Docker build arguments (see docker/Dockerfile). Templates stay.
+.env
+.env.*
+*.local
+!.env.dist
+!.env.example
+
+# Dependencies and build output: installed and produced inside the image
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+
+# Not needed to build the app
+.git
+.gitignore
+*.log
+.DS_Store
+.idea
+.vscode
+screens
+README.md
+docker-compose.yml

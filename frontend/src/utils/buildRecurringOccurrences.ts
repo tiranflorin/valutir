@@ -1,5 +1,5 @@
-import { SubscriptionOccurrence } from '../types/calendar';
-import { SubscriptionRecord } from '../types/subscription';
+import type { SubscriptionOccurrence } from '../types/calendar';
+import type { SubscriptionRecord } from '../types/subscription';
 
 interface BuildRecurringOccurrencesInput {
     subscriptions: SubscriptionRecord[];

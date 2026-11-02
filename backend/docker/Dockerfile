@@ -25,8 +25,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     && docker-php-ext-install pdo_pgsql pgsql opcache intl bcmath mbstring
 
-# Copy application files
-COPY composer.json ./
+# Install the exact locked dependency versions (vendor/ is excluded by .dockerignore)
+COPY composer.json composer.lock ./
 RUN composer install --optimize-autoloader --no-scripts
 
 COPY . .

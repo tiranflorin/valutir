@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Dto\ResetPasswordRequest;
+use App\Exception\ApiValidationException;
 use App\Repository\UserRepository;
 use App\Service\PasswordResetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api')]
 final class PasswordController extends AbstractController
@@ -63,6 +69,8 @@ final class PasswordController extends AbstractController
     public function newPassword(
         Request $request,
         PasswordResetService $passwordResetService,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
         #[Autowire(service: 'limiter.password_reset_submit')] RateLimiterFactory $rateLimiterFactory,
     ): JsonResponse {
         $limit = $rateLimiterFactory->create(hash('sha256', $request->getClientIp() ?? 'unknown'))->consume();
@@ -70,16 +78,19 @@ final class PasswordController extends AbstractController
             return $this->rateLimitedResponse($limit->getRetryAfter()->getTimestamp());
         }
 
-        $data = json_decode($request->getContent(), true);
-        $token = is_array($data) ? ($data['token'] ?? null) : null;
-        $newPassword = is_array($data) ? ($data['newPassword'] ?? null) : null;
-
-        if (!is_string($token) || !is_string($newPassword) || strlen($newPassword) < 8 || strlen($newPassword) > 4096) {
-            return new JsonResponse(['error' => 'A valid token and password of at least 8 characters are required'], 400);
+        try {
+            $dto = $serializer->deserialize($request->getContent(), ResetPasswordRequest::class, 'json');
+        } catch (SerializerExceptionInterface) {
+            return new JsonResponse(['message' => 'Invalid JSON payload.'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (!$passwordResetService->resetPassword($token, $newPassword)) {
-            return new JsonResponse(['error' => 'The password reset link is invalid or expired'], 400);
+        $violations = $validator->validate($dto);
+        if (\count($violations) > 0) {
+            throw new ApiValidationException($violations);
+        }
+
+        if (!$passwordResetService->resetPassword((string) $dto->token, (string) $dto->newPassword)) {
+            return new JsonResponse(['message' => 'The password reset link is invalid or expired.'], Response::HTTP_BAD_REQUEST);
         }
 
         return new JsonResponse(['message' => 'Password reset successful']);

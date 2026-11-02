@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { mapSubscriptionToCalendarEvents } from '../utils/mapSubscriptionToCalendarEvents';
-import { SubscriptionOccurrence } from '../types/calendar';
-import { SubscriptionRecord } from '../types/subscription';
+import type { SubscriptionOccurrence } from '../types/calendar';
+import type { SubscriptionRecord } from '../types/subscription';
 
 interface UseCalendarEventsInput {
     subscriptions: SubscriptionRecord[];

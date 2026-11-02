@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';

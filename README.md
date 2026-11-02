@@ -119,21 +119,18 @@ Fixed items are removed from this list; the git history records what changed. It
 1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 62 backend and 24 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, and token revocation through the firewall are untested. Several service tests are mock-heavy and assert implementation details. The frontend recurrence logic (`utils/buildRecurringOccurrences.ts`) has no tests.
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), a few HTTP scenario tests (subscriptions, sessions, account) replacing most mock tests, and unit tests for the recurrence utilities.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
-2. **Frontend `type-check` and `lint` fail** (18 type errors; CI runs only the frontend tests). The errors are type-only imports needed under `verbatimModuleSyntax`, unused variables, and `@fullcalendar/*` modules missing from the `frontend-test` container, whose `node_modules` looks stale. `lint` crashes on module resolution. Add both checks to CI once they pass.
-3. **Later, high priority (core product functionality): trial reminders are never sent.** The form previews a reminder and `trialReminderSentAt` exists, but nothing emails users before `trialEndsAt`. Add a cron-run console command that sends them and sets `trialReminderSentAt`.
+2. **Later, high priority (core product functionality): trial reminders are never sent.** The form previews a reminder and `trialReminderSentAt` exists, but nothing emails users before `trialEndsAt`. Add a cron-run console command that sends them and sets `trialReminderSentAt`.
 
 ### Security and operations
 
-4. **The committed backend CI env file contains a JWT passphrase.** Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
-5. **Password reset doesn't use `#[PasswordPolicy]`.** `POST /api/reset-password/new` only checks for 8+ characters, unlike register and change password.
-6. **No email verification for new accounts, and emails are case-sensitive** (`Foo@x.com` and `foo@x.com` are different accounts).
-7. **Add `frontend/.dockerignore`** (at least the local env file and `node_modules`). The production build's `COPY . .` copies the local env file into the image build. The `VITE_API_URL` build argument overrides it, but without one the bundle silently uses whatever env file is on the build machine.
-8. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
-9. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
+3. **The committed backend CI env file contains a JWT passphrase.** Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
+4. **No email verification for new accounts, and emails are case-sensitive** (`Foo@x.com` and `foo@x.com` are different accounts).
+5. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
+6. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
 
 ### Product gaps and mocks
 
-10. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
-11. **The Business view is only a filter** on the `b2b` flag (no business account or team). It still mixes cancelled subscriptions into one list, unlike the personal view, which lists them in their own section at the end.
-12. **Household sharing is a placeholder** (the "Shared with household" metric and the disabled "Shared" filter chip).
-13. **No account data export** before deletion.
+7. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
+8. **The Business view is only a filter** on the `b2b` flag (no business account or team). It still mixes cancelled subscriptions into one list, unlike the personal view, which lists them in their own section at the end.
+9. **Household sharing is a placeholder** (the "Shared with household" metric and the disabled "Shared" filter chip).
+10. **No account data export** before deletion.

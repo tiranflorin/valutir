@@ -35,5 +35,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
       - name: Run frontend tests
         run: npm run test:run
+
+      - name: Build
+        run: npm run build
+        env:
+          # Placeholder: CI only checks that the production bundle builds.
+          VITE_API_URL: https://api.example.invalid

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Box, Button, Paper, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { updateProfile } from '../../services/account';
@@ -7,16 +7,13 @@ import { useAccountErrorHandler } from './useAccountErrorHandler';
 const ProfileDetailsCard: React.FC = () => {
     const { user, token, applyProfile } = useAuth();
     const handleError = useAccountErrorHandler();
-    const [name, setName] = useState(user?.name ?? '');
+    // null until the user edits the field, so the saved name shows as soon as the profile loads.
+    const [draftName, setDraftName] = useState<string | null>(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [saving, setSaving] = useState(false);
 
-    // Show the saved name once the profile has loaded.
-    useEffect(() => {
-        setName(user?.name ?? '');
-    }, [user?.name]);
-
+    const name = draftName ?? user?.name ?? '';
     const trimmedName = name.trim();
     const unchanged = trimmedName === (user?.name ?? '');
 
@@ -30,6 +27,7 @@ const ProfileDetailsCard: React.FC = () => {
         try {
             setSaving(true);
             applyProfile(await updateProfile(token, { name: trimmedName }));
+            setDraftName(null);
             setSuccess('Your name has been updated.');
         } catch (submitError) {
             const message = handleError(submitError);
@@ -52,7 +50,7 @@ const ProfileDetailsCard: React.FC = () => {
                     label="Full name"
                     value={name}
                     onChange={(event) => {
-                        setName(event.target.value);
+                        setDraftName(event.target.value);
                         setSuccess('');
                     }}
                     autoComplete="name"

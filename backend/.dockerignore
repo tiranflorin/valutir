@@ -1,0 +1,32 @@
+# Keeps secrets and host artefacts out of the image build context.
+# Dev containers bind-mount this folder, so nothing here affects local development.
+
+# Local environment files: never inside an image. Deployed environments must provide
+# real environment variables (or Symfony secrets). Templates stay.
+.env
+.env.*
+!.env.sample
+!.env.dist
+
+# JWT key pair: generate per environment, never bake into an image
+config/jwt/*.pem
+
+# Symfony secrets decryption key
+config/secrets/*/*.decrypt.private.php
+
+# Installed or generated inside the container
+vendor
+var
+public/bundles
+
+# Tool caches and local tooling
+.git
+.gitignore
+.phpunit.cache
+.php-cs-fixer.cache
+.php-cs-fixer.php
+phpunit.xml
+*.log
+.DS_Store
+.idea
+.vscode

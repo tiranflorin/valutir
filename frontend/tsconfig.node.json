@@ -6,7 +6,6 @@
     "module": "ESNext",
     "types": ["node"],
     "skipLibCheck": true,
-    "composite": true,
     "allowSyntheticDefaultImports": true,
 
     /* Bundler mode */

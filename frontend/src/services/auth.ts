@@ -1,5 +1,5 @@
 import { API_URL } from '../config';
-import type { DefaultCurrency } from './account';
+import { apiErrorMessage, type DefaultCurrency } from './account';
 
 export type LoginPayload = {
     email: string;
@@ -50,11 +50,7 @@ export async function registerRequest(payload: RegisterPayload) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const fieldErrors: unknown[] = data?.errors && typeof data.errors === 'object'
-            ? Object.values(data.errors).flat()
-            : [];
-        const firstFieldError = fieldErrors.find((item): item is string => typeof item === 'string');
-        throw new Error(firstFieldError || data?.message || data?.error || 'Registration failed');
+        throw new Error(apiErrorMessage(data, 'Registration failed'));
     }
 
     return data;
@@ -86,7 +82,7 @@ export async function submitNewPassword(token: string, newPassword: string) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data?.message || data?.error || 'Password reset failed');
+        throw new Error(apiErrorMessage(data, 'Password reset failed'));
     }
 
     return data;

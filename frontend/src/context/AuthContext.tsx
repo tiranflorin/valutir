@@ -6,7 +6,6 @@ type AuthContextValue = {
     user: AuthUser | null;
     token: string | null;
     isAuthenticated: boolean;
-    loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     /** Revokes the current token on the server (best effort) and clears the local session. */
     logout: () => void;
@@ -30,10 +29,26 @@ const mergeProfile = (user: AuthUser | null, profile: AccountProfile): AuthUser 
     pendingEmail: profile.pendingEmail,
 });
 
+/** The session saved in this browser, if its token is still readable. A broken token is discarded. */
+const readStoredSession = (): { token: string; user: AuthUser } | null => {
+    const storedToken = window.localStorage.getItem(STORAGE_KEY);
+    if (!storedToken) {
+        return null;
+    }
+    const storedUser = parseJwt(storedToken);
+    if (!storedUser) {
+        window.localStorage.removeItem(STORAGE_KEY);
+        return null;
+    }
+
+    return { token: storedToken, user: storedUser };
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [token, setToken] = useState<string | null>(null);
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Read once on mount, so the session is known from the first render (no loading phase).
+    const [storedSession] = useState(readStoredSession);
+    const [token, setToken] = useState<string | null>(storedSession?.token ?? null);
+    const [user, setUser] = useState<AuthUser | null>(storedSession?.user ?? null);
 
     const clearSession = useCallback(() => {
         window.localStorage.removeItem(STORAGE_KEY);
@@ -53,14 +68,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         return true;
     }, [clearSession]);
-
-    useEffect(() => {
-        const storedToken = window.localStorage.getItem(STORAGE_KEY);
-        if (storedToken) {
-            startSession(storedToken);
-        }
-        setLoading(false);
-    }, [startSession]);
 
     // Load the real account details (name, currency, pending email) for the current token.
     useEffect(() => {
@@ -112,14 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user,
             token,
             isAuthenticated: !!token,
-            loading,
             login,
             logout,
             clearSession,
             replaceToken,
             applyProfile,
         }),
-        [user, token, loading, login, logout, clearSession, replaceToken, applyProfile]
+        [user, token, login, logout, clearSession, replaceToken, applyProfile]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

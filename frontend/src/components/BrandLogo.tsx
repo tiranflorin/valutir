@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, TypographyProps, useTheme } from '@mui/material';
+import { Typography, useTheme, type TypographyProps } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
 type BrandLogoProps = {

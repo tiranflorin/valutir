@@ -48,10 +48,6 @@ const RegisterPage: React.FC = () => {
     const [passwordError, setPasswordError] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-    if (isAuthenticated) {
-        return <Navigate to="/my-subs" replace />;
-    }
-
     const passwordChecks = useMemo(() => {
         return {
             length: password.length >= 8,
@@ -151,6 +147,10 @@ const RegisterPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    if (isAuthenticated) {
+        return <Navigate to="/my-subs" replace />;
+    }
 
     if (success) {
         return (

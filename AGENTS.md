@@ -131,7 +131,9 @@ docker compose run --rm frontend-test npm run lint
 docker compose run --rm frontend-test npm run build
 ```
 
-Existing backend coverage is currently limited to the health endpoint. Frontend tests use Vitest, JSDOM, and React Testing Library.
+Backend tests are database-free (unit tests, plus HTTP tests for requests rejected before any database access). Frontend tests use Vitest, JSDOM, and React Testing Library. Frontend CI runs type-check, lint, tests, and build; keep all four passing.
+
+After `package.json` changes, refresh the test container's dependencies (they live in an anonymous `node_modules` volume that survives rebuilds): `docker compose up -d --build --renew-anon-volumes frontend-test`.
 
 ## PHP/Symfony enterprise code and security rules
 
