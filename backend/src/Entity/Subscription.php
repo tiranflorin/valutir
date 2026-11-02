@@ -61,7 +61,8 @@ class Subscription
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $trialEndsAt = null;
 
-    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    /** When the trial-ending reminder was sent (server-owned timestamp). */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $trialReminderSentAt = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -77,7 +78,8 @@ class Subscription
     #[ORM\Column(options: ['default' => false])]
     private bool $b2b = false;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    /** Calendar date of the cancellation; the API reads and writes it as Y-m-d. */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]

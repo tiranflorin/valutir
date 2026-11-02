@@ -164,7 +164,7 @@ Reference material: Symfony's [coding conventions](https://symfony.com/doc/curre
 
 ## Working conventions
 
-- Make database changes through new Doctrine migrations; do not edit already-applied migrations.
+- Make database changes through new Doctrine migrations; do not edit already-applied migrations. `Version20261102200000` is the initial schema (the earlier incremental migrations were squashed into it); add new migrations after it and keep `doctrine:schema:validate` passing.
 - Keep authentication and ownership checks in backend code even when the frontend has route guards.
 - Preserve JSON error responses for `/api` routes.
 - Avoid committing generated build output, local environment files, private JWT material, or database volumes.
