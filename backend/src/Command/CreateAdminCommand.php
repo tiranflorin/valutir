@@ -24,7 +24,7 @@ final class CreateAdminCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $existing = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'admin@valutir.com']);
+        $existing = $this->entityManager->getRepository(User::class)->findOneBy(['email' => User::normalizeEmail('admin@valutir.com')]);
         if ($existing) {
             $output->writeln('<comment>Admin user already exists.</comment>');
 

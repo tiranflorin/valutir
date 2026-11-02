@@ -37,7 +37,7 @@ final readonly class UserRegistrationService
      */
     public function register(RegisterRequest $request): void
     {
-        $email = trim((string) $request->email);
+        $email = User::normalizeEmail((string) $request->email);
 
         $user = (new User())
             ->setEmail($email)
@@ -46,7 +46,7 @@ final readonly class UserRegistrationService
         // Hash before the existence check so both paths cost the same time.
         $user->setPassword($this->passwordHasher->hashPassword($user, (string) $request->password));
 
-        if (null !== $this->userRepository->findOneBy(['email' => $email])) {
+        if (null !== $this->userRepository->findOneByEmail($email)) {
             $this->notifyExistingAccount($email);
 
             return;

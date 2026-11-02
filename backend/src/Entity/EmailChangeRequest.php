@@ -37,7 +37,7 @@ class EmailChangeRequest
     public function __construct(User $user, string $newEmail, string $tokenHash, \DateTimeImmutable $expiresAt)
     {
         $this->user = $user;
-        $this->newEmail = $newEmail;
+        $this->newEmail = User::normalizeEmail($newEmail);
         $this->tokenHash = $tokenHash;
         $this->expiresAt = $expiresAt;
     }

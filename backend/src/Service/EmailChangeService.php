@@ -32,9 +32,9 @@ final readonly class EmailChangeService
 
     public function requestChange(User $user, string $newEmail): void
     {
-        $newEmail = trim($newEmail);
+        $newEmail = User::normalizeEmail($newEmail);
 
-        if (null !== $this->userRepository->findOneBy(['email' => $newEmail])) {
+        if (null !== $this->userRepository->findOneByEmail($newEmail)) {
             $this->logger->info('Email change requested to an address that is already registered.', ['user_id' => $user->getId()]);
 
             return;
@@ -75,7 +75,7 @@ final readonly class EmailChangeService
                 $previousEmail = $user->getUserIdentifier();
                 $this->entityManager->remove($request);
 
-                if (null !== $this->userRepository->findOneBy(['email' => $request->getNewEmail()])) {
+                if (null !== $this->userRepository->findOneByEmail($request->getNewEmail())) {
                     return null;
                 }
 

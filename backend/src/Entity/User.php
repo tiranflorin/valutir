@@ -74,9 +74,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
+    /**
+     * Stored and looked up in this form, so addresses are case-insensitive: "Ada@X.com" is "ada@x.com".
+     * The database enforces it too (CHECK email = LOWER(email) plus the unique index).
+     */
+    public static function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
+    }
+
     public function setEmail(string $email): static
     {
-        $this->email = $email;
+        $this->email = self::normalizeEmail($email);
 
         return $this;
     }

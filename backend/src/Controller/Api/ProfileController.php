@@ -86,7 +86,7 @@ final class ProfileController extends AbstractController
         if (!$this->accountService->isCurrentPassword($user, (string) $dto->currentPassword)) {
             return $this->incorrectPassword($user);
         }
-        if (0 === strcasecmp(trim((string) $dto->newEmail), $user->getUserIdentifier())) {
+        if (User::normalizeEmail((string) $dto->newEmail) === $user->getUserIdentifier()) {
             return $this->json(['message' => 'This is already your email address.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 

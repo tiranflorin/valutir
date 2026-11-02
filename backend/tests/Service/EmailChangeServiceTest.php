@@ -26,7 +26,7 @@ final class EmailChangeServiceTest extends TestCase
         $requests = $this->createMock(EmailChangeRequestRepository::class);
         $requests->expects(self::once())->method('deleteForUser')->with($user);
         $users = $this->createStub(UserRepository::class);
-        $users->method('findOneBy')->willReturn(null);
+        $users->method('findOneByEmail')->willReturn(null);
         $persisted = null;
         $entityManager = $this->transactionalEntityManager();
         $entityManager->expects(self::once())->method('persist')->willReturnCallback(
@@ -40,7 +40,7 @@ final class EmailChangeServiceTest extends TestCase
             $sent = $email;
         });
 
-        $this->service($requests, $users, $entityManager, $mailer)->requestChange($user, ' new@example.test ');
+        $this->service($requests, $users, $entityManager, $mailer)->requestChange($user, ' New@Example.test ');
 
         self::assertInstanceOf(EmailChangeRequest::class, $persisted);
         self::assertSame('new@example.test', $persisted->getNewEmail());
@@ -54,7 +54,7 @@ final class EmailChangeServiceTest extends TestCase
     public function testRequestForRegisteredAddressIsSilentlyDropped(): void
     {
         $users = $this->createStub(UserRepository::class);
-        $users->method('findOneBy')->willReturn(new User());
+        $users->method('findOneByEmail')->willReturn(new User());
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('persist');
         $mailer = $this->createMock(MailerInterface::class);
@@ -72,7 +72,7 @@ final class EmailChangeServiceTest extends TestCase
             ->with(hash('sha256', str_repeat('c', 64)), self::isInstanceOf(\DateTimeImmutable::class))
             ->willReturn($request);
         $users = $this->createStub(UserRepository::class);
-        $users->method('findOneBy')->willReturn(null);
+        $users->method('findOneByEmail')->willReturn(null);
         $entityManager = $this->transactionalEntityManager();
         $entityManager->expects(self::once())->method('remove')->with($request);
         $mailer = $this->createMock(MailerInterface::class);
@@ -105,7 +105,7 @@ final class EmailChangeServiceTest extends TestCase
         $requests = $this->createStub(EmailChangeRequestRepository::class);
         $requests->method('findValidByTokenHash')->willReturn($request);
         $users = $this->createStub(UserRepository::class);
-        $users->method('findOneBy')->willReturn(new User());
+        $users->method('findOneByEmail')->willReturn(new User());
         $entityManager = $this->transactionalEntityManager();
         $entityManager->expects(self::once())->method('remove')->with($request);
 

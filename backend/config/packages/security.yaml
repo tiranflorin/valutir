@@ -6,8 +6,8 @@ security:
     providers:
         app_user_provider:
             entity:
+                # No "property": UserRepository::loadUserByIdentifier() looks users up case-insensitively.
                 class: App\Entity\User
-                property: email
 
     firewalls:
         dev:

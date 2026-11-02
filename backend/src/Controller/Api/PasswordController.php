@@ -45,7 +45,7 @@ final class PasswordController extends AbstractController
             return new JsonResponse(['error' => 'Email is required'], 400);
         }
 
-        $user = $userRepository->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneByEmail($email);
         if (null === $user) {
             return new JsonResponse(['message' => 'If your email is registered, you will receive a reset link.']);
         }

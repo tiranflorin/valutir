@@ -157,7 +157,7 @@ Fixed items are removed from this list; the git history records what changed. It
 ### Security and operations
 
 3. **The committed backend CI env file contains a JWT passphrase.** Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
-4. **No email verification for new accounts, and emails are case-sensitive** (`Foo@x.com` and `foo@x.com` are different accounts).
+4. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
 5. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
 6. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
 

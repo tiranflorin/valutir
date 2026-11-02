@@ -152,9 +152,9 @@ final class SendRemindersCommand extends Command
     private function users(mixed $email): ?array
     {
         if (\is_string($email) && '' !== $email) {
-            $user = $this->userRepository->findOneBy(['email' => $email, 'remindersEnabled' => true]);
+            $user = $this->userRepository->findOneByEmail($email);
 
-            return null === $user ? null : [$user];
+            return null === $user || !$user->isRemindersEnabled() ? null : [$user];
         }
 
         return array_values($this->userRepository->findWithRemindersEnabled());

@@ -87,7 +87,7 @@ final class AdvanceBillingDatesCommand extends Command
     private function users(mixed $email): ?array
     {
         if (\is_string($email) && '' !== $email) {
-            $user = $this->userRepository->findOneBy(['email' => $email]);
+            $user = $this->userRepository->findOneByEmail($email);
 
             return null === $user ? null : [$user];
         }

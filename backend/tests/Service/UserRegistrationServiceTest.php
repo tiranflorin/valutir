@@ -20,10 +20,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class UserRegistrationServiceTest extends TestCase
 {
-    public function testNewEmailCreatesUserWithHashedPasswordAndTrimmedFields(): void
+    public function testNewEmailIsStoredLowercaseWithHashedPasswordAndTrimmedFields(): void
     {
         $repository = $this->createMock(UserRepository::class);
-        $repository->expects(self::once())->method('findOneBy')->with(['email' => 'new@example.test'])->willReturn(null);
+        $repository->expects(self::once())->method('findOneByEmail')->with('new@example.test')->willReturn(null);
         $persisted = null;
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('persist')->willReturnCallback(
@@ -36,7 +36,7 @@ final class UserRegistrationServiceTest extends TestCase
         $mailer->expects(self::never())->method('send');
 
         $this->createService($repository, $entityManager, $mailer)
-            ->register($this->request(' new@example.test ', 'Str0ng-pass', '  Ada  '));
+            ->register($this->request(' New@Example.TEST ', 'Str0ng-pass', '  Ada  '));
 
         self::assertInstanceOf(User::class, $persisted);
         self::assertSame('new@example.test', $persisted->getEmail());
@@ -48,7 +48,7 @@ final class UserRegistrationServiceTest extends TestCase
     public function testExistingEmailIsNotRecreatedAndOwnerIsNotified(): void
     {
         $repository = $this->createStub(UserRepository::class);
-        $repository->method('findOneBy')->willReturn(new User());
+        $repository->method('findOneByEmail')->willReturn(new User());
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::never())->method('persist');
         $entityManager->expects(self::never())->method('flush');
@@ -71,7 +71,7 @@ final class UserRegistrationServiceTest extends TestCase
     public function testMailDeliveryFailureForExistingEmailIsNotSurfaced(): void
     {
         $repository = $this->createStub(UserRepository::class);
-        $repository->method('findOneBy')->willReturn(new User());
+        $repository->method('findOneByEmail')->willReturn(new User());
         $mailer = $this->createStub(MailerInterface::class);
         $mailer->method('send')->willThrowException(new TransportException('SMTP down'));
 
@@ -84,7 +84,7 @@ final class UserRegistrationServiceTest extends TestCase
     public function testConcurrentDuplicateIsTreatedAsExistingAccount(): void
     {
         $repository = $this->createStub(UserRepository::class);
-        $repository->method('findOneBy')->willReturn(null);
+        $repository->method('findOneByEmail')->willReturn(null);
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $entityManager->method('flush')->willThrowException($this->createStub(UniqueConstraintViolationException::class));
         $mailer = $this->createMock(MailerInterface::class);

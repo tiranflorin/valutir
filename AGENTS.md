@@ -47,6 +47,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 ### Persistence
 
 - PostgreSQL 16 is the database; Doctrine ORM uses PHP attributes and Doctrine migrations.
+- Emails are case-insensitive: always go through `User::setEmail()` / `User::normalizeEmail()` (trim + lowercase) and look users up with `UserRepository::findOneByEmail()`, never `findOneBy(['email' => ...])`. The security provider uses `UserRepository::loadUserByIdentifier()`, and the database enforces lowercase with `CHECK (email = LOWER(email))` next to the unique index.
 - `user`: ID, unique email, JSON roles, hashed password, name, default currency, token version, IANA `timezone` (default `Europe/Berlin`), and reminder settings (`remindersEnabled`, `remindersProcessedOn`).
 - `subscription`: belongs to a user through a required `user_id` FK with `ON DELETE CASCADE`; it stores monetary, cadence, status, date, notes, payment, trial, household-sharing, and audit information.
 - Household sharing: `householdShared` + `householdSize` (2-10 people, the owner included) split a bill equally; personal subscriptions only. Always set both through `Subscription::setHouseholdSharing()`, and send both in every subscription PUT/PATCH payload (updates replace every field, so omitting them unshares the subscription). Frontend share maths lives in `src/utils/householdShare.ts`.
