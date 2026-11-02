@@ -20,6 +20,7 @@ final class HealthcheckControllerTest extends WebTestCase
 
         self::assertSame('oki', $payload['status']);
         self::assertSame('valutir', $payload['app']);
-        self::assertArrayHasKey('php', $payload);
+        // The public health check must not reveal the runtime version.
+        self::assertSame(['status', 'app'], array_keys($payload));
     }
 }

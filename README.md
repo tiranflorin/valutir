@@ -89,7 +89,7 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `DEFAULT_URI` | backend | The API's public URL, used for URLs built in console commands (one-click unsubscribe) |
 | `CONTACT_RECIPIENT` | backend | Mailbox for contact-form messages |
 | `TURNSTILE_SECRET_KEY`, `TURNSTILE_ALLOWED_HOSTNAMES` | backend | Cloudflare Turnstile verification |
-| `VITE_API_URL` | frontend | API base URL; required for builds (Docker build argument in production) |
+| `VITE_API_URL` | frontend | API base URL; required for builds (a Cloudflare build variable in production). Its origin is also the only API origin the CSP allows |
 | `VITE_TURNSTILE_SITE_KEY` | frontend | Cloudflare Turnstile site key (public) |
 
 ## API
@@ -129,6 +129,21 @@ docker compose exec backend php bin/console app:reminders:send
   It exits with a failure status when a digest can't be sent; that user is retried on the next run.
 
 Charge dates are counted from the stored date: monthly from 31 Jan gives 28 Feb, then 31 Mar (the calendar uses the same rule). Each user's time zone is set in Preferences and defaults to `Europe/Berlin` (Frankfurt, AWS eu-central-1). Servers and the database stay on UTC. Users turn reminders off in Preferences or with the one-click link in every reminder email.
+
+## Frontend deployment
+
+The frontend is a static build hosted on Cloudflare (Pages, or Workers with static assets) on the app's domain; the API and database run on AWS.
+
+- Build command `npm run build`, output folder `frontend/dist`, Node 20. Set `VITE_API_URL` and `VITE_TURNSTILE_SITE_KEY` as build variables.
+- The build writes `dist/_headers` (`frontend/build/securityHeaders.ts`): a Content Security Policy whose `connect-src` is the origin of `VITE_API_URL`, plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and long-lived caching for the hashed files in `/assets`. Add any new external script, frame, font, image, or API origin to that policy.
+- SPA routing: Pages serves `index.html` for unknown paths when there's no `404.html`; on Workers set `not_found_handling = "single-page-application"`.
+- `FRONTEND_URL` (backend) must be the app's one canonical origin: redirect `www` to it (or the reverse) with a Cloudflare redirect rule. Preview deployments (`*.pages.dev`) aren't allowed by the API's CORS.
+
+Still to do when deploying:
+
+1. Proxy the API hostname through Cloudflare with SSL mode Full (strict), allow only Cloudflare's IP ranges on the AWS load balancer, and add `X-Content-Type-Options: nosniff`, `Content-Security-Policy: frame-ancestors 'none'`, and `Cache-Control: no-store` to API responses with a Response Header Transform Rule.
+2. The CSP ships as `Content-Security-Policy-Report-Only`. Click through the deployed app (sign-in, Turnstile on the contact page, calendar), fix what the browser console reports, then set `ENFORCE_CSP = true`.
+3. Turn on HSTS in the Cloudflare dashboard (SSL/TLS > Edge Certificates) with a short `max-age` once the app and API both work over HTTPS; raise it, and consider `includeSubDomains`, once it's stable.
 
 ## Repository layout
 

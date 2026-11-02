@@ -32,6 +32,7 @@ RUN composer install --optimize-autoloader --no-scripts
 COPY . .
 
 COPY docker/xdebug.ini /usr/local/etc/php/conf.d/zz-xdebug.ini
+COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 
 EXPOSE 8080
 CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]

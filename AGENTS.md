@@ -29,7 +29,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
     │   ├── test/            # Vitest/React Testing Library tests
     │   ├── types/           # Domain/API TypeScript types
     │   └── utils/           # Recurrence and calendar helpers
-    └── docker/              # Vite dev and Nginx production images
+    ├── build/               # Build-time helpers (Cloudflare _headers generation)
+    └── docker/              # Vite dev image
 ```
 
 ## Backend
@@ -90,7 +91,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - React Router defines public home/authentication routes and JWT-protected subscription/calendar routes.
 - `AuthContext` stores the JWT in browser `localStorage` under `valutir_auth_token`, loads the account from `GET /api/profile`, and revokes the token on logout; `ProtectedRoute` redirects unauthenticated users to `/login`. Account API calls live in `services/account.ts`.
 - MUI supplies the UI system. `AppThemeProvider` owns light/dark mode, while `AppHeader` and `AppShell` are shared layout primitives.
-- API calls use `fetch` and attach the JWT bearer token. Build URLs from `API_URL` in `src/config.ts` (the only place that reads `VITE_API_URL`); never read `import.meta.env` directly in components. Production builds require `VITE_API_URL` (Docker build argument in `frontend/docker/Dockerfile`).
+- API calls use `fetch` and attach the JWT bearer token. Build URLs from `API_URL` in `src/config.ts` (the only place that reads `VITE_API_URL`); never read `import.meta.env` directly in components. Production builds require `VITE_API_URL` (a Cloudflare build variable).
+- Production hosting is Cloudflare (Pages or Workers static assets); the API and database run on AWS. Security headers are generated at build time into `dist/_headers` by `frontend/build/securityHeaders.ts` (CSP `connect-src` comes from `VITE_API_URL`). When adding an external script, frame, font, image, or API origin, add it to that CSP. HSTS is set in the Cloudflare dashboard, not in `_headers`.
 - The calendar uses FullCalendar. It derives recurring events from subscriptions client-side through `useCalendarEvents` and the recurrence utilities.
 - Keep API contracts aligned with `frontend/src/types/subscription.ts` and the backend DTO/entity serialization.
 

@@ -16,7 +16,6 @@ final class HealthcheckController extends AbstractController
         return $this->json([
             'status' => 'oki',
             'app' => 'valutir',
-            'php' => PHP_VERSION,
         ]);
     }
 }
