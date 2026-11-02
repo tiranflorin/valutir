@@ -20,11 +20,18 @@ final class UpdateProfileRequest
     #[Assert\Choice(choices: User::SUPPORTED_CURRENCIES)]
     public ?string $defaultCurrency = null;
 
+    /** IANA time zone, e.g. "Europe/Bucharest"; used for reminder timing and billing dates. */
+    #[Assert\Length(max: 64)]
+    #[Assert\Timezone]
+    public ?string $timezone = null;
+
+    public ?bool $remindersEnabled = null;
+
     #[Assert\Callback]
     public function validateHasChanges(ExecutionContextInterface $context): void
     {
-        if (null === $this->name && null === $this->defaultCurrency) {
-            $context->buildViolation('Provide at least one of: name, defaultCurrency.')->addViolation();
+        if (null === $this->name && null === $this->defaultCurrency && null === $this->timezone && null === $this->remindersEnabled) {
+            $context->buildViolation('Provide at least one of: name, defaultCurrency, timezone, remindersEnabled.')->addViolation();
         }
     }
 }

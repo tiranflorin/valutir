@@ -38,6 +38,25 @@ final class UpdateProfileRequestTest extends KernelTestCase
         self::assertCount(0, $this->validate($request));
     }
 
+    public function testAcceptsAValidTimezoneAndReminderSetting(): void
+    {
+        $request = new UpdateProfileRequest();
+        $request->timezone = 'Europe/Bucharest';
+        $request->remindersEnabled = false;
+
+        self::assertCount(0, $this->validate($request));
+    }
+
+    public function testRejectsAnUnknownTimezone(): void
+    {
+        $request = new UpdateProfileRequest();
+        $request->timezone = 'Mars/Olympus_Mons';
+
+        $violations = $this->validate($request);
+        self::assertCount(1, $violations);
+        self::assertSame('timezone', $violations[0]->getPropertyPath());
+    }
+
     private function validate(UpdateProfileRequest $request): ConstraintViolationListInterface
     {
         self::bootKernel();

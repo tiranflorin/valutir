@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Container, MenuItem, Paper, TextField } from '@mui/material';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
+import RemindersCard from '../components/account/RemindersCard';
 import { useAccountErrorHandler } from '../components/account/useAccountErrorHandler';
 import { useAuth } from '../context/AuthContext';
 import { currencyOptions, updateProfile, type DefaultCurrency } from '../services/account';
@@ -45,7 +46,7 @@ const PreferencesPage: React.FC = () => {
             <Container className="settings-container">
                 <Box className="settings-page-heading">
                     <h1>Preferences</h1>
-                    <p>Choose the default currency for new subscriptions.</p>
+                    <p>Choose the default currency for new subscriptions and how payment reminders reach you.</p>
                 </Box>
 
                 <Paper className="settings-card">
@@ -86,6 +87,8 @@ const PreferencesPage: React.FC = () => {
                         </div>
                     </Box>
                 </Paper>
+
+                <RemindersCard />
             </Container>
             <AppFooter />
         </Box>

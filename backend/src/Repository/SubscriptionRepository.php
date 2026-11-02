@@ -48,6 +48,22 @@ class SubscriptionRepository extends ServiceEntityRepository
     }
 
     /**
+     * The user's subscriptions that can still be charged: active or trial, not deleted, and not set to stop renewing.
+     *
+     * @return Subscription[]
+     */
+    public function findBillableForUser(User $user): array
+    {
+        return $this->createVisibleForUserQueryBuilder($user)
+            ->andWhere('s.status IN (:billableStatuses)')
+            ->andWhere('s.autoRenew IS NULL OR s.autoRenew = true')
+            ->setParameter('billableStatuses', ['active', 'trial'])
+            ->orderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Subscriptions owned by the user that have not been soft-deleted.
      */
     public function createVisibleForUserQueryBuilder(User $user): QueryBuilder

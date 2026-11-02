@@ -7,7 +7,8 @@ import {
     CircularProgress,
     Container,
     Paper,
-    Tooltip,
+    ToggleButton,
+    ToggleButtonGroup,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
@@ -15,6 +16,7 @@ import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
+import { shareOf, splitCount } from '../utils/householdShare';
 import './RecurringScreens.css';
 
 type Subscription = {
@@ -31,17 +33,28 @@ type Subscription = {
     b2b: boolean;
     cancelledAt: string | null;
     trialEndsAt?: string | null;
+    householdShared?: boolean;
+    householdSize?: number | null;
 };
 
-type Filter = 'all' | 'upcoming' | 'trials' | 'review' | 'cancelled';
+type Filter = 'all' | 'upcoming' | 'trials' | 'review' | 'shared' | 'cancelled';
+/** Whether amounts show the full bill or the owner's equal share of shared bills. */
+type AmountMode = 'full' | 'share';
 type SortKey = 'category' | 'amount' | 'billingCadence' | 'nextBillingDate' | 'status';
 
 const normalizeStatus = (status: string) => status.toLowerCase();
 const isCancelled = (subscription: Subscription) => normalizeStatus(subscription.status) === 'cancelled';
 const isTrial = (subscription: Subscription) => normalizeStatus(subscription.status) === 'trial';
+const isShared = (subscription: Subscription) => splitCount(subscription) > 1;
 
-const monthlyEquivalent = (subscription: Subscription) => {
+/** One bill's amount: the full bill, or your equal share of it when shared. */
+const billAmount = (subscription: Subscription, mode: AmountMode = 'full') => {
     const amount = Number(subscription.amount) || 0;
+    return mode === 'share' ? shareOf(amount, subscription) : amount;
+};
+
+const monthlyEquivalent = (subscription: Subscription, mode: AmountMode = 'full') => {
+    const amount = billAmount(subscription, mode);
     switch (subscription.billingCadence.toLowerCase()) {
         case 'daily': return amount * 365 / 12;
         case 'weekly': return amount * 52 / 12;
@@ -166,10 +179,11 @@ type SubscriptionSectionsProps = {
     cancelledSubscriptions: Subscription[];
     loading: boolean;
     sort: SubscriptionSort;
+    amountMode?: AmountMode;
 };
 
 /** "My subscriptions" followed by a separate "Cancelled" section; shared by the personal and business views. */
-const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, sort }) => {
+const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, sort, amountMode = 'full' }) => {
     const { sortSubscriptions, toggleSort, sortMarker } = sort;
     const mySubscriptions = useMemo(() => sortSubscriptions(activeSubscriptions), [activeSubscriptions, sortSubscriptions]);
     const sortedCancelled = useMemo(() => sortSubscriptions(cancelledSubscriptions), [cancelledSubscriptions, sortSubscriptions]);
@@ -191,7 +205,7 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                             {filter === 'all' ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
                         </Box>
                     ) : (
-                        <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" onSort={toggleSort} sortMarker={sortMarker} />
+                        <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
                     )}
                 </>
             )}
@@ -202,7 +216,7 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                         <strong>Cancelled · {cancelledSubscriptions.length}</strong>
                         <span>Kept for your records; no further charges expected</span>
                     </div>
-                    <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" onSort={toggleSort} sortMarker={sortMarker} />
+                    <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
                 </>
             )}
             {!loading && filter === 'cancelled' && cancelledSubscriptions.length === 0 && (
@@ -328,11 +342,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 type SubscriptionsTableProps = {
     subscriptions: Subscription[];
     dateColumnLabel: string;
+    amountMode?: AmountMode;
     onSort: (key: SortKey) => void;
     sortMarker: (key: SortKey) => string;
 };
 
-const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, dateColumnLabel, onSort, sortMarker }) => (
+const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, dateColumnLabel, amountMode = 'full', onSort, sortMarker }) => (
     <div className="subscriptions-table-wrap">
         <table className="subscriptions-table">
             <thead>
@@ -357,11 +372,17 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                                     <span className="service-cell">
                                         <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
                                         <span className="service-name">{subscription.serviceName}</span>
+                                        {isShared(subscription) && <span className="shared-tag" title={`Split between ${splitCount(subscription)} people`}>Shared</span>}
                                     </span>
                                 </RouterLink>
                             </td>
                             <td>{subscription.category || 'Uncategorized'}</td>
-                            <td>{formatCurrency(Number(subscription.amount) || 0, subscription.currency)}</td>
+                            <td>
+                                {formatCurrency(billAmount(subscription, amountMode), subscription.currency)}
+                                {amountMode === 'share' && isShared(subscription) && (
+                                    <small className="full-bill-note">of {formatCurrency(billAmount(subscription), subscription.currency)}</small>
+                                )}
+                            </td>
                             <td>{subscription.billingCadence.charAt(0).toUpperCase() + subscription.billingCadence.slice(1)}</td>
                             <td>{formatDate(cancelled ? subscription.cancelledAt : subscription.nextBillingDate)}</td>
                             <td><span className={`status-tag ${statusClass}`}>{statusLabel(subscription.status)}</span></td>
@@ -456,9 +477,13 @@ const MySubscriptionsPage: React.FC = () => {
         }),
         [trialSubscriptions]
     );
+    const [amountMode, setAmountMode] = useState<AmountMode>('full');
+    const sharedSubscriptions = useMemo(() => activeSubscriptions.filter(isShared), [activeSubscriptions]);
+    // Only the personal view can split bills; business totals always show full bills.
+    const personalAmountMode: AmountMode = view === 'personal' && sharedSubscriptions.length > 0 ? amountMode : 'full';
     const monthlyTotal = useMemo(
-        () => groupedMoney(activeSubscriptions, monthlyEquivalent),
-        [activeSubscriptions]
+        () => groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode)),
+        [activeSubscriptions, personalAmountMode]
     );
 
     const sort = useSubscriptionSort();
@@ -467,8 +492,9 @@ const MySubscriptionsPage: React.FC = () => {
         if (filter === 'cancelled') return [];
         if (filter === 'upcoming') return dueSoon;
         if (filter === 'trials') return trialSubscriptions;
+        if (filter === 'shared') return sharedSubscriptions;
         return activeSubscriptions;
-    }, [filter, dueSoon, trialSubscriptions, activeSubscriptions]);
+    }, [filter, dueSoon, trialSubscriptions, sharedSubscriptions, activeSubscriptions]);
 
     return (
         <Box className="dashboard-page">
@@ -530,10 +556,25 @@ const MySubscriptionsPage: React.FC = () => {
                     </Paper>
                 ) : (
                     <>
+                        {sharedSubscriptions.length > 0 && (
+                            <Box className="amount-mode-switch">
+                                <ToggleButtonGroup
+                                    size="small"
+                                    exclusive
+                                    value={amountMode}
+                                    onChange={(_, next: AmountMode | null) => next && setAmountMode(next)}
+                                    aria-label="Amounts shown"
+                                >
+                                    <ToggleButton value="full">Full bills</ToggleButton>
+                                    <ToggleButton value="share">My share</ToggleButton>
+                                </ToggleButtonGroup>
+                                <span>{amountMode === 'share' ? 'Shared bills count only your part.' : 'Shared bills count in full.'}</span>
+                            </Box>
+                        )}
                         <section className="metric-grid" aria-label="Upcoming and recurring costs">
                             <Paper className="metric-card">
                                 <span className="metric-label">Due in next 7 days</span>
-                                <div className="metric-value">{groupedMoney(dueSoon, (subscription) => Number(subscription.amount) || 0)}</div>
+                                <div className="metric-value">{groupedMoney(dueSoon, (subscription) => billAmount(subscription, personalAmountMode))}</div>
                                 <div className="metric-hint">{dueSoon.length ? `${dueSoon.length} expected charge${dueSoon.length === 1 ? '' : 's'}` : 'No charges due this week'}</div>
                             </Paper>
                             <Paper className="metric-card trial-warning">
@@ -544,7 +585,7 @@ const MySubscriptionsPage: React.FC = () => {
                             <Paper className="metric-card primary-metric">
                                 <span className="metric-label">Tracked recurring bills</span>
                                 <div className="metric-value">{monthlyTotal} <small>/ month</small></div>
-                                <div className="metric-hint">{groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription) * 12)} annual run rate · full bill amounts</div>
+                                <div className="metric-hint">{groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode) * 12)} annual run rate · {personalAmountMode === 'share' ? 'your share of shared bills' : 'full bill amounts'}</div>
                             </Paper>
                         </section>
 
@@ -556,8 +597,10 @@ const MySubscriptionsPage: React.FC = () => {
                             </Paper>
                             <Paper className="metric-card">
                                 <span className="metric-label">Shared with household</span>
-                                <div className="metric-value">—</div>
-                                <div className="metric-hint">Household sharing isn’t available in the current account data</div>
+                                <div className="metric-value">{sharedSubscriptions.length} <small>{sharedSubscriptions.length === 1 ? 'service' : 'services'}</small></div>
+                                <div className="metric-hint">{sharedSubscriptions.length
+                                    ? `${groupedMoney(sharedSubscriptions, (subscription) => monthlyEquivalent(subscription, 'share'))} / month your share`
+                                    : 'Mark a subscription as household shared to split its cost'}</div>
                             </Paper>
                             <Paper className="metric-card">
                                 <span className="metric-label">Active subscriptions</span>
@@ -576,13 +619,11 @@ const MySubscriptionsPage: React.FC = () => {
                                     ['all', `All ${contextSubscriptions.length}`],
                                     ['upcoming', `Upcoming ${dueSoon.length}`],
                                     ['trials', `Trials ${trialSubscriptions.length}`],
+                                    ['shared', `Shared ${sharedSubscriptions.length}`],
                                     ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
                                 ] as [Filter, string][]).map(([key, label]) => (
                                     <Chip key={key} label={label} onClick={() => setFilter(key)} className={filter === key ? 'selected' : ''} />
                                 ))}
-                                <Tooltip title="Household sharing is not available in the current API data">
-                                    <span><Chip label="Shared" disabled /></span>
-                                </Tooltip>
                             </div>
 
                             <div className="list-labels" id="attention">
@@ -600,7 +641,7 @@ const MySubscriptionsPage: React.FC = () => {
                                                     <div className="attention-name">{subscription.serviceName}</div>
                                                     <div className="attention-meta">TRIAL ENDS · {formatDate(endsAt)}</div>
                                                 </div>
-                                                <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
+                                                <div className="attention-price">{formatCurrency(billAmount(subscription, personalAmountMode), subscription.currency)} / {subscription.billingCadence}</div>
                                                 <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review trial →</RouterLink>
                                             </div>
                                         );
@@ -617,6 +658,7 @@ const MySubscriptionsPage: React.FC = () => {
                                 cancelledSubscriptions={cancelledSubscriptions}
                                 loading={loading}
                                 sort={sort}
+                                amountMode={personalAmountMode}
                             />
                             <div className="list-labels"><span>Costs are shown using each subscription’s stored currency. Currency preferences can be added without changing these records.</span></div>
                         </Paper>

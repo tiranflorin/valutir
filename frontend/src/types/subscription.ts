@@ -26,6 +26,9 @@ export interface SubscriptionRecord {
     isActive: boolean;
     autoRenew: boolean;
     b2b: boolean;
+    householdShared: boolean;
+    /** People splitting the bill equally, the owner included; null when not shared. */
+    householdSize: number | null;
     cancelledAt: string | null;
     createdAt: string;
     updatedAt: string;

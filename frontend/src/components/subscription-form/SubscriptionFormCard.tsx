@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { todayIsoDate } from '../../utils/dates';
+import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
+import { TRIAL_REMINDER_LEAD_DAYS } from '../../utils/reminders';
 import {
     Accordion,
     AccordionDetails,
@@ -9,6 +11,7 @@ import {
     Button,
     Chip,
     Divider,
+    MenuItem,
     Stack,
     Switch,
     TextField,
@@ -33,6 +36,8 @@ export type SubscriptionFormValues = {
     notes: string;
     providerGroup: string;
     householdShared: boolean;
+    /** People splitting the bill equally, the owner included (used when householdShared). */
+    householdSize: number;
     autoRenew: boolean;
     b2b: boolean;
 };
@@ -148,9 +153,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
         if (Number.isNaN(chargeDate.getTime())) return null;
 
         const reminderDate = new Date(chargeDate);
-        reminderDate.setDate(reminderDate.getDate() - 2);
+        reminderDate.setDate(reminderDate.getDate() - TRIAL_REMINDER_LEAD_DAYS);
 
-        return reminderDate.toISOString().slice(0, 10);
+        // Local calendar date (toISOString() would give the UTC date, off by one near midnight).
+        return todayIsoDate(reminderDate);
     }, [isTrial, values.renewalDate]);
 
     const patch = (partial: Partial<SubscriptionFormValues>) => {
@@ -317,7 +323,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             </Box>
                             <Switch
                                 checked={values.b2b}
-                                onChange={(event) => patch({ b2b: event.target.checked })}
+                                onChange={(event) => patch(event.target.checked
+                                    ? { b2b: true, householdShared: false }
+                                    : { b2b: false })}
                                 inputProps={{ 'aria-label': 'Business subscription' }}
                             />
                         </Stack>
@@ -388,12 +396,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         minRows={4}
                                     />
 
-                                    {showHouseholdShared && (
+                                    {showHouseholdShared && !values.b2b && (
                                         <Stack
-                                            direction={{ xs: 'column', sm: 'row' }}
                                             spacing={1.5}
-                                            alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                            justifyContent="space-between"
                                             sx={{
                                                 border: `1px solid ${theme.palette.divider}`,
                                                 borderRadius: 3,
@@ -402,21 +407,49 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                 py: 1.75,
                                             }}
                                         >
-                                            <Box>
-                                                <Typography fontWeight={700}>Household shared</Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Mark this if the subscription is shared with family or household members.
-                                                </Typography>
-                                            </Box>
-
-                                            <Button
-                                                type="button"
-                                                variant={values.householdShared ? 'contained' : 'outlined'}
-                                                onClick={() => patch({ householdShared: !values.householdShared })}
-                                                sx={{ fontWeight: 600, minWidth: 160 }}
+                                            <Stack
+                                                direction={{ xs: 'column', sm: 'row' }}
+                                                spacing={1.5}
+                                                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                                                justifyContent="space-between"
                                             >
-                                                {values.householdShared ? 'Shared' : 'Not shared'}
-                                            </Button>
+                                                <Box>
+                                                    <Typography fontWeight={700}>Household shared</Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Split the bill equally with family or household members.
+                                                    </Typography>
+                                                </Box>
+
+                                                <Button
+                                                    type="button"
+                                                    variant={values.householdShared ? 'contained' : 'outlined'}
+                                                    aria-pressed={values.householdShared}
+                                                    onClick={() => patch({ householdShared: !values.householdShared })}
+                                                    sx={{ fontWeight: 600, minWidth: 160 }}
+                                                >
+                                                    {values.householdShared ? 'Shared' : 'Not shared'}
+                                                </Button>
+                                            </Stack>
+
+                                            {values.householdShared && (
+                                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                                    <TextField
+                                                        select
+                                                        label="Split between"
+                                                        value={values.householdSize}
+                                                        onChange={(event) => patch({ householdSize: Number(event.target.value) })}
+                                                        helperText="People sharing the bill, you included"
+                                                        sx={{ minWidth: 200 }}
+                                                    >
+                                                        {HOUSEHOLD_SIZES.map((size) => (
+                                                            <MenuItem key={size} value={size}>{size} people</MenuItem>
+                                                        ))}
+                                                    </TextField>
+                                                    <Typography variant="body2" aria-live="polite">
+                                                        Your share: <strong>{(parsedAmount / values.householdSize).toFixed(2)} {values.currency}</strong> per {values.billingInterval} bill
+                                                    </Typography>
+                                                </Stack>
+                                            )}
                                         </Stack>
                                     )}
 

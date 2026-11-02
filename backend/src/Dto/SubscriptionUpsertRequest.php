@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 final class SubscriptionUpsertRequest
 {
@@ -42,6 +43,13 @@ final class SubscriptionUpsertRequest
 
     public bool $b2b = false;
 
+    /** Whether the bill is split equally within the household. Personal subscriptions only. */
+    public bool $householdShared = false;
+
+    /** People splitting the bill, the owner included. Required when householdShared is true. */
+    #[Assert\Range(min: 2, max: 10, notInRangeMessage: 'A shared subscription is split between {{ min }} and {{ max }} people.')]
+    public ?int $householdSize = null;
+
     #[Assert\Date]
     public ?string $cancelledAt = null;
 
@@ -51,4 +59,22 @@ final class SubscriptionUpsertRequest
 
     #[Assert\Date]
     public ?string $trialEndsAt = null;
+
+    #[Assert\Callback]
+    public function validateHouseholdSharing(ExecutionContextInterface $context): void
+    {
+        if (!$this->householdShared) {
+            return;
+        }
+        if ($this->b2b) {
+            $context->buildViolation("Business subscriptions can't be shared with a household.")
+                ->atPath('householdShared')
+                ->addViolation();
+        }
+        if (null === $this->householdSize) {
+            $context->buildViolation('Choose how many people share this subscription.')
+                ->atPath('householdSize')
+                ->addViolation();
+        }
+    }
 }

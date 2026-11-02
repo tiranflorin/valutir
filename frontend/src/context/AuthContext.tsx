@@ -26,6 +26,8 @@ const mergeProfile = (user: AuthUser | null, profile: AccountProfile): AuthUser 
     email: profile.email,
     name: profile.name ?? user?.name,
     defaultCurrency: profile.defaultCurrency,
+    timezone: profile.timezone,
+    remindersEnabled: profile.remindersEnabled,
     pendingEmail: profile.pendingEmail,
 });
 

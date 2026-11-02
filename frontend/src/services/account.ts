@@ -12,6 +12,9 @@ export type AccountProfile = {
     email: string;
     name: string | null;
     defaultCurrency: DefaultCurrency;
+    /** IANA time zone used for reminder timing, e.g. "Europe/Bucharest". */
+    timezone: string;
+    remindersEnabled: boolean;
     pendingEmail: string | null;
 };
 
@@ -80,7 +83,7 @@ export async function fetchProfile(token: string): Promise<AccountProfile> {
     return data;
 }
 
-export const updateProfile = (token: string, changes: Partial<Pick<AccountProfile, 'name' | 'defaultCurrency'>>) =>
+export const updateProfile = (token: string, changes: Partial<Pick<AccountProfile, 'name' | 'defaultCurrency' | 'timezone' | 'remindersEnabled'>>) =>
     apiRequest<AccountProfile>('/api/profile', {
         method: 'PATCH',
         token,
@@ -125,3 +128,10 @@ export const logoutRequest = (token: string) =>
 
 export const logoutEverywhereRequest = (token: string) =>
     apiRequest<null>('/api/logout/all', { method: 'POST', token, fallbackError: 'Unable to sign out of all devices.' });
+
+/** Public: the signed token from a reminder email is the credential. */
+export const unsubscribeFromReminders = (unsubscribeToken: string) =>
+    apiRequest<{ message: string }>(`/api/reminders/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`, {
+        method: 'POST',
+        fallbackError: 'This unsubscribe link is invalid.',
+    });

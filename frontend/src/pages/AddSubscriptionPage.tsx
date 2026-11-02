@@ -11,6 +11,7 @@ import SubscriptionFormCard, {
 } from '../components/subscription-form/SubscriptionFormCard';
 import { API_URL } from '../config';
 import { isBeforeToday, todayIsoDate } from '../utils/dates';
+import { householdPayload } from '../utils/householdShare';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -29,6 +30,7 @@ const AddSubscriptionPage: React.FC = () => {
         notes: '',
         providerGroup: '',
         householdShared: false,
+        householdSize: 2,
         autoRenew: true,
         b2b: window.localStorage.getItem('valutir_dashboard_view') === 'business',
     });
@@ -91,7 +93,7 @@ const AddSubscriptionPage: React.FC = () => {
                 trialEndsAt: isTrial ? values.renewalDate : null,
                 notes: values.notes.trim() || null,
                 paymentMethod: values.providerGroup.trim() || null,
-                householdShared: values.householdShared,
+                ...householdPayload(values),
                 autoRenew: !isOther && values.autoRenew,
                 b2b: values.b2b,
                 cancelledAt: isOther ? today : null,

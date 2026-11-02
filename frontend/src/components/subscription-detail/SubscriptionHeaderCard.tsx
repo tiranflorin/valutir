@@ -15,6 +15,8 @@ export type SubscriptionCardModel = {
     status: string;
     autoRenew: boolean;
     b2b: boolean;
+    householdShared?: boolean;
+    householdSize?: number | null;
     cancelledAt: string | null;
     startedAt?: string | null;
     paymentMethod?: string | null;

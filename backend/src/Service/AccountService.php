@@ -23,7 +23,7 @@ final readonly class AccountService
     }
 
     /**
-     * @return array{email: string, name: string|null, defaultCurrency: string, pendingEmail: string|null}
+     * @return array{email: string, name: string|null, defaultCurrency: string, timezone: string, remindersEnabled: bool, pendingEmail: string|null}
      */
     public function describe(User $user): array
     {
@@ -31,6 +31,8 @@ final readonly class AccountService
             'email' => $user->getUserIdentifier(),
             'name' => $user->getName(),
             'defaultCurrency' => $user->getDefaultCurrency(),
+            'timezone' => $user->getTimezone(),
+            'remindersEnabled' => $user->isRemindersEnabled(),
             'pendingEmail' => $this->emailChangeRequestRepository
                 ->findPendingForUser($user, new \DateTimeImmutable())
                 ?->getNewEmail(),
@@ -44,6 +46,12 @@ final readonly class AccountService
         }
         if (null !== $request->defaultCurrency) {
             $user->setDefaultCurrency($request->defaultCurrency);
+        }
+        if (null !== $request->timezone) {
+            $user->setTimezone($request->timezone);
+        }
+        if (null !== $request->remindersEnabled) {
+            $user->setRemindersEnabled($request->remindersEnabled);
         }
 
         $this->entityManager->flush();

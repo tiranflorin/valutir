@@ -1,0 +1,131 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Reminder;
+
+use App\Entity\ReminderLog;
+use App\Entity\User;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
+/**
+ * The daily digest of upcoming payments. Unlike account notices, delivery errors are thrown
+ * so the command can retry the user on its next run.
+ */
+final readonly class ReminderMailer
+{
+    private const string FROM = 'noreply@valutir.com';
+
+    public function __construct(
+        private MailerInterface $mailer,
+        private UnsubscribeToken $unsubscribeToken,
+        private UrlGeneratorInterface $urlGenerator,
+        #[Autowire('%frontend_url%')] private string $frontendUrl,
+    ) {
+    }
+
+    /**
+     * @param non-empty-list<DueReminder> $reminders
+     *
+     * @throws TransportExceptionInterface
+     */
+    public function sendDigest(User $user, array $reminders): void
+    {
+        $this->mailer->send($this->buildDigest($user, $reminders));
+    }
+
+    /**
+     * @param non-empty-list<DueReminder> $reminders
+     */
+    public function buildDigest(User $user, array $reminders): Email
+    {
+        $token = $this->unsubscribeToken->create($user);
+        $frontend = rtrim($this->frontendUrl, '/');
+        $oneClickUrl = $this->urlGenerator->generate('api_reminders_unsubscribe', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        $trials = array_filter($reminders, static fn (DueReminder $r): bool => ReminderLog::KIND_TRIAL_ENDING === $r->kind);
+        $renewals = array_filter($reminders, static fn (DueReminder $r): bool => ReminderLog::KIND_RENEWAL === $r->kind);
+
+        $lines = [sprintf('Hi %s,', $user->getName() ?: 'there'), '', 'Coming up soon:', ''];
+        if ([] !== $trials) {
+            $lines[] = 'TRIALS ENDING';
+            foreach ($trials as $reminder) {
+                $lines[] = sprintf('- %s: trial ends %s, then the first charge is %s', $reminder->subscription->getServiceName(), $this->when($reminder), $this->amount($reminder));
+            }
+            $lines[] = '  Keep it, or cancel with the provider before then.';
+            $lines[] = '';
+        }
+        if ([] !== $renewals) {
+            $lines[] = 'RENEWALS';
+            foreach ($renewals as $reminder) {
+                $lines[] = sprintf('- %s: %s %s', $reminder->subscription->getServiceName(), $this->amount($reminder), $this->when($reminder));
+            }
+            $lines[] = '';
+        }
+        $lines[] = sprintf('See all your subscriptions: %s/my-subs', $frontend);
+        $lines[] = '';
+        $lines[] = 'You get this email because payment reminders are on.';
+        $lines[] = sprintf('Turn them off: %s/unsubscribe?token=%s', $frontend, rawurlencode($token));
+
+        $email = (new Email())
+            ->from(self::FROM)
+            ->to((string) $user->getEmail())
+            ->subject($this->subject($reminders))
+            ->text(implode("\n", $lines));
+        // One-click unsubscribe (RFC 8058), expected by Gmail and Yahoo for recurring mail.
+        $email->getHeaders()->addTextHeader('List-Unsubscribe', sprintf('<%s>', $oneClickUrl));
+        $email->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+
+        return $email;
+    }
+
+    /**
+     * @param non-empty-list<DueReminder> $reminders
+     */
+    private function subject(array $reminders): string
+    {
+        if (1 === \count($reminders)) {
+            $reminder = $reminders[0];
+            $service = $reminder->subscription->getServiceName();
+
+            return ReminderLog::KIND_TRIAL_ENDING === $reminder->kind
+                ? sprintf('Your %s trial ends %s', $service, $this->when($reminder))
+                : sprintf('%s renews %s: %s', $service, $this->when($reminder), $this->amount($reminder));
+        }
+
+        return sprintf('%d payments coming up', \count($reminders));
+    }
+
+    private function when(DueReminder $reminder): string
+    {
+        $date = $reminder->chargeDate->format('D j M');
+
+        return match ($reminder->daysUntil) {
+            0 => sprintf('today (%s)', $date),
+            1 => sprintf('tomorrow (%s)', $date),
+            default => sprintf('on %s (in %d days)', $date, $reminder->daysUntil),
+        };
+    }
+
+    private function amount(DueReminder $reminder): string
+    {
+        $subscription = $reminder->subscription;
+        $currency = (string) $subscription->getCurrency();
+        $full = (float) $subscription->getAmount();
+        $text = $this->money($full, $currency);
+        $people = $subscription->isHouseholdShared() ? (int) $subscription->getHouseholdSize() : 1;
+
+        return $people > 1 ? sprintf('%s (your share %s)', $text, $this->money($full / $people, $currency)) : $text;
+    }
+
+    private function money(float $amount, string $currency): string
+    {
+        $formatted = (new \NumberFormatter('en_GB', \NumberFormatter::CURRENCY))->formatCurrency($amount, $currency);
+
+        return false === $formatted ? sprintf('%.2f %s', $amount, $currency) : $formatted;
+    }
+}

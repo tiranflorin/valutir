@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Reminder;
+
+/**
+ * How many days before a charge the reminder goes out. Fixed for now; custom lead times are a
+ * candidate paid-plan feature (see README "Paid plan").
+ */
+final class ReminderPolicy
+{
+    public const int TRIAL_LEAD_DAYS = 2;
+
+    public static function renewalLeadDays(string $cadence): int
+    {
+        return match ($cadence) {
+            'daily', 'weekly' => 1,
+            'monthly' => 3,
+            default => 7, // quarterly, yearly
+        };
+    }
+}

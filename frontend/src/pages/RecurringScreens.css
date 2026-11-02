@@ -2420,6 +2420,37 @@ body {
     gap: 8px;
 }
 
+.shared-tag {
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: #e9eefb;
+    color: #34509a;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.full-bill-note {
+    display: block;
+    color: #78847d;
+    font-size: 11px;
+}
+
+.amount-mode-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.amount-mode-switch > span {
+    color: #78847d;
+    font-size: 12px;
+}
+
 .status-tag {
     display: inline-flex;
     align-items: center;
@@ -3108,6 +3139,16 @@ body {
 
 :root[data-theme='dark'] .settings-save-row .MuiButton-root.MuiButton-outlined:hover {
     background: #1f2a23;
+}
+
+:root[data-theme='dark'] .shared-tag {
+    background: #263354;
+    color: #b9c8f2;
+}
+
+:root[data-theme='dark'] .full-bill-note,
+:root[data-theme='dark'] .amount-mode-switch > span {
+    color: #9aa79f;
 }
 
 :root[data-theme='dark'] .settings-card.MuiPaper-root {

@@ -34,6 +34,8 @@ final class AccountServiceTest extends TestCase
             'email' => 'ada@example.test',
             'name' => 'Ada',
             'defaultCurrency' => 'EUR',
+            'timezone' => 'Europe/Berlin',
+            'remindersEnabled' => true,
             'pendingEmail' => 'new@example.test',
         ], $service->describe($user));
     }

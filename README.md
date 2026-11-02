@@ -90,6 +90,35 @@ backend/   Symfony API, Doctrine migrations, and PHPUnit tests
 frontend/  React application, calendar UI, and Vitest tests
 ```
 
+## Scheduled commands
+
+Two console commands keep billing data current and send payment reminders. Both are safe to run at any time and repeatedly, and both take `--dry-run` (show what would happen) and `--user=EMAIL` (one user only). Run them **hourly, in this order**:
+
+```bash
+docker compose exec backend php bin/console app:subscriptions:advance-billing-dates
+docker compose exec backend php bin/console app:reminders:send
+```
+
+- `app:subscriptions:advance-billing-dates` moves a past `nextBillingDate` of an auto-renewing subscription to its next charge on or after the owner's local today, and turns a trial whose end date has passed into an active subscription. Cancelled, "other", deleted, and non-renewing subscriptions are left alone.
+- `app:reminders:send` emails each user (with reminders on) one daily digest of upcoming payments, on the first run after 01:00 in their time zone; later runs that day skip them. A charge is reminded once, from its lead time until the charge day:
+
+  | Reminder | Sent |
+  |---|---|
+  | Trial ending | 2 days before the trial ends |
+  | Renewal, daily or weekly | 1 day before |
+  | Renewal, monthly | 3 days before |
+  | Renewal, quarterly or yearly | 7 days before |
+
+  It exits with a failure status when a digest can't be sent; that user is retried on the next run.
+
+Charge dates are counted from the stored date: monthly from 31 Jan gives 28 Feb, then 31 Mar (the calendar uses the same rule). Each user's time zone is set in Preferences and defaults to `Europe/Berlin` (Frankfurt, AWS eu-central-1). Servers and the database stay on UTC. Users turn reminders off in Preferences or with the one-click link in every reminder email.
+
+## Paid plan
+
+Ideas for the paid plan (pricing and checkout are still a mock, see Status & TODO):
+
+- **Custom reminder lead times.** Reminder timing is fixed for now (table above). Letting users choose when they're reminded, globally or per subscription, is a candidate paid-plan feature.
+
 ## Brainstorming
 
 ### Product and data ideas
@@ -116,10 +145,14 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ### Correctness and reliability
 
-1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 62 backend and 24 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, and token revocation through the firewall are untested. Several service tests are mock-heavy and assert implementation details. The frontend recurrence logic (`utils/buildRecurringOccurrences.ts`) has no tests.
-   - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), a few HTTP scenario tests (subscriptions, sessions, account) replacing most mock tests, and unit tests for the recurrence utilities.
+1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 112 backend and 54 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
+   - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
-2. **Later, high priority (core product functionality): trial reminders are never sent.** The form previews a reminder and `trialReminderSentAt` exists, but nothing emails users before `trialEndsAt`. Add a cron-run console command that sends them and sets `trialReminderSentAt`.
+2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see Scheduled commands) but nothing schedules them in production yet:
+   - Schedule both commands hourly, `advance-billing-dates` first, for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
+   - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
+   - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's URL (links in the email).
+   - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.
 
 ### Security and operations
 
@@ -132,5 +165,7 @@ Fixed items are removed from this list; the git history records what changed. It
 
 7. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
 8. **The Business view is only a filter** on the `b2b` flag (no business account or team).
-9. **Household sharing is a placeholder** (the "Shared with household" metric and the disabled "Shared" filter chip).
-10. **No account data export** before deletion.
+9. **No account data export** before deletion.
+10. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
+11. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
+12. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.

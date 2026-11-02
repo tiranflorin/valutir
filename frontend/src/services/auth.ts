@@ -18,6 +18,8 @@ export type AuthUser = {
     roles?: string[];
     /** Loaded from GET /api/profile once signed in. */
     defaultCurrency?: DefaultCurrency;
+    timezone?: string;
+    remindersEnabled?: boolean;
     pendingEmail?: string | null;
 };
 

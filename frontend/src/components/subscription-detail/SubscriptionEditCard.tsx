@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { API_URL } from '../../config';
 import { isBeforeToday, todayIsoDate } from '../../utils/dates';
+import { householdPayload } from '../../utils/householdShare';
 import SubscriptionFormCard, {
     type BillingInterval,
     type SubscriptionFormValues,
@@ -46,7 +47,8 @@ const SubscriptionEditCard: React.FC<Props> = ({
         status: mapStatusToForm(subscription.status),
         notes: subscription.notes ?? '',
         providerGroup: '',
-        householdShared: false,
+        householdShared: subscription.householdShared ?? false,
+        householdSize: subscription.householdSize ?? 2,
         autoRenew: subscription.autoRenew,
         b2b: subscription.b2b || window.localStorage.getItem('valutir_dashboard_view') === 'business',
     });
@@ -102,6 +104,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     status: statusPayload,
                     autoRenew: !isOther && values.autoRenew,
                     b2b: values.b2b,
+                    ...householdPayload(values),
                     cancelledAt,
                 }),
             });
@@ -130,6 +133,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     status: statusPayload,
                     autoRenew: !isOther && values.autoRenew,
                     b2b: values.b2b,
+                    ...householdPayload(values),
                     cancelledAt,
                 }
             );
@@ -155,7 +159,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
             onCancel={onCancel}
             showHeader={false}
             showProviderGroup={false}
-            showHouseholdShared={false}
+            showHouseholdShared
         />
     );
 };

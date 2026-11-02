@@ -70,6 +70,8 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                     status: 'active',
                     autoRenew: true,
                     b2b: subscription.b2b,
+                    householdShared: subscription.householdShared ?? false,
+                    householdSize: subscription.householdSize ?? null,
                     cancelledAt: null,
                     trialEndsAt: null,
                     startedAt: reenabledFromDate,

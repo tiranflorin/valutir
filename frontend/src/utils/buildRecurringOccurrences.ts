@@ -21,27 +21,36 @@ const toIsoDate = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-const addFrequency = (
-    date: Date,
-    frequency: SubscriptionRecord['billingCadence']
-) => {
-    const next = new Date(date);
+const addMonthsClamped = (anchor: Date, months: number) => {
+    const target = new Date(anchor.getFullYear(), anchor.getMonth() + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(anchor.getDate(), lastDay));
+    return target;
+};
 
+/**
+ * Charge number n (0 = the anchor), counted from the anchor rather than the previous charge, so
+ * month-end dates clamp instead of drifting: 31 Jan -> 28 Feb -> 31 Mar. Same rule as the
+ * backend's BillingSchedule. Returns null for an unknown cadence.
+ */
+export const chargeDate = (
+    anchor: Date,
+    frequency: SubscriptionRecord['billingCadence'],
+    n: number
+): Date | null => {
     switch (frequency) {
+        case 'daily':
+            return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + n);
         case 'weekly':
-            next.setDate(next.getDate() + 7);
-            return next;
+            return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 7 * n);
         case 'monthly':
-            next.setMonth(next.getMonth() + 1);
-            return next;
+            return addMonthsClamped(anchor, n);
         case 'quarterly':
-            next.setMonth(next.getMonth() + 3);
-            return next;
+            return addMonthsClamped(anchor, 3 * n);
         case 'yearly':
-            next.setFullYear(next.getFullYear() + 1);
-            return next;
+            return addMonthsClamped(anchor, 12 * n);
         default:
-            return next;
+            return n === 0 ? new Date(anchor) : null;
     }
 };
 
@@ -63,9 +72,11 @@ export const buildRecurringOccurrences = ({
     subscriptions.forEach((subscription) => {
         if (!shouldIncludeSubscription(subscription)) return;
 
-        let cursor = parseDateOnly(subscription.nextBillingDate as string);
+        const anchor = parseDateOnly(subscription.nextBillingDate as string);
 
-        while (cursor < end) {
+        for (let n = 0; ; n += 1) {
+            const cursor = chargeDate(anchor, subscription.billingCadence, n);
+            if (!cursor || cursor >= end) break;
             if (cursor >= start) {
                 occurrences.push({
                     subscriptionId: String(subscription.id),
@@ -76,8 +87,6 @@ export const buildRecurringOccurrences = ({
                     ownerName: undefined,
                 });
             }
-
-            cursor = addFrequency(cursor, subscription.billingCadence);
         }
     });
 

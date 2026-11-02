@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -16,6 +17,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const string DEFAULT_CURRENCY = 'EUR';
     public const array SUPPORTED_CURRENCIES = ['EUR', 'USD', 'RON'];
+    /** Default user time zone: Frankfurt, where the app is hosted (AWS eu-central-1). */
+    public const string DEFAULT_TIMEZONE = 'Europe/Berlin';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -48,6 +51,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(options: ['default' => 1])]
     private int $tokenVersion = 1;
+
+    /** IANA time zone used for "today" in reminders and billing-date updates. */
+    #[ORM\Column(length: 64, options: ['default' => self::DEFAULT_TIMEZONE])]
+    private string $timezone = self::DEFAULT_TIMEZONE;
+
+    /** Payment reminder emails; on by default, turned off from Preferences or the email's unsubscribe link. */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $remindersEnabled = true;
+
+    /** The user's local date the reminder digest was last handled for (one digest per local day). */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $remindersProcessedOn = null;
 
     public function getId(): ?int
     {
@@ -167,5 +182,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         ++$this->tokenVersion;
 
         return $this;
+    }
+
+    public function getTimezone(): string
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(string $timezone): static
+    {
+        $this->timezone = $timezone;
+
+        return $this;
+    }
+
+    public function isRemindersEnabled(): bool
+    {
+        return $this->remindersEnabled;
+    }
+
+    public function setRemindersEnabled(bool $remindersEnabled): static
+    {
+        $this->remindersEnabled = $remindersEnabled;
+
+        return $this;
+    }
+
+    public function getRemindersProcessedOn(): ?\DateTimeImmutable
+    {
+        return $this->remindersProcessedOn;
     }
 }

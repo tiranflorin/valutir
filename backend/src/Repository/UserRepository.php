@@ -35,28 +35,43 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-    //    /**
-    //     * @return User[] Returns an array of User objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return User[]
+     */
+    public function findWithRemindersEnabled(): array
+    {
+        return $this->findBy(['remindersEnabled' => true], ['id' => 'ASC']);
+    }
 
-    //    public function findOneBySomeField($value): ?User
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Atomically marks the user's reminders as handled for $localDate. Returns false when another
+     * run already handled that day, so overlapping runs never send the same digest twice.
+     */
+    public function claimReminderRun(User $user, \DateTimeImmutable $localDate): bool
+    {
+        $updated = $this->createQueryBuilder('u')
+            ->update()
+            ->set('u.remindersProcessedOn', ':localDate')
+            ->andWhere('u.id = :id')
+            ->andWhere('u.remindersProcessedOn IS NULL OR u.remindersProcessedOn < :localDate')
+            ->setParameter('localDate', $localDate, 'date_immutable')
+            ->setParameter('id', $user->getId())
+            ->getQuery()
+            ->execute();
+
+        return 1 === $updated;
+    }
+
+    /** Undoes claimReminderRun() after a failed send, so the next run retries the user. */
+    public function releaseReminderRun(User $user, ?\DateTimeImmutable $previous): void
+    {
+        $this->createQueryBuilder('u')
+            ->update()
+            ->set('u.remindersProcessedOn', ':previous')
+            ->andWhere('u.id = :id')
+            ->setParameter('previous', $previous, 'date_immutable')
+            ->setParameter('id', $user->getId())
+            ->getQuery()
+            ->execute();
+    }
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import { shareOf, splitCount } from '../../utils/householdShare';
 
 type Props = {
     subscription: SubscriptionCardModel;
@@ -29,7 +30,17 @@ const DetailRow: React.FC<{ label: string; value: string; helper?: string }> = (
     </Box>
 );
 
+const formatMoney = (amount: number, currency: string) => {
+    try {
+        return new Intl.NumberFormat('en-GB', { style: 'currency', currency: currency || 'EUR' }).format(amount);
+    } catch {
+        return `${amount.toFixed(2)} ${currency || 'EUR'}`;
+    }
+};
+
 const SubscriptionInfoCard: React.FC<Props> = ({ subscription }) => {
+    const people = splitCount(subscription);
+
     return (
         <Paper className="subscription-info-panel">
             <div className="subscription-info-heading">
@@ -42,6 +53,13 @@ const SubscriptionInfoCard: React.FC<Props> = ({ subscription }) => {
                 <DetailRow label="Next billing date" value={formatDate(subscription.nextBillingDate)} />
                 <DetailRow label="Auto renew" value={subscription.autoRenew ? 'On' : 'Off'} />
                 <DetailRow label="Subscription view" value={subscription.b2b ? 'Business' : 'Personal'} />
+                {!subscription.b2b && (
+                    <DetailRow
+                        label="Household shared"
+                        value={people > 1 ? `Yes · split between ${people}` : 'No'}
+                        helper={people > 1 ? `Your share: ${formatMoney(shareOf(Number(subscription.amount) || 0, subscription), subscription.currency)} per ${subscription.billingCadence} bill` : undefined}
+                    />
+                )}
                 <DetailRow label="Notes" value={subscription.notes?.trim() || '—'} />
                 {subscription.status === 'cancelled' && (
                     <DetailRow label="Cancelled at" value={formatDate(subscription.cancelledAt)} />

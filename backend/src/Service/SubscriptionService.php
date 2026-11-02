@@ -98,6 +98,8 @@ final class SubscriptionService
         $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setB2b($dto->b2b);
+        // A size sent without householdShared is ignored, so turning sharing off always clears it.
+        $subscription->setHouseholdSharing($dto->householdShared ? $dto->householdSize : null);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
 
         // trialReminderSentAt is server-owned (set when a reminder is sent), never taken from the client.

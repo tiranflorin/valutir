@@ -78,6 +78,14 @@ class Subscription
     #[ORM\Column(options: ['default' => false])]
     private bool $b2b = false;
 
+    /** Whether the bill is split equally within the household (personal subscriptions only). */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $householdShared = false;
+
+    /** People splitting the bill equally, the owner included (2-10); null when not shared. */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $householdSize = null;
+
     /** Calendar date of the cancellation; the API reads and writes it as Y-m-d. */
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
@@ -262,6 +270,28 @@ class Subscription
         return $this;
     }
 
+    public function isHouseholdShared(): bool
+    {
+        return $this->householdShared;
+    }
+
+    public function getHouseholdSize(): ?int
+    {
+        return $this->householdSize;
+    }
+
+    /**
+     * Shares the bill equally between $people (the owner included), or stops sharing when null.
+     * One setter keeps the two fields consistent.
+     */
+    public function setHouseholdSharing(?int $people): static
+    {
+        $this->householdShared = null !== $people;
+        $this->householdSize = $people;
+
+        return $this;
+    }
+
     public function getCancelledAt(): ?\DateTimeImmutable
     {
         return $this->cancelledAt;
@@ -355,6 +385,8 @@ class Subscription
             'isActive' => $this->isActive(),
             'autoRenew' => $this->isAutoRenew(),
             'b2b' => $this->isB2b(),
+            'householdShared' => $this->isHouseholdShared(),
+            'householdSize' => $this->getHouseholdSize(),
             'cancelledAt' => $this->getCancelledAt()?->format('Y-m-d'),
             'createdAt' => $this->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
