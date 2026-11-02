@@ -46,7 +46,11 @@ export async function registerRequest(payload: RegisterPayload) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data?.message || data?.error || 'Registration failed');
+        const fieldErrors: unknown[] = data?.errors && typeof data.errors === 'object'
+            ? Object.values(data.errors).flat()
+            : [];
+        const firstFieldError = fieldErrors.find((item): item is string => typeof item === 'string');
+        throw new Error(firstFieldError || data?.message || data?.error || 'Registration failed');
     }
 
     return data;

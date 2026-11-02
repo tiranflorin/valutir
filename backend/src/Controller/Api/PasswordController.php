@@ -1,56 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\Api;
 
-use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\PasswordResetService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api')]
-class PasswordController extends AbstractController
+final class PasswordController extends AbstractController
 {
-    #[Route('/register', name: 'api_register', methods: ['POST'])]
-    public function register(
-        Request $request,
-        UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager,
-    ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
-        $password = $data['password'] ?? null;
-        $name = $data['name'] ?? null;
-
-        if (!$email || !$password || !$name) {
-            return new JsonResponse(['error' => 'Email, password, and name are required'], 400);
-        }
-
-        $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
-        if ($existingUser) {
-            return new JsonResponse(['error' => 'Email already registered'], 409);
-        }
-
-        $user = new User();
-        $user->setEmail($email);
-        $user->setName($name);
-        $user->setRoles(['ROLE_USER']);
-        $user->setPassword($passwordHasher->hashPassword($user, $password));
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        return new JsonResponse(['message' => 'User created successfully', 'email' => $user->getEmail()], 201);
-    }
-
     #[Route('/reset-password/request', name: 'api_reset_password_request', methods: ['POST'])]
     public function requestReset(
         Request $request,

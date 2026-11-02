@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Dto;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-class SubscriptionUpsertRequest
+final class SubscriptionUpsertRequest
 {
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -49,5 +51,4 @@ class SubscriptionUpsertRequest
 
     #[Assert\Date]
     public ?string $trialEndsAt = null;
-    public ?string $trialReminderSentAt = null;
 }

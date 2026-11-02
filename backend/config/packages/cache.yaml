@@ -17,3 +17,11 @@ framework:
         # Namespaced pools use the above "app" backend by default
         #pools:
             #my.dedicated.cache: null
+
+when@test:
+    framework:
+        cache:
+            pools:
+                # Keep rate-limiter state in memory so limits never carry over between test runs.
+                cache.rate_limiter:
+                    adapter: cache.adapter.array

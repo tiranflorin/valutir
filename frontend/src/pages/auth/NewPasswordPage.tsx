@@ -67,6 +67,9 @@ const NewPasswordPage: React.FC = () => {
         if (!password) {
             setPasswordError('New password is required');
             valid = false;
+        } else if (!checks.length) {
+            setPasswordError('Password must be at least 8 characters');
+            valid = false;
         } else if (strength === 'Weak' || strength === 'Fair') {
             setPasswordError('Password strength must be at least Good');
             valid = false;

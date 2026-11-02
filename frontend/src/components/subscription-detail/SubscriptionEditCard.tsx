@@ -92,7 +92,6 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     billingCadence: values.billingInterval,
                     nextBillingDate: values.renewalDate || null,
                     trialEndsAt: isTrial ? values.renewalDate || null : null,
-                    trialReminderSentAt: null,
                     notes: values.notes.trim() || null,
                     status: statusPayload,
                     autoRenew: !isOther && values.autoRenew,

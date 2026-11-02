@@ -11,7 +11,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 ## Current capabilities
 
 - Account registration and JWT login
-- User-scoped subscription create, read, update, and soft-delete operations
+- User-scoped subscription create, read, update, and soft-delete operations (soft-deleted subscriptions are kept in the database but hidden from the API)
 - Subscription fields for amount, currency, cadence, category, payment method, status, dates, notes, trial details, and a `b2b` business classification
 - Personal and business dashboard views, with a business toggle on subscription create and edit forms
 - Protected Profile and Preferences pages, including authenticated password changes and a saved default currency for new subscriptions
@@ -109,3 +109,27 @@ frontend/  React application, calendar UI, and Vitest tests
 
 - Expand test coverage.
 - Update the CI workflows for backend tests and frontend checks.
+
+## Status & TODO:
+
+Unfinished or buggy
+
+1. ~~Deleted subscriptions don't really disappear.~~ **Fixed.** Deleting stays a soft delete (the row keeps `deletedAt`, cancellation date, and the `deletedUseful` answer), but all user-scoped queries in `SubscriptionRepository` now go through `createVisibleForUserQueryBuilder()`, which excludes soft-deleted rows. Deleted subscriptions no longer appear in `GET /api/subs` and return 404 for `GET`/`PUT`/`PATCH`/`DELETE /api/subs/{id}`, so the UI never sees them.
+   - TODO: add an `app:subscriptions:purge-deleted` Symfony console command, scheduled via cron, that archives or permanently removes subscriptions soft-deleted longer than a retention period.
+2. ~~Deleting sets the wrong status.~~ **Fixed** (together with #7). `SubscriptionService::delete()` now sets the status to `'cancelled'` instead of `false` (which was silently stored as `""`). Covered by `tests/Service/SubscriptionServiceTest.php`.
+3. ~~Registration has almost no validation.~~ **Fixed.** `POST /api/register` moved to its own `RegistrationController`, which deserializes into a validated `RegisterRequest` DTO and delegates to `UserRegistrationService`:
+   - Email: required, valid format, max 180 characters (the column length). Name: required, max 255. Malformed JSON or non-string fields return 400; validation failures return 422 with per-field `errors`.
+   - Password: the new reusable `#[PasswordPolicy]` constraint (`src/Validator/`) requires at least 8 characters, plus any two of an uppercase letter, a number, or a symbol. The Register, New password, and Profile forms enforce the same rule. Previously they accepted any 3 of the 4 meter checks, so a 7-character password like `Ab1!xyz` passed.
+   - Rate limited to 5 attempts per 15 minutes per client IP (429 with `Retry-After`).
+   - No account enumeration: new and already-registered emails both get `202 Accepted` with the same message. The password is hashed on both paths so timing matches, and the existing account's owner gets an email with sign-in and reset links instead. The concurrent-duplicate race on the unique email index is handled the same way.
+   - TODO: apply `#[PasswordPolicy]` to `ChangePasswordRequest` (which duplicates the rule inline in `ProfileController`) and to `POST /api/reset-password/new` (which only checks for 8+ characters).
+   - TODO: consider email verification before activating new accounts, and case-insensitive email matching (currently `Foo@x.com` and `foo@x.com` are different accounts).
+4. The API URL setting is inconsistent. AddSubscriptionPage uses VITE_API_BASE_URL with a localhost fallback, while every other page uses VITE_API_URL.
+5. No account management: you can't change your name or email or delete your account, and there's no logout on the backend side (tokens simply expire after 24 hours).
+6. Few tests. (Fixed separately: `ContactControllerTest` failed with a 429 after 5 runs within 15 minutes because rate-limiter state persisted in the filesystem cache and the test reset the wrong limiter key. The test environment now stores limiter state in memory via `cache.rate_limiter` in `config/packages/cache.yaml`.) Backend tests cover only the health check, the contact form, password reset and Turnstile. Subscription create/update/delete and the "can't access another user's data" checks have no tests. The frontend has 3 test files.
+7. ~~Code standards are applied unevenly.~~ **Fixed.** Every file in `backend/src` now declares `strict_types=1`. Controllers, services, the DTO, the exception, the event subscriber, the security handlers, and the console command are `final`. Doctrine entities and repositories stay non-final on purpose (Doctrine proxies extend entities, and tests mock repositories). Enabling strict types exposed bug #2, now fixed. `POST /api/register` also rejects non-string fields with a 400 instead of a type error; its full validation is still #3.
+8. ~~Subscription trial fields were returned from the wrong properties.~~ **Fixed.** `Subscription::toArray()` returned `startedAt` as `trialEndsAt` and `updatedAt` as `trialReminderSentAt`, so the UI showed the wrong trial end date. Because the cancel form sent that value back and the API only parsed `Y-m-d H:i:s`, cancelling from the UI also failed with a 400 for every subscription. Both fields now come from their own properties. `trialReminderSentAt` is server-owned: it's no longer accepted from clients (the frontend stopped sending it), and it's cleared whenever the trial end date changes so a new reminder can be sent. Covered by `tests/Entity/SubscriptionTest.php` and `tests/Service/SubscriptionServiceTest.php`.
+   - TODO: actually send trial reminders (for example, a cron-run console command that emails users before `trialEndsAt` and sets `trialReminderSentAt`). Nothing sends them yet.
+9. Frontend `type-check` and `lint` fail (CI runs only the frontend tests, which pass). `type-check` reports type-only imports needed under `verbatimModuleSyntax`, a few unused variables, and missing `@fullcalendar/*` modules in the `frontend-test` container. `lint` crashes on a module-resolution error, which suggests that container's `node_modules` is out of date.
+
+I'd fix #1 and #2 first, since they're data-correctness problems in the app's main flow. Then registration validation (#3), then deciding what the Business/Plans feature actually is. I can make any of these fixes if you want.

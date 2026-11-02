@@ -32,6 +32,7 @@ const ProfilePage: React.FC = () => {
         symbol: /[^A-Za-z0-9]/.test(newPassword),
     }), [newPassword]);
     const strengthScore = Object.values(passwordChecks).filter(Boolean).length;
+    const meetsPasswordPolicy = passwordChecks.length && strengthScore >= 3;
     const initials = user?.name?.slice(0, 1)?.toUpperCase() || user?.email?.slice(0, 1)?.toUpperCase() || 'U';
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -39,8 +40,8 @@ const ProfilePage: React.FC = () => {
         setError('');
         setSuccess('');
 
-        if (strengthScore < 3) {
-            setError('Use a password that meets at least three of the four requirements below.');
+        if (!meetsPasswordPolicy) {
+            setError('Use at least 8 characters, plus any two of uppercase, number, or symbol.');
             return;
         }
         if (newPassword !== confirmPassword) {
@@ -156,7 +157,7 @@ const ProfilePage: React.FC = () => {
                             <Button
                                 type="submit"
                                 variant="contained"
-                                disabled={saving || !currentPassword || !newPassword || !confirmPassword || strengthScore < 3 || newPassword !== confirmPassword}
+                                disabled={saving || !currentPassword || !newPassword || !confirmPassword || !meetsPasswordPolicy || newPassword !== confirmPassword}
                             >
                                 {saving ? 'Updating...' : 'Update password'}
                             </Button>

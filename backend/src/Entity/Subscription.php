@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Repository\SubscriptionRepository;
@@ -354,8 +356,8 @@ class Subscription
             'cancelledAt' => $this->getCancelledAt()?->format('Y-m-d'),
             'createdAt' => $this->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
-            'trialEndsAt' => $this->getStartedAt()?->format('Y-m-d'),
-            'trialReminderSentAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'trialEndsAt' => $this->getTrialEndsAt()?->format('Y-m-d'),
+            'trialReminderSentAt' => $this->getTrialReminderSentAt()?->format(\DateTimeInterface::ATOM),
         ];
     }
 }

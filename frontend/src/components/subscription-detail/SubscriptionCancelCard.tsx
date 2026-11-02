@@ -67,7 +67,6 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                 b2b: subscription.b2b,
                 cancelledAt: cancellationDate,
                 trialEndsAt: subscription.trialEndsAt ?? null,
-                trialReminderSentAt: subscription.trialReminderSentAt ?? null,
             };
 
             const response = await fetch(`${VITE_API_URL}/api/subs/${subscription.id}`, {

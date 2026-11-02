@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\Api;
 
 use App\Dto\SubscriptionUpsertRequest;
+use App\Entity\Subscription;
 use App\Entity\User;
 use App\Service\SubscriptionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,7 +18,7 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExcep
 use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/subs')]
-class SubsController extends AbstractController
+final class SubsController extends AbstractController
 {
     public function __construct(
         private readonly SubscriptionService $subscriptionService,
@@ -29,7 +32,7 @@ class SubsController extends AbstractController
         $user = $this->requireUser();
 
         $items = array_map(
-            static fn ($subscription) => $subscription->toArray(),
+            static fn (Subscription $subscription): array => $subscription->toArray(),
             $this->subscriptionService->listForUser($user)
         );
 

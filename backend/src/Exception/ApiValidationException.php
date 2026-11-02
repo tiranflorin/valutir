@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exception;
 
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ApiValidationException extends \RuntimeException
+final class ApiValidationException extends \RuntimeException
 {
     private array $errors;
 

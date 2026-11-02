@@ -72,7 +72,6 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                     b2b: subscription.b2b,
                     cancelledAt: null,
                     trialEndsAt: null,
-                    trialReminderSentAt: null,
                     startedAt: reenabledFromDate,
                 }),
             });

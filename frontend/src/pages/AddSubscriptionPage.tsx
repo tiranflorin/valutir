@@ -84,7 +84,6 @@ const AddSubscriptionPage: React.FC = () => {
                 startedAt: today,
                 nextBillingDate: values.renewalDate,
                 trialEndsAt: isTrial ? values.renewalDate : null,
-                trialReminderSentAt: null,
                 notes: values.notes.trim() || null,
                 paymentMethod: values.providerGroup.trim() || null,
                 householdShared: values.householdShared,

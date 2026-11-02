@@ -114,6 +114,9 @@ const RegisterPage: React.FC = () => {
         if (!password) {
             setPasswordError('Password is required');
             valid = false;
+        } else if (!passwordChecks.length) {
+            setPasswordError('Password must be at least 8 characters');
+            valid = false;
         } else if (passwordStrength === 'Weak' || passwordStrength === 'Fair') {
             setPasswordError('Password strength must be at least Good');
             valid = false;
@@ -159,7 +162,7 @@ const RegisterPage: React.FC = () => {
                         <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 1.5 }} />
                         <div className="login-intro">
                             <h1>Account created</h1>
-                            <p>Your account is ready. Sign in to start tracking.</p>
+                            <p>Your account is ready. Sign in to start tracking. If this email was already registered, we’ve sent it a message with next steps instead.</p>
                         </div>
                         <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login')}>
                             Go to sign in

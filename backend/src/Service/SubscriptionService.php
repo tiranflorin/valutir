@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
 use App\Dto\SubscriptionUpsertRequest;
@@ -12,7 +14,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class SubscriptionService
+final class SubscriptionService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -68,7 +70,7 @@ class SubscriptionService
     {
         $subscription->setDeletedAt(new \DateTimeImmutable());
         $subscription->setCancelledAt(new \DateTimeImmutable());
-        $subscription->setStatus(false);
+        $subscription->setStatus('cancelled');
         $subscription->setDeletedUseful($usedAndUseful);
         $this->entityManager->flush();
     }
@@ -97,8 +99,14 @@ class SubscriptionService
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setB2b($dto->b2b);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
-        $subscription->setTrialEndsAt($this->parseDate($dto->trialEndsAt));
-        $subscription->setTrialReminderSentAt($this->parseDateTime($dto->trialReminderSentAt));
+
+        // trialReminderSentAt is server-owned (set when a reminder is sent), never taken from the client.
+        // A new trial end date needs a new reminder, so clear the old one.
+        $trialEndsAt = $this->parseDate($dto->trialEndsAt);
+        if ($trialEndsAt?->format('Y-m-d') !== $subscription->getTrialEndsAt()?->format('Y-m-d')) {
+            $subscription->setTrialReminderSentAt(null);
+        }
+        $subscription->setTrialEndsAt($trialEndsAt);
     }
 
     private function parseDate(?string $value): ?\DateTimeImmutable
@@ -111,21 +119,6 @@ class SubscriptionService
 
         if (!$date) {
             throw new BadRequestHttpException(sprintf('Invalid date value "%s". Expected format: Y-m-d.', $value));
-        }
-
-        return $date;
-    }
-
-    private function parseDateTime(?string $value): ?\DateTimeImmutable
-    {
-        if (null === $value || '' === $value) {
-            return null;
-        }
-
-        $date = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value);
-
-        if (!$date) {
-            throw new BadRequestHttpException(sprintf('Invalid date value "%s". Expected format: Y-m-d H:i:s .', $value));
         }
 
         return $date;

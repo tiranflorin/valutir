@@ -22,7 +22,6 @@ final class ContactControllerTest extends WebTestCase
 
         $client = static::createClient();
         $container = static::getContainer();
-        $container->get('limiter.contact_submit')->create(hash('sha256', 'unknown'))->reset();
 
         $turnstileVerifier = new TurnstileVerificationService(
             new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
