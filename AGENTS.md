@@ -85,6 +85,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Supported billing cadences are `weekly`, `monthly`, `quarterly`, and `yearly` (frontend form, API validation, `BillingSchedule::CADENCES`). Rows saved earlier may still hold `daily`; the scheduled commands skip unknown cadences.
 - CORS allows only the `FRONTEND_URL` origin (`%frontend_url%`, default `http://localhost:5173`); the same parameter builds links in emails, so keep it an origin without a path or trailing slash.
 - Account endpoints that check the current password are limited to 5 failed attempts per 15 minutes per user; responses never reveal whether another email is registered.
+- Use `Request::getClientIp()` for client IPs (never read `X-Forwarded-For`, `CF-Connecting-IP`, or similar headers directly). Proxies are trusted only through `SYMFONY_TRUSTED_PROXIES` (`framework.yaml`); `X-Forwarded-Host` is intentionally not trusted.
 
 ## Frontend
 

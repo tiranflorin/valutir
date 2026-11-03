@@ -87,6 +87,7 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `MAILER_DSN` | backend | Email transport (MailDev locally, Amazon SES in production) |
 | `FRONTEND_URL` | backend | The app's origin (`scheme://host[:port]`, no trailing slash): base URL for links in emails and the only CORS-allowed origin |
 | `DEFAULT_URI` | backend | The API's public URL, used for URLs built in console commands (one-click unsubscribe) |
+| `SYMFONY_TRUSTED_PROXIES` | backend | Reverse proxies allowed to pass on the client IP and scheme; empty locally. See [Client IPs behind proxies](#client-ips-behind-proxies) |
 | `CONTACT_RECIPIENT` | backend | Mailbox for contact-form messages |
 | `TURNSTILE_SECRET_KEY`, `TURNSTILE_ALLOWED_HOSTNAMES` | backend | Cloudflare Turnstile verification |
 | `VITE_API_URL` | frontend | API base URL; required for builds (a Cloudflare build variable in production). Its origin is also the only API origin the CSP allows |
@@ -138,6 +139,20 @@ The frontend is a static build hosted on Cloudflare (Pages, or Workers with stat
 - The build writes `dist/_headers` (`frontend/build/securityHeaders.ts`): a Content Security Policy whose `connect-src` is the origin of `VITE_API_URL`, plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and long-lived caching for the hashed files in `/assets`. Add any new external script, frame, font, image, or API origin to that policy.
 - SPA routing: Pages serves `index.html` for unknown paths when there's no `404.html`; on Workers set `not_found_handling = "single-page-application"`.
 - `FRONTEND_URL` (backend) must be the app's one canonical origin: redirect `www` to it (or the reverse) with a Cloudflare redirect rule. Preview deployments (`*.pages.dev`) aren't allowed by the API's CORS.
+
+### Client IPs behind proxies
+
+Rate limits (registration, password reset, contact, email-change confirmation), login throttling, and the Turnstile check all use the client's IP. Behind a proxy PHP only sees the proxy's address, so without configuration every visitor shares one IP: a few sign-ups would block registration for everyone, and about 25 failed logins would lock everyone out.
+
+Symfony reads the visitor's IP and scheme from `X-Forwarded-For` / `-Proto` / `-Port`, but only when the request comes from an address in `SYMFONY_TRUSTED_PROXIES` (`config/packages/framework.yaml`). It walks the `X-Forwarded-For` list from the right, skipping trusted proxies, so a header forged by the client is ignored. Unset, nothing is trusted (local development). Set it to every proxy hop in front of PHP, whatever the final setup is:
+
+| Setup | `SYMFONY_TRUSTED_PROXIES` |
+|---|---|
+| Cloudflare (proxied DNS) → AWS load balancer → PHP | The VPC range of the load balancer (or `PRIVATE_SUBNETS`) plus Cloudflare's IP ranges ([cloudflare.com/ips](https://www.cloudflare.com/ips/)), comma-separated |
+| Cloudflare Tunnel (`cloudflared` next to PHP) → PHP | The `cloudflared` address (or `PRIVATE_SUBNETS` if only it can reach PHP) |
+| Cloudflare → PHP directly | Cloudflare's IP ranges |
+
+Check after deploying: the client IP logged for a request (or a rate-limit hit from two networks) must differ per visitor, not be the proxy's address. Cloudflare's ranges change rarely; update the variable when they do.
 
 Still to do when deploying:
 
