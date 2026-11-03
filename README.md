@@ -129,6 +129,12 @@ docker compose exec backend php bin/console app:reminders:send
 
   It exits with a failure status when a digest can't be sent; that user is retried on the next run.
 
+A third command removes expired rows from the PostgreSQL-backed cache pools (revoked JWTs and rate-limit counters, table `cache_items`). Expired rows are already ignored, so this only keeps the table small; run it hourly too, in any order:
+
+```bash
+docker compose exec backend php bin/console cache:pool:prune
+```
+
 Charge dates are counted from the stored date: monthly from 31 Jan gives 28 Feb, then 31 Mar (the calendar uses the same rule). Each user's time zone is set in Preferences and defaults to `Europe/Berlin` (Frankfurt, AWS eu-central-1). Servers and the database stay on UTC. Users turn reminders off in Preferences or with the one-click link in every reminder email.
 
 ## Frontend deployment
@@ -157,8 +163,9 @@ Check after deploying: the client IP logged for a request (or a rate-limit hit f
 Still to do when deploying:
 
 1. Proxy the API hostname through Cloudflare with SSL mode Full (strict), allow only Cloudflare's IP ranges on the AWS load balancer, and add `X-Content-Type-Options: nosniff`, `Content-Security-Policy: frame-ancestors 'none'`, and `Cache-Control: no-store` to API responses with a Response Header Transform Rule.
-2. The CSP ships as `Content-Security-Policy-Report-Only`. Click through the deployed app (sign-in, Turnstile on the contact page, calendar), fix what the browser console reports, then set `ENFORCE_CSP = true`.
-3. Turn on HSTS in the Cloudflare dashboard (SSL/TLS > Edge Certificates) with a short `max-age` once the app and API both work over HTTPS; raise it, and consider `includeSubDomains`, once it's stable.
+2. Make sure the API can only be reached through your own Cloudflare zone. Cloudflare's IP ranges are shared by every Cloudflare customer, so an IP allow-list alone lets anyone route requests to the origin through their own zone or Worker and skip your WAF and edge rules. Prefer a Cloudflare Tunnel (`cloudflared` next to PHP, no public ingress on the load balancer); otherwise turn on Authenticated Origin Pulls with your own certificate (zone-specific mTLS, checked at the load balancer or nginx). Also add a WAF rule on the API hostname that blocks everything except `/api/*` and `/health`. (Cloudflare Access isn't a fit: it's a login gate for internal apps, not for a public API.)
+3. The CSP ships as `Content-Security-Policy-Report-Only`. Click through the deployed app (sign-in, Turnstile on the contact page, calendar), fix what the browser console reports, then set `ENFORCE_CSP = true`.
+4. Turn on HSTS in the Cloudflare dashboard (SSL/TLS > Edge Certificates) with a short `max-age` once the app and API both work over HTTPS; raise it, and consider `includeSubDomains`, once it's stable.
 
 ## Repository layout
 
@@ -199,7 +206,7 @@ Fixed items are removed from this list; the git history records what changed. It
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
 2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see Scheduled commands) but nothing schedules them in production yet:
-   - Schedule both commands hourly, `advance-billing-dates` first, for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
+   - Schedule the commands hourly (`advance-billing-dates` before `reminders:send`, plus `cache:pool:prune`), for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
    - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
    - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's origin (links in the email, and CORS).
    - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.
@@ -212,14 +219,15 @@ Fixed items are removed from this list; the git history records what changed. It
 6. **Dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high), and `composer audit` hasn't been run (AGENTS.md asks for it before releases). Apply safe updates and list anything that needs a major upgrade.
 7. **The dev admin command hard-codes a password** and prints it to the console (`app:create-admin`). Read it from a prompt or option instead.
 8. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
-9. **The token blocklist lives in `cache.app` (filesystem).** Use a shared pool such as Redis before running more than one backend instance.
-10. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
+9. **Rate limiters run without a lock.** Counters live in PostgreSQL (`cache.rate_limiter`), but `symfony/lock` isn't installed, so parallel requests can read the same count and exceed a limit (e.g. more than 5 password guesses). Add `symfony/lock` with the PostgreSQL advisory-lock store (`PostgreSqlStore`, no table needed).
+10. **Optional hardening: keep the JWT in an HttpOnly cookie.** The SPA stores it in `localStorage` (`valutir_auth_token`), so a successful XSS could steal it for later use. The CSP and React's escaping make that unlikely, and an XSS could still call the API while the page is open, so the gain is limited. If done: the API sets an `HttpOnly; Secure; SameSite=Strict` cookie (Lexik supports cookie tokens). The app and API hostnames count as the same site, so no Worker or single origin is needed. The SPA sends `credentials: 'include'`, CORS allows credentials for `FRONTEND_URL`, and logout clears the cookie. Add CSRF protection (AGENTS.md requires it for cookie auth): an `Origin` check on state-changing requests, because sibling subdomains count as same-site. Keep the 24-hour lifetime (or about 8 hours); skip refresh tokens, since the blocklist and `tokenVersion` already revoke tokens server-side.
+11. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
 
 ### Product gaps and mocks
 
-11. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
-12. **The Business view is only a filter** on the `b2b` flag (no business account or team).
-13. **No account data export** before deletion.
-14. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
-15. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
-16. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.
+12. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
+13. **The Business view is only a filter** on the `b2b` flag (no business account or team).
+14. **No account data export** before deletion.
+15. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
+16. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
+17. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.

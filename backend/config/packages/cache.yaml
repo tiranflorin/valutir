@@ -3,25 +3,27 @@ framework:
         # Unique name of your app: used to compute stable namespaces for cache keys.
         #prefix_seed: your_vendor_name/app_name
 
-        # The "app" cache stores to the filesystem by default.
-        # The data in this cache should persist between deploys.
-        # Other options include:
+        # The "app" cache stores to the filesystem by default. The filesystem is per container and
+        # is wiped on every deploy, so cache.app only holds data that is safe to lose.
+        #app: cache.adapter.filesystem
 
-        # Redis
-        #app: cache.adapter.redis
-        #default_redis_provider: redis://localhost
-
-        # APCu (not recommended with heavy random-write workloads as memory fragmentation can cause perf issues)
-        #app: cache.adapter.apcu
-
-        # Namespaced pools use the above "app" backend by default
-        #pools:
-            #my.dedicated.cache: null
+        # State that must survive a deploy and be shared by every backend instance lives in
+        # PostgreSQL (table "cache_items", created by a migration; expired rows are removed by
+        # "cache:pool:prune"). DBAL pools use the default connection ("database_connection").
+        pools:
+            # Revoked JWT IDs from POST /api/logout, kept until each token expires.
+            cache.jwt_blocklist:
+                adapter: cache.adapter.doctrine_dbal
+            # Rate limiters and login throttling (Symfony's default pool for both).
+            cache.rate_limiter:
+                adapter: cache.adapter.doctrine_dbal
 
 when@test:
     framework:
         cache:
             pools:
-                # Keep rate-limiter state in memory so limits never carry over between test runs.
+                # Backend tests are database-free and must not carry state between runs.
+                cache.jwt_blocklist:
+                    adapter: cache.adapter.array
                 cache.rate_limiter:
                     adapter: cache.adapter.array
