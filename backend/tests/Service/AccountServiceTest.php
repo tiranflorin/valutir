@@ -32,6 +32,7 @@ final class AccountServiceTest extends TestCase
 
         self::assertSame([
             'email' => 'ada@example.test',
+            'emailVerified' => false,
             'name' => 'Ada',
             'defaultCurrency' => 'EUR',
             'timezone' => 'Europe/Berlin',

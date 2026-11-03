@@ -113,6 +113,17 @@ final class SendRemindersCommandTest extends TestCase
         self::assertStringContainsString('nothing due: 1', $tester->getDisplay());
     }
 
+    public function testAUserWithAnUnverifiedEmailGetsNoReminder(): void
+    {
+        $unverified = (new User())->setEmail('someone-else@example.test')->setName('Eve');
+        $this->users->method('findOneByEmail')->willReturn($unverified);
+        $this->users->expects(self::never())->method('claimReminderRun');
+        $this->mailer->expects(self::never())->method('send');
+
+        $tester = $this->tester([], [$this->subscription('2026-11-04')]);
+        $tester->execute(['--user' => 'someone-else@example.test']);
+    }
+
     protected function setUp(): void
     {
         $this->users = $this->createMock(UserRepository::class);
@@ -127,7 +138,7 @@ final class SendRemindersCommandTest extends TestCase
      */
     private function tester(array $users, array $subscriptions, string $utcNow = self::NOW): CommandTester
     {
-        $this->users->method('findWithRemindersEnabled')->willReturn($users);
+        $this->users->method('findReminderRecipients')->willReturn($users);
         $subscriptionRepository = $this->createStub(SubscriptionRepository::class);
         $subscriptionRepository->method('findBillableForUser')->willReturn($subscriptions);
         $clock = $this->createStub(Clock::class);
@@ -149,7 +160,7 @@ final class SendRemindersCommandTest extends TestCase
 
     private function user(): User
     {
-        $user = (new User())->setEmail('ada@example.test')->setName('Ada');
+        $user = (new User())->setEmail('ada@example.test')->setName('Ada')->markEmailVerified(new \DateTimeImmutable('2026-01-01'));
         (new \ReflectionProperty(User::class, 'id'))->setValue($user, 1);
 
         return $user;

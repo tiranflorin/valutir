@@ -42,7 +42,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - `POST /api/login_check` authenticates JSON `{ "email", "password" }` and LexikJWTAuthenticationBundle returns a JWT.
 - JWTs are stateless, sent as `Authorization: Bearer <token>`, and have a 24-hour TTL.
 - Token revocation: `POST /api/logout` adds the current token to Lexik's blocklist (`cache.jwt_blocklist`). The blocklist and rate limiters/login throttling (`cache.rate_limiter`) are PostgreSQL-backed pools (`cache_items` table, `cache.yaml`) so they survive deploys and are shared across instances; keep such state out of `cache.app`, which is per-container filesystem. Tests swap both pools for array adapters. Every JWT also carries a `tv` claim matching `User::$tokenVersion`; `TokenVersionListener` rejects mismatches. Call `User::revokeAllTokens()` whenever every session must end (sign out everywhere, password change or reset, email change).
-- Public endpoints: `/api/login*`, `/api/register`, `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, `/api/reminders/unsubscribe` (signed token), and `/api/billing/webhook` (Stripe signature). All other `/api` endpoints require a fully authenticated user.
+- Public endpoints: `/api/login*`, `/api/register` (including `/api/register/verify-email`, link token), `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, `/api/reminders/unsubscribe` (signed token), and `/api/billing/webhook` (Stripe signature). All other `/api` endpoints require a fully authenticated user.
 - `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, and `ApiExceptionSubscriber` keep API errors JSON-shaped.
 - Do not read, print, grep, expose, log, commit, or repeat values from local `.env` files (`.env`, `.env.local`, `.env.ci`, `.env.dev`, `.env.test`, ...), JWT keys (`config/jwt/*.pem`), or environment dumps (`printenv`, `env`, `docker compose config`, `docker inspect`, `debug:dotenv`). Use the committed templates (`.env.dist`, `.env.sample`) for variable names. For AI agents this is enforced by `.claude/settings.json` and `.claude/hooks/block-env-secrets.py`; treat a block as intended and ask the user instead of working around it.
 
@@ -50,7 +50,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 - PostgreSQL 16 is the database; Doctrine ORM uses PHP attributes and Doctrine migrations.
 - Emails are case-insensitive: always go through `User::setEmail()` / `User::normalizeEmail()` (trim + lowercase) and look users up with `UserRepository::findOneByEmail()`, never `findOneBy(['email' => ...])`. The security provider uses `UserRepository::loadUserByIdentifier()`, and the database enforces lowercase with `CHECK (email = LOWER(email))` next to the unique index.
-- `user`: ID, unique email, JSON roles, hashed password, name, default currency, token version, IANA `timezone` (default `Europe/Berlin`), and reminder settings (`remindersEnabled`, `remindersProcessedOn`).
+- `user`: ID, unique email, JSON roles, hashed password, name, default currency, token version, IANA `timezone` (default `Europe/Berlin`), reminder settings (`remindersEnabled`, `remindersProcessedOn`), the paid unlock (`unlockedAt`), and email verification (`emailVerifiedAt` plus the latest link's token hash and expiry).
+- Email verification (`App\Service\EmailVerificationService`): new accounts start unverified and are emailed a 24-hour link; only the SHA-256 hash of its token is stored, and only the latest link works. An unverified account can sign in and track subscriptions, but `CheckoutService` refuses payment (403) and reminders skip it (`User::canReceiveReminders()`, `UserRepository::findReminderRecipients()`). Any new feature that emails the user, charges them, or shares their data with a third party must require `User::isEmailVerified()`. A completed password reset or email change calls `User::markEmailVerified()`, since both prove control of the inbox.
 - `subscription`: belongs to a user through a required `user_id` FK with `ON DELETE CASCADE`; it stores monetary, cadence, status, date, notes, payment, trial, household-sharing, and audit information.
 - Household sharing: `householdShared` + `householdSize` (2-10 people, the owner included) split a bill equally; personal subscriptions only. Always set both through `Subscription::setHouseholdSharing()`, and send both in every subscription PUT/PATCH payload (updates replace every field, so omitting them unshares the subscription). Frontend share maths lives in `src/utils/householdShare.ts`.
 - Billing dates: charges are counted from the stored `nextBillingDate` with month-end clamping (`App\Billing\BillingSchedule`, mirrored by `frontend/src/utils/buildRecurringOccurrences.ts`; keep them in sync). "Today" for a user is their local calendar day (`App\Billing\UserTime`); servers and the database stay on UTC. Use the `App\Clock\Clock` interface instead of `new \DateTimeImmutable()` in code that the scheduled commands run.
@@ -64,16 +65,18 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | Endpoint | Purpose |
 |---|---|
 | `GET /health` | Basic service health response |
-| `POST /api/register` | Create a user |
+| `POST /api/register` | Create a user (unverified; emails a verification link) |
+| `POST /api/register/verify-email` | Public; verify the account's email from its link token (rate limited per IP) |
 | `POST /api/login_check` | Obtain a JWT |
 | `POST /api/reset-password/request` | Request password-reset email |
 | `POST /api/reset-password/new` | Submit a new password (signs out every device) |
 | `POST /api/logout` | Revoke the current token (this device) |
 | `POST /api/logout/all` | Revoke every token for the user (all devices) |
-| `GET /api/profile` | Current user's email, name, default currency, time zone, reminder setting, and pending email change |
+| `GET /api/profile` | Current user's email, `emailVerified`, name, default currency, time zone, reminder setting, and pending email change |
 | `PATCH /api/profile` | Update any of `name`, `defaultCurrency` (`EUR`, `USD`, `RON`), `timezone` (IANA), `remindersEnabled` |
 | `PATCH /api/profile/password` | Change password (current password required); returns a fresh token and signs out other devices |
 | `POST /api/profile/email` | Start an email change (current password required); emails a confirmation link to the new address |
+| `POST /api/profile/email/verification` | Resend the verification link (3 per hour; 409 when already verified) |
 | `POST /api/profile/email/confirm` | Public; apply an email change from its link token and sign out every device |
 | `DELETE /api/profile` | Permanently delete the account and its data (current password required) |
 | `POST /api/reminders/unsubscribe?token=…` | Public; turn payment reminders off from the signed link in a reminder email (one-click unsubscribe) |

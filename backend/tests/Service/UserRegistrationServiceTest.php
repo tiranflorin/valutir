@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Clock\Clock;
 use App\Dto\RegisterRequest;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\AccountMailer;
+use App\Service\EmailVerificationService;
 use App\Service\UserRegistrationService;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,9 +34,17 @@ final class UserRegistrationServiceTest extends TestCase
                 $persisted = $user;
             },
         );
-        $entityManager->expects(self::once())->method('flush');
+        // Once to create the account, once to store the verification token.
+        $entityManager->expects(self::exactly(2))->method('flush');
+        $sentLink = null;
         $mailer = $this->createMock(MailerInterface::class);
-        $mailer->expects(self::never())->method('send');
+        $mailer->expects(self::once())->method('send')->with(self::callback(static function (Email $email) use (&$sentLink): bool {
+            self::assertSame('new@example.test', $email->getTo()[0]->getAddress());
+            self::assertSame(1, preg_match('~http://frontend\.test/verify-email\?token=([a-f0-9]{64})~', (string) $email->getTextBody(), $matches));
+            $sentLink = $matches[1];
+
+            return true;
+        }));
 
         $this->createService($repository, $entityManager, $mailer)
             ->register($this->request(' New@Example.TEST ', 'Str0ng-pass', '  Ada  '));
@@ -43,6 +54,12 @@ final class UserRegistrationServiceTest extends TestCase
         self::assertSame('Ada', $persisted->getName());
         self::assertSame('hashed:Str0ng-pass', $persisted->getPassword());
         self::assertSame(['ROLE_USER'], $persisted->getRoles());
+        self::assertFalse($persisted->isEmailVerified());
+        self::assertTrue($persisted->isEmailVerificationTokenValid(new \DateTimeImmutable('2026-11-03 10:00:00')));
+        self::assertNotNull($sentLink);
+        // Only the hash is stored, never the token from the link.
+        $storedHash = (new \ReflectionProperty(User::class, 'emailVerificationTokenHash'))->getValue($persisted);
+        self::assertSame(hash('sha256', $sentLink), $storedHash);
     }
 
     public function testExistingEmailIsNotRecreatedAndOwnerIsNotified(): void
@@ -102,7 +119,17 @@ final class UserRegistrationServiceTest extends TestCase
         $hasher = $this->createStub(UserPasswordHasherInterface::class);
         $hasher->method('hashPassword')->willReturnCallback(static fn (User $user, string $plain): string => 'hashed:'.$plain);
 
-        return new UserRegistrationService($repository, $entityManager, $hasher, $mailer, new NullLogger(), 'http://frontend.test/');
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new \DateTimeImmutable('2026-11-03 09:00:00'));
+        $verification = new EmailVerificationService(
+            $repository,
+            $entityManager,
+            new AccountMailer($mailer, new NullLogger(), 'http://frontend.test/'),
+            $clock,
+            new NullLogger(),
+        );
+
+        return new UserRegistrationService($repository, $entityManager, $hasher, $mailer, $verification, new NullLogger(), 'http://frontend.test/');
     }
 
     private function request(string $email, string $password, string $name): RegisterRequest

@@ -13,6 +13,7 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
 import ThemeModeToggle from './ThemeModeToggle';
+import EmailVerificationBanner from './EmailVerificationBanner';
 import '../pages/RecurringScreens.css';
 
 const AppHeader: React.FC = () => {
@@ -27,78 +28,81 @@ const AppHeader: React.FC = () => {
     const closeMenu = () => setAnchorEl(null);
 
     return (
-        <Box component="header" className="site-header">
-            <Container maxWidth="xl" className="site-header-inner">
-                <RouterLink className="site-brand" to={isAuthenticated ? '/my-subs' : '/'} aria-label="ValuTir home">
-                    <img src={mode === 'dark' ? '/brand/header-logo-dark.svg' : '/brand/header-logo.svg'} alt="ValuTir" />
-                </RouterLink>
+        <>
+            <Box component="header" className="site-header">
+                <Container maxWidth="xl" className="site-header-inner">
+                    <RouterLink className="site-brand" to={isAuthenticated ? '/my-subs' : '/'} aria-label="ValuTir home">
+                        <img src={mode === 'dark' ? '/brand/header-logo-dark.svg' : '/brand/header-logo.svg'} alt="ValuTir" />
+                    </RouterLink>
 
-                <Box component="nav" className="site-nav" aria-label="Main navigation">
-                    {isAuthenticated ? (
-                        <>
-                            <Button component={RouterLink} to="/my-subs" className={pathname === '/my-subs' ? 'active' : ''}>
-                                Subs
-                            </Button>
-                            <Button component={RouterLink} to="/calendar" className={pathname.startsWith('/calendar') ? 'active' : ''}>
-                                Calendar
-                            </Button>
-                            <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>
-                                Plan
-                            </Button>
-                            <ThemeModeToggle />
-                            <Button
-                                className="account-trigger"
-                                aria-label="Open account menu"
-                                aria-haspopup="true"
-                                onClick={(event) => setAnchorEl(event.currentTarget)}
-                                endIcon={<KeyboardArrowDownRoundedIcon />}
-                            >
-                                <Avatar className="account-avatar">{initials}</Avatar>
-                            </Button>
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={closeMenu}
-                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                PaperProps={{ className: 'account-menu' }}
-                            >
-                                <MenuItem disabled className="account-menu-email">{user?.email}</MenuItem>
-                                <Divider />
-                                <MenuItem component={RouterLink} to="/profile" selected={pathname === '/profile'} onClick={closeMenu}>
-                                    Profile
-                                </MenuItem>
-                                <MenuItem component={RouterLink} to="/preferences" selected={pathname === '/preferences'} onClick={closeMenu}>
-                                    Preferences
-                                </MenuItem>
-                                <Divider />
-                                <MenuItem
-                                    onClick={() => {
-                                        closeMenu();
-                                        logout();
-                                        navigate('/');
-                                    }}
+                    <Box component="nav" className="site-nav" aria-label="Main navigation">
+                        {isAuthenticated ? (
+                            <>
+                                <Button component={RouterLink} to="/my-subs" className={pathname === '/my-subs' ? 'active' : ''}>
+                                    Subs
+                                </Button>
+                                <Button component={RouterLink} to="/calendar" className={pathname.startsWith('/calendar') ? 'active' : ''}>
+                                    Calendar
+                                </Button>
+                                <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>
+                                    Plan
+                                </Button>
+                                <ThemeModeToggle />
+                                <Button
+                                    className="account-trigger"
+                                    aria-label="Open account menu"
+                                    aria-haspopup="true"
+                                    onClick={(event) => setAnchorEl(event.currentTarget)}
+                                    endIcon={<KeyboardArrowDownRoundedIcon />}
                                 >
-                                    Log out
-                                </MenuItem>
-                            </Menu>
-                        </>
-                    ) : (
-                        <>
-                            {isLanding && <a href="#how-it-works">How it works</a>}
-                            {isLanding && <a href="#business">For business</a>}
-                            {isLanding && <a href="#free">Free plan</a>}
-                            {!isLanding && <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>Plans</Button>}
-                            <ThemeModeToggle />
-                            <Button component={RouterLink} to="/login" className="signin-link">Sign in</Button>
-                            <Button component={RouterLink} to="/register" variant="contained" className="header-cta">
-                                Try it out
-                            </Button>
-                        </>
-                    )}
-                </Box>
-            </Container>
-        </Box>
+                                    <Avatar className="account-avatar">{initials}</Avatar>
+                                </Button>
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl)}
+                                    onClose={closeMenu}
+                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    PaperProps={{ className: 'account-menu' }}
+                                >
+                                    <MenuItem disabled className="account-menu-email">{user?.email}</MenuItem>
+                                    <Divider />
+                                    <MenuItem component={RouterLink} to="/profile" selected={pathname === '/profile'} onClick={closeMenu}>
+                                        Profile
+                                    </MenuItem>
+                                    <MenuItem component={RouterLink} to="/preferences" selected={pathname === '/preferences'} onClick={closeMenu}>
+                                        Preferences
+                                    </MenuItem>
+                                    <Divider />
+                                    <MenuItem
+                                        onClick={() => {
+                                            closeMenu();
+                                            logout();
+                                            navigate('/');
+                                        }}
+                                    >
+                                        Log out
+                                    </MenuItem>
+                                </Menu>
+                            </>
+                        ) : (
+                            <>
+                                {isLanding && <a href="#how-it-works">How it works</a>}
+                                {isLanding && <a href="#business">For business</a>}
+                                {isLanding && <a href="#free">Free plan</a>}
+                                {!isLanding && <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>Plans</Button>}
+                                <ThemeModeToggle />
+                                <Button component={RouterLink} to="/login" className="signin-link">Sign in</Button>
+                                <Button component={RouterLink} to="/register" variant="contained" className="header-cta">
+                                    Try it out
+                                </Button>
+                            </>
+                        )}
+                    </Box>
+                </Container>
+            </Box>
+            <EmailVerificationBanner />
+        </>
     );
 };
 

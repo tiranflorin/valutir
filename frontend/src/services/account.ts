@@ -10,6 +10,8 @@ export const currencyOptions: { code: DefaultCurrency; label: string }[] = [
 
 export type AccountProfile = {
     email: string;
+    /** False until the owner opens the verification link; unverified accounts can't pay or get reminders. */
+    emailVerified: boolean;
     name: string | null;
     defaultCurrency: DefaultCurrency;
     /** IANA time zone used for reminder timing, e.g. "Europe/Bucharest". */
@@ -105,6 +107,21 @@ export const requestEmailChange = (token: string, newEmail: string, currentPassw
         token,
         body: { newEmail, currentPassword },
         fallbackError: 'Unable to start the email change.',
+    });
+
+/** Public: the emailed verification token is the credential. */
+export const verifyEmail = (verificationToken: string) =>
+    apiRequest<{ message: string }>('/api/register/verify-email', {
+        method: 'POST',
+        body: { token: verificationToken },
+        fallbackError: 'This verification link is invalid or expired.',
+    });
+
+export const resendEmailVerification = (token: string) =>
+    apiRequest<{ message: string }>('/api/profile/email/verification', {
+        method: 'POST',
+        token,
+        fallbackError: 'Unable to send a new confirmation link.',
     });
 
 /** Public: the emailed confirmation token is the credential. */

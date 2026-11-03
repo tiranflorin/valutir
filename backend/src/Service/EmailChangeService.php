@@ -80,6 +80,8 @@ final readonly class EmailChangeService
                 }
 
                 $user->setEmail($request->getNewEmail());
+                // The confirmation link was opened from the new inbox.
+                $user->markEmailVerified(new \DateTimeImmutable());
                 $user->revokeAllTokens();
 
                 return [$user, $previousEmail];

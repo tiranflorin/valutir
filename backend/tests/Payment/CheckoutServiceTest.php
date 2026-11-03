@@ -16,6 +16,7 @@ use App\Repository\PurchaseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
@@ -27,7 +28,7 @@ final class CheckoutServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->user = (new User())->setEmail('Buyer@Example.com');
+        $this->user = (new User())->setEmail('Buyer@Example.com')->markEmailVerified(new \DateTimeImmutable('2026-11-01'));
         (new \ReflectionProperty(User::class, 'id'))->setValue($this->user, 42);
     }
 
@@ -106,6 +107,16 @@ final class CheckoutServiceTest extends TestCase
         $this->expectException(ConflictHttpException::class);
 
         $this->service($gateway)->start($this->user);
+    }
+
+    public function testAnUnverifiedEmailCannotPay(): void
+    {
+        $unverified = (new User())->setEmail('someone-else@example.com');
+        $gateway = $this->gateway();
+        $gateway->expects(self::never())->method('createSession');
+        $this->expectException(AccessDeniedHttpException::class);
+
+        $this->service($gateway)->start($unverified);
     }
 
     public function testCheckoutIsUnavailableWithoutStripeKeys(): void

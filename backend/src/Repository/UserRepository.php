@@ -51,11 +51,23 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Users with reminders on and a verified email (see User::canReceiveReminders()).
+     *
      * @return User[]
      */
-    public function findWithRemindersEnabled(): array
+    public function findReminderRecipients(): array
     {
-        return $this->findBy(['remindersEnabled' => true], ['id' => 'ASC']);
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.remindersEnabled = true')
+            ->andWhere('u.emailVerifiedAt IS NOT NULL')
+            ->orderBy('u.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findOneByEmailVerificationTokenHash(string $tokenHash): ?User
+    {
+        return $this->findOneBy(['emailVerificationTokenHash' => $tokenHash]);
     }
 
     /**

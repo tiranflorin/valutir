@@ -55,7 +55,7 @@ final class RegistrationController extends AbstractController
 
         // Same response whether or not the email was already registered (no account enumeration).
         return $this->json(
-            ['message' => 'Registration received. You can now sign in.'],
+            ['message' => 'Registration received. Check your inbox for a link to confirm your email address; you can sign in now.'],
             Response::HTTP_ACCEPTED,
         );
     }

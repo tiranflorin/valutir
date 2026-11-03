@@ -11,6 +11,7 @@ use App\Repository\PurchaseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
@@ -46,6 +47,10 @@ final class CheckoutService
     {
         if ($user->isUnlocked()) {
             throw new ConflictHttpException('Your account is already unlocked.');
+        }
+        if (!$user->isEmailVerified()) {
+            // Stripe receipts and the customer record use this address; it must be the buyer's.
+            throw new AccessDeniedHttpException('Confirm your email address before paying. We sent you a link when you signed up; you can resend it from the banner at the top of the page.');
         }
         if (!$this->gateway->isConfigured()) {
             $this->logger->error('Stripe Checkout is turned off.', ['reason' => $this->gateway->configurationProblem()]);

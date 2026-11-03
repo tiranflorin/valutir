@@ -147,16 +147,16 @@ final class SendRemindersCommand extends Command
     }
 
     /**
-     * @return list<User>|null null when a requested user doesn't exist or has reminders off
+     * @return list<User>|null null when a requested user doesn't exist, has reminders off, or hasn't verified their email
      */
     private function users(mixed $email): ?array
     {
         if (\is_string($email) && '' !== $email) {
             $user = $this->userRepository->findOneByEmail($email);
 
-            return null === $user || !$user->isRemindersEnabled() ? null : [$user];
+            return null === $user || !$user->canReceiveReminders() ? null : [$user];
         }
 
-        return array_values($this->userRepository->findWithRemindersEnabled());
+        return array_values($this->userRepository->findReminderRecipients());
     }
 }

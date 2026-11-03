@@ -21,6 +21,8 @@ export type AuthUser = {
     timezone?: string;
     remindersEnabled?: boolean;
     pendingEmail?: string | null;
+    /** Unknown (undefined) until the profile loads. */
+    emailVerified?: boolean;
 };
 
 export async function loginRequest(payload: LoginPayload) {

@@ -29,6 +29,7 @@ const mergeProfile = (user: AuthUser | null, profile: AccountProfile): AuthUser 
     timezone: profile.timezone,
     remindersEnabled: profile.remindersEnabled,
     pendingEmail: profile.pendingEmail,
+    emailVerified: profile.emailVerified,
 });
 
 /** The session saved in this browser, if its token is still readable. A broken token is discarded. */

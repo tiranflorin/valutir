@@ -34,7 +34,9 @@ const unlockFeatures = [
 ];
 
 const PlansPage: React.FC = () => {
-    const { isAuthenticated, token } = useAuth();
+    const { isAuthenticated, token, user } = useAuth();
+    // The server refuses checkout too; this just explains why before the click.
+    const emailUnverified = user?.emailVerified === false;
     const [searchParams, setSearchParams] = useSearchParams();
     const [loadedStatus, setStatus] = useState<BillingStatus | null>(null);
     // A status loaded for an earlier session is never shown after sign-out.
@@ -126,7 +128,7 @@ const PlansPage: React.FC = () => {
                 variant="contained"
                 fullWidth
                 onClick={() => void handleUpgrade()}
-                disabled={!status || !status.checkoutAvailable || redirecting || returnState === 'confirming'}
+                disabled={!status || !status.checkoutAvailable || emailUnverified || redirecting || returnState === 'confirming'}
             >
                 {redirecting ? 'Opening secure checkout…' : `Pay ${price} once`}
             </Button>
@@ -188,6 +190,11 @@ const PlansPage: React.FC = () => {
                     <p className="plans-usage" role="status">
                         You have {status.activeCount} of {status.freeActiveLimit} active subscriptions on the free plan.
                     </p>
+                )}
+                {status && !status.unlocked && emailUnverified && (
+                    <Alert className="plans-upgrade-notice" severity="info">
+                        Confirm your email address first: Stripe sends your receipt there. Use the link we emailed you, or “Resend link” at the top of the page.
+                    </Alert>
                 )}
                 {status && !status.checkoutAvailable && !status.unlocked && (
                     <Alert className="plans-upgrade-notice" severity="info">Payments are not available right now. Please try again later.</Alert>

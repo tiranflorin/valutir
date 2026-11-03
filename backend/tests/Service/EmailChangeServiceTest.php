@@ -86,6 +86,7 @@ final class EmailChangeServiceTest extends TestCase
         self::assertTrue($this->service($requests, $users, $entityManager, $mailer)->confirmChange(str_repeat('c', 64)));
         self::assertSame('new@example.test', $user->getEmail());
         self::assertSame(2, $user->getTokenVersion());
+        self::assertTrue($user->isEmailVerified(), 'The link was opened from the new inbox.');
     }
 
     public function testConfirmWithUnknownOrExpiredTokenFails(): void

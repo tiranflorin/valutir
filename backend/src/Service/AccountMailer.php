@@ -25,6 +25,19 @@ final readonly class AccountMailer
     ) {
     }
 
+    public function sendEmailVerification(string $email, string $rawToken): void
+    {
+        $link = $this->url('/verify-email?token='.rawurlencode($rawToken));
+
+        $this->send($email, 'Confirm your email address for ValuTir', <<<TEXT
+            Welcome to ValuTir! Confirm that this is your email address within 24 hours: {$link}
+
+            Until you confirm, you can use ValuTir, but payment reminders and the one-time upgrade stay off.
+
+            If you didn't create a ValuTir account, ignore this email. Nobody can use this address for payments or reminders without confirming it.
+            TEXT);
+    }
+
     public function sendEmailChangeConfirmation(string $newEmail, string $rawToken): void
     {
         $link = $this->url('/confirm-email?token='.rawurlencode($rawToken));

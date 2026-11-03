@@ -54,6 +54,8 @@ final readonly class PasswordResetService
             $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
             // A reset usually means the account may be compromised: sign out every device.
             $user->revokeAllTokens();
+            // The reset link was opened from this inbox, which proves the owner controls it.
+            $user->markEmailVerified(new \DateTimeImmutable());
             $this->entityManager->remove($token);
 
             return true;

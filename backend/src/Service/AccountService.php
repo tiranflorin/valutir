@@ -23,12 +23,13 @@ final readonly class AccountService
     }
 
     /**
-     * @return array{email: string, name: string|null, defaultCurrency: string, timezone: string, remindersEnabled: bool, pendingEmail: string|null}
+     * @return array{email: string, emailVerified: bool, name: string|null, defaultCurrency: string, timezone: string, remindersEnabled: bool, pendingEmail: string|null}
      */
     public function describe(User $user): array
     {
         return [
             'email' => $user->getUserIdentifier(),
+            'emailVerified' => $user->isEmailVerified(),
             'name' => $user->getName(),
             'defaultCurrency' => $user->getDefaultCurrency(),
             'timezone' => $user->getTimezone(),

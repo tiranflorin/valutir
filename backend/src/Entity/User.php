@@ -13,6 +13,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_USER_EMAIL_VERIFICATION_TOKEN', fields: ['emailVerificationTokenHash'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const string DEFAULT_CURRENCY = 'EUR';
@@ -70,6 +71,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $unlockedAt = null;
+
+    /**
+     * When the owner proved they control the address (verification link, password reset, or a
+     * confirmed email change); null until then. Unverified accounts can't pay and get no reminders.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerifiedAt = null;
+
+    /** SHA-256 of the latest verification link's token; only the latest link works. */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $emailVerificationTokenHash = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerificationExpiresAt = null;
 
     public function getId(): ?int
     {
@@ -251,5 +266,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->unlockedAt = null;
 
         return $this;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return null !== $this->emailVerifiedAt;
+    }
+
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    /**
+     * Replaces any earlier link: only the newest token can verify the address.
+     */
+    public function setEmailVerificationToken(string $tokenHash, \DateTimeImmutable $expiresAt): static
+    {
+        $this->emailVerificationTokenHash = $tokenHash;
+        $this->emailVerificationExpiresAt = $expiresAt;
+
+        return $this;
+    }
+
+    public function isEmailVerificationTokenValid(\DateTimeImmutable $now): bool
+    {
+        return null !== $this->emailVerificationTokenHash
+            && null !== $this->emailVerificationExpiresAt
+            && $this->emailVerificationExpiresAt > $now;
+    }
+
+    /** Also invalidates any outstanding verification link. */
+    public function markEmailVerified(\DateTimeImmutable $at): static
+    {
+        $this->emailVerifiedAt ??= $at;
+        $this->emailVerificationTokenHash = null;
+        $this->emailVerificationExpiresAt = null;
+
+        return $this;
+    }
+
+    /** Payment reminders only go to addresses the owner has proved are theirs. */
+    public function canReceiveReminders(): bool
+    {
+        return $this->remindersEnabled && $this->isEmailVerified();
     }
 }

@@ -60,6 +60,7 @@ final class PasswordResetServiceTest extends TestCase
         self::assertTrue($service->resetPassword(str_repeat('a', 64), 'A-new-password9!'));
         self::assertSame('new-hash', $user->getPassword());
         self::assertSame(2, $user->getTokenVersion(), 'A reset signs out every device.');
+        self::assertTrue($user->isEmailVerified(), 'Opening the emailed reset link proves the owner controls the address.');
     }
 
     public function testInvalidOrExpiredTokenDoesNotChangePassword(): void

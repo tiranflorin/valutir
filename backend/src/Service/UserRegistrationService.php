@@ -19,6 +19,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 /**
  * Registers users without revealing whether an email is already taken: the caller
  * always gets the same outcome, and the owner of an existing account is notified by email.
+ * A new account starts unverified and is sent a verification link.
  */
 final readonly class UserRegistrationService
 {
@@ -27,6 +28,7 @@ final readonly class UserRegistrationService
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
         private MailerInterface $mailer,
+        private EmailVerificationService $emailVerificationService,
         private LoggerInterface $logger,
         #[Autowire('%frontend_url%')] private string $frontendUrl,
     ) {
@@ -58,7 +60,12 @@ final readonly class UserRegistrationService
         } catch (UniqueConstraintViolationException) {
             // Another request registered the same email concurrently.
             $this->notifyExistingAccount($email);
+
+            return;
         }
+
+        // Both paths send exactly one email, so neither timing nor inbox reveals which one ran.
+        $this->emailVerificationService->sendVerification($user);
     }
 
     private function notifyExistingAccount(string $email): void

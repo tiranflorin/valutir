@@ -11,14 +11,13 @@ Status on 2026-11-03: payments run end to end in a Stripe sandbox; nothing below
 - [ ] **Fix the npm audit findings** (28 known vulnerabilities: 19 moderate, 9 high), and re-run `composer audit` right before release (README TODO #6).
 - [ ] **Rotate the committed JWT passphrase**, and move CI secrets to GitHub Actions secrets (TODO #5).
 - [ ] **Remove the hard-coded dev admin password** from `app:create-admin` (TODO #7).
-- [ ] **Match the Plans page to what's built.** Only lifting the 50-subscription limit exists today; the page also promises project/cost-center allocation, a bookkeeping export, custom reminder timing, and price history (TODO #12). Build them, or take them off the page, before charging anyone.
+- [ ] **Match the Plans page to what's built.** Only lifting the 50-subscription limit exists today; the page also promises project/cost-center allocation, a bookkeeping export, custom reminder timing, and price history (TODO #11). Build them, or take them off the page, before charging anyone.
 - [ ] **EU right of withdrawal.** Before paying, the buyer must explicitly agree to immediate delivery and acknowledge that this ends the 14-day withdrawal right; otherwise they can claim a full refund within 14 days. Add a required terms checkbox and custom text to the Checkout session (`consent_collection`, `custom_text`).
 - [ ] **Legal pages:** Terms, Privacy Policy (name Stripe as payment processor), refund policy, and contact details, linked from the site footer and Plans page. Stripe reviews these during activation. Have a lawyer review them.
-- [ ] **Add locking to the rate limiters** (`symfony/lock` with `PostgreSqlStore`), so parallel requests can't go past a limit (TODO #9).
+- [ ] **Add locking to the rate limiters** (`symfony/lock` with `PostgreSqlStore`), so parallel requests can't go past a limit (TODO #8).
 
 ### Should fix
 
-- [ ] **Email verification for new accounts** (TODO #8). Stripe receipts and Checkout use the account email, so an unverified address can belong to someone else.
 - [ ] **Database-backed tests** for user isolation, the checkout and webhook flow, and token revocation (TODO #1, currently deferred).
 
 ### Stripe account (live mode)

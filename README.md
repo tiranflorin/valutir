@@ -12,6 +12,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 **Accounts and security**
 - Registration with validated email, name, and password (8+ characters plus two of uppercase, number, or symbol), rate limited, and without revealing whether an email is already registered. Emails are case-insensitive.
+- Email verification: a new account is sent a 24-hour confirmation link (only the latest one works; "Resend link" in the banner shown until it's confirmed). Unverified accounts can sign in and track subscriptions, but get no payment reminders and can't pay, so nobody can make ValuTir email or charge an address they don't own. A completed password reset or email change also counts as verification, since both prove the owner controls the inbox.
 - JWT sign-in with login throttling; sign out of this device or all devices (revoked tokens are rejected server-side).
 - Password reset by emailed one-hour link; changing or resetting the password signs out other devices.
 - Profile page: change name, change email (confirmed by a link sent to the new address), change password, sign out everywhere, and permanently delete the account and its data.
@@ -100,16 +101,16 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 
 Send `Authorization: Bearer <token>` with authenticated requests. Errors are always JSON; validation failures return 422 with per-field `errors`.
 
-- **Public:** `POST /api/register`, `POST /api/login_check`, `POST /api/contact`, `POST /api/reset-password/request`, `POST /api/reset-password/new`, `POST /api/profile/email/confirm` (link token), `POST /api/reminders/unsubscribe` (signed link token), `POST /api/billing/webhook` (Stripe-signed), and `GET /health`.
-- **Account (authenticated):** `GET`/`PATCH`/`DELETE /api/profile`, `PATCH /api/profile/password`, `POST /api/profile/email`, `POST /api/logout`, `POST /api/logout/all`.
+- **Public:** `POST /api/register`, `POST /api/register/verify-email` (link token), `POST /api/login_check`, `POST /api/contact`, `POST /api/reset-password/request`, `POST /api/reset-password/new`, `POST /api/profile/email/confirm` (link token), `POST /api/reminders/unsubscribe` (signed link token), `POST /api/billing/webhook` (Stripe-signed), and `GET /health`.
+- **Account (authenticated):** `GET`/`PATCH`/`DELETE /api/profile`, `PATCH /api/profile/password`, `POST /api/profile/email`, `POST /api/profile/email/verification` (resend the confirmation link), `POST /api/logout`, `POST /api/logout/all`.
 - **Billing (authenticated):** `GET /api/billing` (plan, price, active-subscription usage), `POST /api/billing/checkout` (returns a Stripe Checkout URL).
 - **Subscriptions (authenticated, owner only):** `GET`/`POST /api/subs`, `GET`/`PUT`/`PATCH`/`DELETE /api/subs/{id}`. Updates replace every field, so send the full subscription.
 
 The full endpoint table with request details is in [AGENTS.md](AGENTS.md#api-endpoints).
 
 Notes:
-- Password reset and email-change links use random single-use tokens; only their SHA-256 hash is stored. Reset links expire after one hour, email-change links after 24 hours.
-- Registration, password reset, contact, email confirmation, and password-checking account actions are rate limited.
+- Password reset, email-change, and email-verification links use random single-use tokens; only their SHA-256 hash is stored. Reset links expire after one hour, email-change and verification links after 24 hours.
+- Registration, password reset, contact, email confirmation and verification (opening a link: 10 per 15 minutes per IP; resending: 3 per hour per user), and password-checking account actions are rate limited.
 - The contact form verifies the Turnstile token with Cloudflare server-side and sends the message to `CONTACT_RECIPIENT`, with the sender as Reply-To. Keep the Turnstile secret out of Vite variables.
 
 ## Scheduled commands
@@ -273,7 +274,7 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ### Correctness and reliability
 
-1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 166 backend and 69 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
+1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 192 backend and 76 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
 2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see Scheduled commands) but nothing schedules them in production yet:
@@ -289,16 +290,15 @@ Fixed items are removed from this list; the git history records what changed. It
 5. **A JWT passphrase was committed.** It's in the backend CI env file and was in `backend/.env.sample` (now a placeholder) and remains in git history. Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
 6. **npm dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high). Apply safe updates and list anything that needs a major upgrade. (`composer audit` is clean as of 2026-11-03, after the Symfony 7.4.22 update. It only flags `doctrine/cache` as abandoned, which is not a vulnerability. Re-run it before each release, as AGENTS.md asks.)
 7. **The dev admin command hard-codes a password** and prints it to the console (`app:create-admin`). Read it from a prompt or option instead.
-8. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
-9. **Rate limiters run without a lock.** Counters live in PostgreSQL (`cache.rate_limiter`), but `symfony/lock` isn't installed, so parallel requests can read the same count and exceed a limit (e.g. more than 5 password guesses). Add `symfony/lock` with the PostgreSQL advisory-lock store (`PostgreSqlStore`, no table needed).
-10. **Optional hardening: keep the JWT in an HttpOnly cookie.** The SPA stores it in `localStorage` (`valutir_auth_token`), so a successful XSS could steal it for later use. The CSP and React's escaping make that unlikely, and an XSS could still call the API while the page is open, so the gain is limited. If done: the API sets an `HttpOnly; Secure; SameSite=Strict` cookie (Lexik supports cookie tokens). The app and API hostnames count as the same site, so no Worker or single origin is needed. The SPA sends `credentials: 'include'`, CORS allows credentials for `FRONTEND_URL`, and logout clears the cookie. Add CSRF protection (AGENTS.md requires it for cookie auth): an `Origin` check on state-changing requests, because sibling subdomains count as same-site. Keep the 24-hour lifetime (or about 8 hours); skip refresh tokens, since the blocklist and `tokenVersion` already revoke tokens server-side.
-11. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
+8. **Rate limiters run without a lock.** Counters live in PostgreSQL (`cache.rate_limiter`), but `symfony/lock` isn't installed, so parallel requests can read the same count and exceed a limit (e.g. more than 5 password guesses). Add `symfony/lock` with the PostgreSQL advisory-lock store (`PostgreSqlStore`, no table needed).
+9. **Optional hardening: keep the JWT in an HttpOnly cookie.** The SPA stores it in `localStorage` (`valutir_auth_token`), so a successful XSS could steal it for later use. The CSP and React's escaping make that unlikely, and an XSS could still call the API while the page is open, so the gain is limited. If done: the API sets an `HttpOnly; Secure; SameSite=Strict` cookie (Lexik supports cookie tokens). The app and API hostnames count as the same site, so no Worker or single origin is needed. The SPA sends `credentials: 'include'`, CORS allows credentials for `FRONTEND_URL`, and logout clears the cookie. Add CSRF protection (AGENTS.md requires it for cookie auth): an `Origin` check on state-changing requests, because sibling subdomains count as same-site. Keep the 24-hour lifetime (or about 8 hours); skip refresh tokens, since the blocklist and `tokenVersion` already revoke tokens server-side.
+10. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period.
 
 ### Product gaps and mocks
 
-12. **Most paid-plan tools aren't built yet.** The one-time unlock is paid through Stripe and lifts the 50-subscription limit. The Plans page also lists project and cost-center allocation, a bookkeeping export, custom reminder timing, and price history, and none of them exist yet. Build them, or take them off the page before charging real customers. Also missing: no receipt or invoice email from ValuTir (Stripe can send receipts: Dashboard → Settings → Emails), and no USD or RON prices, since everyone is charged in EUR.
-13. **The Business view is only a filter** on the `b2b` flag (no business account or team).
-14. **No account data export** before deletion.
-15. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
-16. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
-17. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.
+11. **Most paid-plan tools aren't built yet.** The one-time unlock is paid through Stripe and lifts the 50-subscription limit. The Plans page also lists project and cost-center allocation, a bookkeeping export, custom reminder timing, and price history, and none of them exist yet. Build them, or take them off the page before charging real customers. Also missing: no receipt or invoice email from ValuTir (Stripe can send receipts: Dashboard → Settings → Emails), and no USD or RON prices, since everyone is charged in EUR.
+12. **The Business view is only a filter** on the `b2b` flag (no business account or team).
+13. **No account data export** before deletion.
+14. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
+15. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
+16. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.

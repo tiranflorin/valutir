@@ -3355,3 +3355,8 @@ body {
     border-color: #6c5231;
     background: #302617;
 }
+
+/* Unconfirmed-email notice under the header (EmailVerificationBanner). */
+.email-verification-banner.MuiContainer-root {
+    margin-top: 12px;
+}
