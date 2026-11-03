@@ -1,0 +1,32 @@
+# FrankenPHP (Caddy + PHP in one process) serving the Symfony API, locally and in production.
+#
+# Plain HTTP on :8080 only. In production, Cloudflare terminates TLS and reaches this port through
+# the Cloudflare Tunnel inside the instance; nothing else can connect to it. Locally, Docker
+# publishes it as http://localhost:8080.
+#
+# Classic mode: every request starts fresh, like PHP-FPM. Worker mode (keeping Symfony in memory
+# between requests) is a later, tested step; see docs/architecture.md "PHP runtime".
+{
+	# No automatic certificates or HTTP->HTTPS redirect: TLS is Cloudflare's job.
+	auto_https off
+	# The Caddy admin API isn't needed and shouldn't listen anywhere.
+	admin off
+	# HTTP/2 and HTTP/3 need TLS here; Cloudflare speaks them to browsers, this hop is HTTP/1.1.
+	servers {
+		protocols h1
+	}
+	# No access logs: they'd record every visitor's IP address, which the Privacy policy says we
+	# don't keep. Errors still go to stderr through PHP and Symfony's logger.
+}
+
+:8080 {
+	root * /var/www/html/public
+
+	# Don't advertise the server software.
+	header -Server
+
+	encode zstd gzip
+
+	# Serves files from public/ and sends everything else to public/index.php (Symfony's front controller).
+	php_server
+}

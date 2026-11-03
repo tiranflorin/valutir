@@ -28,6 +28,7 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile
+            target: dev   # FrankenPHP with Xdebug; "prod" is the production image (docs/architecture.md)
         environment:
             DATABASE_URL: 'postgresql://valutir:${DB_PASSWORD}@db:5432/valutir'
             JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
@@ -63,7 +64,7 @@ services:
             start_period: 15s
         restart: unless-stopped
 
-    # Local payments only: forwards Stripe test-mode webhooks to the backend (README "Payments").
+    # Local payments only: forwards Stripe test-mode webhooks to the backend (docs/payments.md).
     # Start it with: docker compose --profile stripe up -d stripe-cli
     stripe-cli:
         image: stripe/stripe-cli:v1.21.8
@@ -73,6 +74,43 @@ services:
             STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
         depends_on:
             - backend
+
+    # The production image (Dockerfile target "prod"), run locally against the local database, to
+    # check a release before it ships. Opt-in, on http://localhost:8081:
+    #   docker compose --profile prod up -d --build backend-prod
+    # No code is mounted: it runs exactly what's baked into the image, with APP_ENV=prod.
+    backend-prod:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile
+            target: prod
+        profiles: [prod]
+        environment:
+            DATABASE_URL: 'postgresql://valutir:${DB_PASSWORD}@db:5432/valutir'
+            APP_SECRET: ${APP_SECRET}
+            JWT_SECRET_KEY: /run/jwt/private.pem
+            JWT_PUBLIC_KEY: /run/jwt/public.pem
+            JWT_PASSPHRASE: ${JWT_PASSPHRASE}
+            MAILER_DSN: smtp://maildev:1025
+            DEFAULT_URI: http://localhost:8081
+            FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+            CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
+            TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+            TURNSTILE_ALLOWED_HOSTNAMES: ${TURNSTILE_ALLOWED_HOSTNAMES:-}
+            STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+            STRIPE_MODE: ${STRIPE_MODE:-test}
+            STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+            STRIPE_AUTOMATIC_TAX: ${STRIPE_AUTOMATIC_TAX:-1}
+        volumes:
+            # The local key pair, read-only; production reads its keys from SSM Parameter Store.
+            - ./config/jwt:/run/jwt:ro
+        depends_on:
+            db:
+                condition: service_healthy
+            maildev:
+                condition: service_started
+        ports:
+            - "8081:8080"
 
 volumes:
     pgdata:

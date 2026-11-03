@@ -1,21 +1,22 @@
 # Go-live checklist
 
-What to check and fix before ValuTir takes real payments, plus what Stripe needs from the production architecture, as input for the final system design. Details live in the [README](../README.md) ("Payments", "Frontend deployment", "Status & TODO"); this page is the one list to tick off.
+What to check and fix before ValuTir takes real payments, plus what Stripe needs from the production architecture, as input for the final system design. Details live in [payments.md](payments.md), [cloudflare-and-proxies.md](cloudflare-and-proxies.md), and [architecture.md](architecture.md); "TODO #N" refers to [status-and-todo.md](status-and-todo.md). This page is the one list to tick off.
 
-Status on 2026-11-03: payments run end to end in a Stripe sandbox; nothing below has been done for production yet.
+Status on 2026-11-03: payments, email verification, branded emails, and the legal pages are built and covered by unit tests and local runs. A full payment through a Stripe sandbox (pay, unlock, refund) hasn't been run yet; that's the first Stripe item below. Nothing here has been done for production yet.
 
 ## Part 1: check and fix before production
 
 ### Blockers: code and content
 
-- [ ] **Fix the npm audit findings** (28 known vulnerabilities: 19 moderate, 9 high), and re-run `composer audit` right before release (README TODO #6).
+- [ ] **Fix the npm audit findings** (28 known vulnerabilities: 19 moderate, 9 high), and re-run `composer audit` right before release (TODO #6).
 - [ ] **Rotate the committed JWT passphrase**, and move CI secrets to GitHub Actions secrets (TODO #5).
 - [ ] **Remove the hard-coded dev admin password** from `app:create-admin` (TODO #7).
 - [ ] **Match the Plans page to what's built.** Only lifting the 50-subscription limit exists today; the page also promises project/cost-center allocation, a bookkeeping export, custom reminder timing, and price history (TODO #12). Build them, or take them off the page, before charging anyone.
 - [ ] **Honor the 14-day money-back guarantee** promised in the Terms and Refund policy (instead of asking buyers to waive the EU withdrawal right at checkout). Refund requests arrive through the contact form; issue them in the Stripe Dashboard within 5 business days. A full refund returns the account to the free plan automatically.
-- [ ] **Finish the legal pages:** Privacy (`/privacy`), Terms (`/terms`), and Refunds (`/refunds`), all linked in the footer and from the Plans page. Fill in the Trade Register number and CUI (the name, registered office, and governing law are set) once in `frontend/src/legal.ts`, then have all three reviewed by a lawyer. The Privacy policy already includes the cookies and storage table (README TODO #10).
+- [ ] **Finish the legal pages:** Privacy (`/privacy`), Terms (`/terms`), and Refunds (`/refunds`), all linked in the footer and from the Plans page. Fill in the Trade Register number and CUI (the name, registered office, and governing law are set) once in `frontend/src/legal.ts`, then have all three reviewed by a lawyer. The Privacy policy already includes the cookies and storage table (TODO #10).
 - [ ] **Make the Privacy Policy's promises true in production:** error logs kept for at most 30 days (set CloudWatch log-group retention to 30 days), contact messages deleted from the `CONTACT_RECIPIENT` mailbox once handled, and data processing agreements in place with AWS, Cloudflare and Stripe. Also set `framework.session: false` (TODO #10).
 - [ ] **Add the Terms and Refunds URLs in the Stripe Dashboard** (Settings → Public details), and set the support email and the `VALUTIR` statement descriptor that the Refund policy names.
+- [ ] **A process for GDPR access and portability requests.** The Privacy policy promises an answer within one month, but there's no self-service export (TODO #14). Until there is, export the user's account, subscriptions, and purchases from the database by hand, as JSON or CSV.
 - [ ] **Add locking to the rate limiters** (`symfony/lock` with `PostgreSqlStore`), so parallel requests can't go past a limit (TODO #8).
 
 ### Should fix
@@ -24,8 +25,9 @@ Status on 2026-11-03: payments run end to end in a Stripe sandbox; nothing below
 
 ### Stripe account (live mode)
 
+- [ ] **Run one full payment in the Stripe sandbox first** ([payments.md, "Testing payments locally"](payments.md#testing-payments-locally)): pay with `4242 4242 4242 4242`, see the account unlock, refund it in the Dashboard, and see it return to the free plan.
 - [ ] 2FA on every Dashboard login (security key or authenticator app). Team members get their own logins with the smallest role that works.
-- [ ] Business type and country decided with the accountant (e.g. SRL or PFA) before activation; payout bank account in **EUR**, to match the charge currency, if offered.
+- [ ] Activate the account for **TECHDIVISION SRL** (Romania), with the same Trade Register number and CUI as on the legal pages. Use a payout bank account in **EUR**, matching the charge currency, if Stripe offers it.
 - [ ] Industry: **Software as a service (SaaS)**, with an accurate product description (subscription tracker, free plan, optional one-time €19.99 unlock, delivered digitally and immediately).
 - [ ] Statement descriptor `VALUTIR` (or `VALUTIR.COM`), so buyers recognize the charge.
 - [ ] Public details: support email, website, phone. Branding: name, logo, color.
@@ -40,7 +42,7 @@ Status on 2026-11-03: payments run end to end in a Stripe sandbox; nothing below
 
 ### Infrastructure and deploy
 
-- [ ] Run migrations before the new code serves traffic (`purchase`, `user.unlocked_at`, `cache_items`).
+- [ ] Run migrations before the new code serves traffic: `cache_items`, `purchase` and `user.unlocked_at`, and the email verification columns on `user`. Existing accounts start unverified.
 - [ ] API proxied through Cloudflare with SSL Full (strict). Origin reachable only through your own zone: Cloudflare Tunnel, or Authenticated Origin Pulls with your own certificate.
 - [ ] WAF rule: only `/api/*` and `/health` on the API hostname.
 - [ ] **WAF skip rule for `/api/billing/webhook`:** no Bot Fight Mode, managed challenge, "Under Attack" mode, or tight rate limit on it. Optionally allow only [Stripe's webhook IPs](https://docs.stripe.com/ips) there.
@@ -48,7 +50,8 @@ Status on 2026-11-03: payments run end to end in a Stripe sandbox; nothing below
 - [ ] `FRONTEND_URL` is the app's HTTPS origin (Stripe returns buyers to `FRONTEND_URL/plans`), and `DEFAULT_URI` is the API's public URL.
 - [ ] Hourly scheduled commands: `app:subscriptions:advance-billing-dates`, `app:reminders:send`, `cache:pool:prune`, with alarms on failure (TODO #2).
 - [ ] Email via Amazon SES, with the domain verified (SPF, DKIM, DMARC) and production access granted (TODO #2).
-- [ ] CSP switched from report-only to enforced after a click-through, and HSTS turned on in Cloudflare (README "Frontend deployment").
+- [ ] The email logo is served at `FRONTEND_URL/brand/email-logo.png` (it's deployed with the frontend). Send yourself each email once from production and check it in Gmail and Outlook.
+- [ ] CSP switched from report-only to enforced after a click-through, and HSTS turned on in Cloudflare ([cloudflare-and-proxies.md](cloudflare-and-proxies.md)).
 - [ ] Log alerts on `Rejected Stripe webhook.`, `Stripe session does not match its purchase`, and `Stripe Checkout is turned off.`; Stripe's own "failing endpoint" emails go to a monitored inbox.
 
 ## Part 2: Stripe requirements for the final architecture

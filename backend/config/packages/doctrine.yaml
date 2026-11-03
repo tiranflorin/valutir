@@ -2,9 +2,10 @@ doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
 
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        # PostgreSQL major version, locally and on Amazon RDS. Set here so DATABASE_URL doesn't need
+        # serverVersion, and Doctrine never connects just to detect it. Keep it in sync with the db
+        # image in docker-compose.yml and the RDS engine version.
+        server_version: '16'
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:

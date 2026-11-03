@@ -2,7 +2,7 @@
 # Dev containers bind-mount this folder, so nothing here affects local development.
 
 # Local environment files: never inside an image. Production builds run on
-# Cloudflare with build variables (see README "Frontend deployment"). Templates stay.
+# Cloudflare with build variables (see docs/cloudflare-and-proxies.md). Templates stay.
 .env
 .env.*
 *.local

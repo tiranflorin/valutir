@@ -6,7 +6,7 @@ namespace App\Reminder;
 
 /**
  * How many days before a charge the reminder goes out. Fixed for now; custom lead times are a
- * candidate paid-plan feature (see README "Paid plan").
+ * candidate paid-plan feature (see README "Product ideas").
  */
 final class ReminderPolicy
 {

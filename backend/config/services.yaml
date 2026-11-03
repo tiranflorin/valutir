@@ -15,7 +15,7 @@ parameters:
     turnstile_allowed_hostnames: '%env(default:turnstile_allowed_hostnames_default:TURNSTILE_ALLOWED_HOSTNAMES)%'
     contact_recipient_default: ''
     contact_recipient: '%env(default:contact_recipient_default:CONTACT_RECIPIENT)%'
-    # Stripe (README "Payments"). Empty keys turn checkout off: the Plans page says payments are unavailable.
+    # Stripe (docs/payments.md). Empty keys turn checkout off: the Plans page says payments are unavailable.
     stripe_secret_key_default: ''
     stripe_secret_key: '%env(default:stripe_secret_key_default:STRIPE_SECRET_KEY)%'
     stripe_webhook_secret_default: ''

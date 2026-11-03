@@ -1,0 +1,53 @@
+# Status and TODO
+
+Fixed items are removed from this list; the git history records what changed. Items marked **Later** are planned but deliberately deferred.
+
+## Correctness and reliability
+
+1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 199 backend and 81 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
+   - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
+   - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
+2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see [Scheduled commands](scheduled-commands.md)) but nothing schedules them in production yet:
+   - Schedule the commands hourly (`advance-billing-dates` before `reminders:send`, plus `cache:pool:prune`), for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
+   - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
+   - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's origin (links in the email, and CORS).
+   - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.
+3. **The "Other" status is undefined.** The subscription form shows users a warning ending in "(TODO)": *"Other" is treated as partially active in the current flow.* Whether an "Other" subscription is charged, reminded, or counted in totals has never been decided; the reminder and billing-date commands currently skip it. Decide what it means, or remove it.
+4. **Small date rules still open:** "Re-enabled from" on the re-enable form has no limits, and a provider cancellation date can be earlier than the subscription's start date.
+
+## Security and operations
+
+5. **A JWT passphrase was committed.** It's in the backend CI env file and was in `backend/.env.sample` (now a placeholder) and remains in git history. Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
+6. **npm dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high). Apply safe updates and list anything that needs a major upgrade. (`composer audit` is clean as of 2026-11-03, after the Symfony 7.4.22 update. It only flags `doctrine/cache` as abandoned, which is not a vulnerability. Re-run it before each release, as AGENTS.md asks.)
+7. **The dev admin command hard-codes a password** and prints it to the console (`app:create-admin`). Read it from a prompt or option instead.
+8. **Rate limiters run without a lock.** Counters live in PostgreSQL (`cache.rate_limiter`), but `symfony/lock` isn't installed, so parallel requests can read the same count and exceed a limit (e.g. more than 5 password guesses). Add `symfony/lock` with the PostgreSQL advisory-lock store (`PostgreSqlStore`, no table needed).
+9. **Optional hardening: keep the JWT in an HttpOnly cookie.** The SPA stores it in `localStorage` (`valutir_auth_token`), so a successful XSS could steal it for later use. The CSP and React's escaping make that unlikely, and an XSS could still call the API while the page is open, so the gain is limited. If done: the API sets an `HttpOnly; Secure; SameSite=Strict` cookie (Lexik supports cookie tokens). The app and API hostnames count as the same site, so no Worker or single origin is needed. The SPA sends `credentials: 'include'`, CORS allows credentials for `FRONTEND_URL`, and logout clears the cookie. Add CSRF protection (AGENTS.md requires it for cookie auth): an `Origin` check on state-changing requests, because sibling subdomains count as same-site. Keep the 24-hour lifetime (or about 8 hours); skip refresh tokens, since the blocklist and `tokenVersion` already revoke tokens server-side.
+10. **Cookies and browser storage (GDPR / ePrivacy).** Reviewed on 2026-11-03. Nothing ValuTir stores today needs consent, so **no cookie banner is needed yet**. EU law (ePrivacy Art. 5(3), which covers `localStorage` as well as cookies) only exempts storage that is *strictly necessary* for a service the user asked for, so every item still has to be disclosed, and anything new has to be checked before it ships.
+    - **What's stored:**
+      - `localStorage.valutir_auth_token`: the sign-in token. Strictly necessary.
+      - `localStorage.valutir_dashboard_view`: the Personal/Business view the user picked themselves. A user-interface preference, also exempt.
+      - The API sets no cookies (stateless JWT; checked: no `Set-Cookie` on sign-in). Symfony's `framework.session: true` is never started; set it to `false` so a future change can't create a session cookie by accident.
+      - The theme mode isn't stored.
+    - **Third parties:**
+      - Cloudflare Turnstile, on the contact page only, may set security cookies on Cloudflare's domain (`cf_clearance`, `__cf_bm`). Security and bot protection are generally treated as strictly necessary, but disclose them.
+      - Cloudflare's proxy may set `__cf_bm` on the API hostname while Bot Fight Mode or Bot Management is on. Strictly necessary; disclose it.
+      - Stripe Checkout sets its own cookies on `checkout.stripe.com`, where Stripe is the controller. Mention it in the Privacy Policy.
+    - **Disclosure: done.** Section 7 of the Privacy Policy (`/privacy`, linked from the footer) lists each item with its provider, purpose and lifetime, and says why none needs consent. Still to do: set `framework.session: false`, and re-check the Cloudflare cookie names and lifetimes against Cloudflare's own documentation, because third-party cookie lists disagree.
+    - **Before adding anything non-essential** (analytics, marketing pixels, embedded video or maps, chat widgets, fonts loaded from Google's CDN), prefer options that store nothing: Cloudflare Web Analytics is cookieless, and fonts can be self-hosted. If consent is still needed, add a consent manager before the feature ships. It must meet these requirements:
+      - Scripts are blocked until the user opts in.
+      - "Accept" and "Reject" are equally prominent on the first screen, and nothing is pre-ticked.
+      - Each consent is recorded with a timestamp and the policy version.
+      - The user can withdraw consent at any time from a footer "Cookie settings" link.
+      - The user is asked again when the list changes, or after about 12 months.
+      - Recommended: the open-source, self-hosted [vanilla-cookieconsent](https://github.com/orestbida/cookieconsent). It needs no new CSP origin and has no fees. Hosted consent managers (Cookiebot, Usercentrics) add a third-party origin and a monthly cost.
+    - **Rule:** any new `localStorage`/`sessionStorage` key, cookie, or CSP origin in `frontend/build/securityHeaders.ts` needs this inventory updated first (see AGENTS.md).
+11. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period. Update the Privacy policy's retention section ("kept with your account until the account is deleted") in the same change.
+
+## Product gaps and mocks
+
+12. **Most paid-plan tools aren't built yet.** The one-time unlock is paid through Stripe and lifts the 50-subscription limit. The Plans page also lists project and cost-center allocation, a bookkeeping export, custom reminder timing, and price history, and none of them exist yet. Build them, or take them off the page before charging real customers. Also missing: no receipt or invoice email from ValuTir (Stripe can send receipts: Dashboard → Settings → Emails), and no USD or RON prices, since everyone is charged in EUR.
+13. **The Business view is only a filter** on the `b2b` flag (no business account or team).
+14. **No account data export.** The Privacy policy promises a copy of a user's data on request (GDPR access and portability), so for now it's done by hand (see the go-live checklist). A "Download my data" button on the Profile page (JSON of the account, subscriptions, and purchases) would make it self-service and also cover export before deletion.
+15. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.
+16. **Later: family-plan savings.** Suggest a family plan when several people pay for the same service separately (fits the savings-suggestions roadmap; needs named household members or real household accounts).
+17. **Later: real household accounts.** Invite members by email so one shared subscription is visible to everyone, each seeing their own share. This changes the rule that subscriptions are visible only to their owner, so it needs its own access-rule design and tests.

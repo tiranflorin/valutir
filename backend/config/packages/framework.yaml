@@ -45,7 +45,7 @@ framework:
     # Real client IPs behind a reverse proxy (Cloudflare, a load balancer, a tunnel). Rate limits,
     # login throttling and Turnstile use Request::getClientIp(), which is the proxy's own address
     # unless that proxy is trusted. SYMFONY_TRUSTED_PROXIES lists the addresses/CIDRs allowed to set
-    # these headers (see README "Client IPs behind proxies"); unset, no proxy is trusted, so
+    # these headers (see docs/cloudflare-and-proxies.md); unset, no proxy is trusted, so
     # forwarded headers are ignored. X-Forwarded-Host is deliberately not trusted.
     trusted_proxies: '%env(default::SYMFONY_TRUSTED_PROXIES)%'
     trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
