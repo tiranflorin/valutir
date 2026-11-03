@@ -104,44 +104,37 @@ body {
     color: #526258;
 }
 
+.theme-toggle.MuiButton-root,
 .site-nav > .theme-toggle.MuiButton-root {
-    /*min-width: 112px;*/
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
     min-height: 38px;
-    padding: 5px 0 5px 11px;
+    padding: 0;
     border-color: #d8e5db;
     border-radius: 9px;
     background: #fff;
     color: #526258;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: none;
+    box-shadow: none;
 }
 
+/* Icon only: center it instead of leaving room for a label. */
+.theme-toggle.MuiButton-root .MuiButton-startIcon {
+    margin: 0;
+}
+
+.theme-toggle.MuiButton-root:hover,
 .site-nav > .theme-toggle.MuiButton-root:hover {
     border-color: #b9d4c0;
     background: #f5faf6;
 }
 
-.auth-theme-toggle.MuiButton-root {
+/* Pages without the site header (sign-in, register, password reset, email links). */
+.theme-toggle--floating.MuiButton-root {
     position: fixed;
     z-index: 50;
-    top: 18px;
-    right: 20px;
-    /*min-height: 40px;*/
-    padding: 6px 12px;
-    border-color: #d8e5db;
-    border-radius: 9px;
-    background: #fff;
-    color: #405448;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: none;
-    box-shadow: 0 4px 14px #1e362610;
-}
-
-.auth-theme-toggle.MuiButton-root:hover {
-    border-color: #b9d4c0;
-    background: #f5faf6;
+    top: 23px;
+    right: 24px;
 }
 
 .account-avatar.MuiAvatar-root {
@@ -2574,19 +2567,7 @@ body {
         gap: 9px;
     }
 
-    .site-nav > .theme-toggle.MuiButton-root {
-        min-width: 38px;
-        width: 38px;
-        padding: 6px;
-        overflow: hidden;
-        font-size: 0;
-    }
-
-    .site-nav > .theme-toggle.MuiButton-root .MuiButton-startIcon {
-        margin: 0;
-    }
-
-    .auth-theme-toggle.MuiButton-root {
+    .theme-toggle--floating.MuiButton-root {
         top: 12px;
         right: 12px;
     }
@@ -2921,15 +2902,15 @@ body {
     color: #cbd5e1;
 }
 
-:root[data-theme='dark'] .site-nav > .theme-toggle.MuiButton-root,
-:root[data-theme='dark'] .auth-theme-toggle.MuiButton-root {
+:root[data-theme='dark'] .theme-toggle.MuiButton-root,
+:root[data-theme='dark'] .site-nav > .theme-toggle.MuiButton-root {
     border-color: #3b4b62;
     background: #172033;
     color: #dbe5f2;
 }
 
-:root[data-theme='dark'] .site-nav > .theme-toggle.MuiButton-root:hover,
-:root[data-theme='dark'] .auth-theme-toggle.MuiButton-root:hover {
+:root[data-theme='dark'] .theme-toggle.MuiButton-root:hover,
+:root[data-theme='dark'] .site-nav > .theme-toggle.MuiButton-root:hover {
     border-color: #52647e;
     background: #253147;
 }
@@ -3359,4 +3340,28 @@ body {
 /* Unconfirmed-email notice under the header (EmailVerificationBanner). */
 .email-verification-banner.MuiContainer-root {
     margin-top: 12px;
+}
+
+/* Success state on auth-style card pages (SuccessHeading): check and title on one centered line. */
+.success-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 9px;
+}
+
+.login-intro .success-heading h1 {
+    margin: 0;
+    line-height: 1.15;
+}
+
+.success-heading-icon.MuiSvgIcon-root {
+    flex: none;
+    font-size: 32px;
+    color: var(--vt-green, #176b43);
+}
+
+:root[data-theme='dark'] .success-heading-icon.MuiSvgIcon-root {
+    color: #8dd5a3;
 }

@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import { confirmEmailChange } from '../../services/account';
 import '../RecurringScreens.css';
+import SuccessHeading from '../../components/SuccessHeading';
 
 type Status = 'confirming' | 'confirmed' | 'failed';
 
@@ -57,9 +57,8 @@ const ConfirmEmailPage: React.FC = () => {
                     )}
                     {status === 'confirmed' && (
                         <>
-                            <CheckCircleIcon color="success" sx={{ fontSize: 56, mb: 1 }} />
                             <div className="login-intro">
-                                <h1>Email updated</h1>
+                                <SuccessHeading title="Email updated" />
                                 <p>{message}</p>
                             </div>
                             <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login', { replace: true })}>

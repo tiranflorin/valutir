@@ -1,0 +1,13 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}Confirm your new email address for ValuTir.{% endblock %}
+
+{% block content %}
+    <h1>Confirm your new email address</h1>
+    <p>You asked to use <strong>{{ email_address }}</strong> for your ValuTir account. Confirm it to finish the change.</p>
+    {{ ui.button(confirm_url, 'Confirm new email') }}
+    <p>The link works for 24 hours. After the change, you'll sign in with this address, and every device is signed out.</p>
+{% endblock %}
+
+{% block note %}Didn't ask for this? Ignore this email. Nothing will change.{% endblock %}

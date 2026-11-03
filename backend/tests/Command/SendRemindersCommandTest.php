@@ -16,6 +16,7 @@ use App\Reminder\UnsubscribeToken;
 use App\Repository\ReminderLogRepository;
 use App\Repository\SubscriptionRepository;
 use App\Repository\UserRepository;
+use App\Tests\Support\Emails;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -151,7 +152,7 @@ final class SendRemindersCommandTest extends TestCase
             $subscriptionRepository,
             $this->log,
             new ReminderPlanner(new BillingSchedule()),
-            new ReminderMailer($this->mailer, new UnsubscribeToken('secret'), $urls, 'http://frontend.test'),
+            new ReminderMailer($this->mailer, Emails::factory(), new UnsubscribeToken('secret'), $urls),
             $this->createStub(EntityManagerInterface::class),
             $clock,
             new NullLogger(),

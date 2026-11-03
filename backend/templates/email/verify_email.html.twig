@@ -1,0 +1,13 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}Confirm your email address to finish setting up ValuTir.{% endblock %}
+
+{% block content %}
+    <h1>Confirm your email address</h1>
+    <p>Welcome to ValuTir! Confirm that <strong>{{ email_address }}</strong> is your address so we can send you payment reminders and receipts.</p>
+    {{ ui.button(verify_url, 'Confirm my email') }}
+    <p>The link works for 24 hours. Until you confirm, you can use ValuTir, but payment reminders and the one-time upgrade stay off.</p>
+{% endblock %}
+
+{% block note %}Didn't create a ValuTir account? Ignore this email. Nobody can use this address for reminders or payments without confirming it.{% endblock %}

@@ -13,11 +13,13 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 │   │   ├── Dto/             # Request DTOs and validation
 │   │   ├── Entity/          # Doctrine entities (User, Subscription, Purchase, ...)
 │   │   ├── EventSubscriber/ # JSON API exception handling
+│   │   ├── Mail/            # EmailFactory and plain-text conversion for branded emails
 │   │   ├── Payment/         # Stripe Checkout, webhook handling, free-plan limit
 │   │   ├── Repository/      # User-scoped persistence queries
 │   │   ├── Security/        # API auth error responses
 │   │   └── Service/         # Subscription business logic
 │   ├── migrations/          # Doctrine migrations
+│   ├── templates/email/     # Twig email templates; layout.html.twig is the shared branded layout
 │   ├── tests/               # PHPUnit tests
 │   └── docker/              # PHP development image
 └── frontend/                # React 18 + TypeScript + Vite application
@@ -185,4 +187,5 @@ Reference material: Symfony's [coding conventions](https://symfony.com/doc/curre
 - Make database changes through new Doctrine migrations; do not edit already-applied migrations. `Version20261102200000` is the initial schema (the earlier incremental migrations were squashed into it); add new migrations after it and keep `doctrine:schema:validate` passing.
 - Keep authentication and ownership checks in backend code even when the frontend has route guards.
 - Preserve JSON error responses for `/api` routes.
+- Emails (README "Emails"): build every email with `App\Mail\EmailFactory::create()` from a template in `backend/templates/email/` that extends `email/layout.html.twig`. Never use `new Email()` with inline HTML or text. Change the look only in the layout (brand tokens, macros, footer), and use the `ui.button()` / `ui.link()` macros so every link is a real `<a href>`. Pass only server-built URLs (`EmailFactory::appUrl()`), never print user text with `|raw`, and keep brand token values free of quotes (they're escaped into `<style>`). Account emails go through `AccountMailer`, which logs delivery failures instead of throwing, so responses can't reveal whether an address is registered.
 - Avoid committing generated build output, local environment files, private JWT material, or database volumes.

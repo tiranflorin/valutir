@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Repository\EmailChangeRequestRepository;
 use App\Service\AccountMailer;
 use App\Service\AccountService;
+use App\Tests\Support\Emails;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -114,7 +115,7 @@ final class AccountServiceTest extends TestCase
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
             $emailChangeRequestRepository ?? $this->createStub(EmailChangeRequestRepository::class),
             $passwordHasher ?? $this->createStub(UserPasswordHasherInterface::class),
-            new AccountMailer($mailer ?? $this->createStub(MailerInterface::class), new NullLogger(), 'http://frontend.test'),
+            new AccountMailer($mailer ?? $this->createStub(MailerInterface::class), Emails::factory(), new NullLogger()),
             new NullLogger(),
         );
     }

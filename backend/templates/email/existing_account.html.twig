@@ -1,0 +1,14 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}Someone tried to sign up with your email address. You already have an account.{% endblock %}
+
+{% block content %}
+    <h1>You already have a ValuTir account</h1>
+    <p>Someone tried to create a new ValuTir account with this email address, but there's already an account for it.</p>
+    <p>If that was you, sign in instead, or reset your password if you've forgotten it.</p>
+    {{ ui.button(login_url, 'Sign in to ValuTir') }}
+    <p>Forgot your password? {{ ui.link(reset_url, 'Reset it here') }}.</p>
+{% endblock %}
+
+{% block note %}Wasn't you? You can ignore this email. Your account hasn't been changed.{% endblock %}

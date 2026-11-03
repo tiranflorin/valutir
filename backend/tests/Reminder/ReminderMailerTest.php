@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Reminder\DueReminder;
 use App\Reminder\ReminderMailer;
 use App\Reminder\UnsubscribeToken;
+use App\Tests\Support\Emails;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -31,12 +32,29 @@ final class ReminderMailerTest extends TestCase
 
         self::assertSame('2 payments coming up', $email->getSubject());
         self::assertSame(['ada@example.test'], array_map(static fn ($a): string => $a->getAddress(), $email->getTo()));
-        self::assertStringContainsString('- Design app: trial ends on Wed 4 Nov (in 2 days), then the first charge is €19.99', $text);
-        self::assertStringContainsString('- Netflix: €13.99 (your share €3.50) tomorrow (Tue 3 Nov)', $text);
-        self::assertLessThan(strpos($text, 'RENEWALS'), strpos($text, 'TRIALS ENDING'));
-        self::assertStringContainsString('Turn them off: http://frontend.test/unsubscribe?token=', $text);
+        $html = (string) $email->getHtmlBody();
+
+        self::assertStringContainsString("Design app\nTrial ends on Wed 4 Nov (in 2 days), then the first charge  €19.99", $text);
+        self::assertStringContainsString("Netflix\nRenews tomorrow (Tue 3 Nov)  €13.99 (your share €3.50)", $text);
+        self::assertLessThan(strpos($text, 'Renewals'), strpos($text, 'Trials ending'));
+        // Real links in the HTML, and labelled URLs in the plain-text part.
+        self::assertMatchesRegularExpression('~<a href="http://frontend\.test/unsubscribe\?token=[^"]+"[^>]*>Turn them off</a>~', $html);
+        self::assertStringContainsString('<a href="http://frontend.test/my-subs"', $html);
+        self::assertStringContainsString('[Turn them off](http://frontend.test/unsubscribe?token=', $text);
+        self::assertStringContainsString('[See all your subscriptions](http://frontend.test/my-subs)', $text);
         self::assertSame('<https://api.test/api/reminders/unsubscribe?token=signed>', $email->getHeaders()->get('List-Unsubscribe')?->getBodyAsString());
         self::assertSame('List-Unsubscribe=One-Click', $email->getHeaders()->get('List-Unsubscribe-Post')?->getBodyAsString());
+    }
+
+    public function testServiceNamesCannotInjectMarkup(): void
+    {
+        $email = $this->mailer()->buildDigest($this->user(), [
+            new DueReminder($this->subscription('<a href="https://evil.example">Win</a>', '1.00'), ReminderLog::KIND_RENEWAL, CalendarDay::fromString('2026-11-02'), 0),
+        ]);
+        $html = (string) $email->getHtmlBody();
+
+        self::assertStringNotContainsString('<a href="https://evil.example"', $html);
+        self::assertStringContainsString('&lt;a href="https://evil.example"&gt;Win&lt;/a&gt;', $html);
     }
 
     public function testSingleReminderGetsASpecificSubject(): void
@@ -53,7 +71,7 @@ final class ReminderMailerTest extends TestCase
         $urls = $this->createStub(UrlGeneratorInterface::class);
         $urls->method('generate')->willReturn('https://api.test/api/reminders/unsubscribe?token=signed');
 
-        return new ReminderMailer($this->createStub(MailerInterface::class), new UnsubscribeToken('secret'), $urls, 'http://frontend.test/');
+        return new ReminderMailer($this->createStub(MailerInterface::class), Emails::factory(), new UnsubscribeToken('secret'), $urls);
     }
 
     private function user(): User

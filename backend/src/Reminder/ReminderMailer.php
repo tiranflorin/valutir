@@ -6,7 +6,7 @@ namespace App\Reminder;
 
 use App\Entity\ReminderLog;
 use App\Entity\User;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Mail\EmailFactory;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -18,13 +18,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final readonly class ReminderMailer
 {
-    private const string FROM = 'noreply@valutir.com';
-
     public function __construct(
         private MailerInterface $mailer,
+        private EmailFactory $emails,
         private UnsubscribeToken $unsubscribeToken,
         private UrlGeneratorInterface $urlGenerator,
-        #[Autowire('%frontend_url%')] private string $frontendUrl,
     ) {
     }
 
@@ -44,38 +42,23 @@ final readonly class ReminderMailer
     public function buildDigest(User $user, array $reminders): Email
     {
         $token = $this->unsubscribeToken->create($user);
-        $frontend = rtrim($this->frontendUrl, '/');
         $oneClickUrl = $this->urlGenerator->generate('api_reminders_unsubscribe', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+        $items = fn (string $kind): array => array_values(array_map(
+            fn (DueReminder $reminder): array => [
+                'service' => (string) $reminder->subscription->getServiceName(),
+                'when' => $this->when($reminder),
+                'amount' => $this->amount($reminder),
+            ],
+            array_filter($reminders, static fn (DueReminder $reminder): bool => $kind === $reminder->kind),
+        ));
 
-        $trials = array_filter($reminders, static fn (DueReminder $r): bool => ReminderLog::KIND_TRIAL_ENDING === $r->kind);
-        $renewals = array_filter($reminders, static fn (DueReminder $r): bool => ReminderLog::KIND_RENEWAL === $r->kind);
-
-        $lines = [sprintf('Hi %s,', $user->getName() ?: 'there'), '', 'Coming up soon:', ''];
-        if ([] !== $trials) {
-            $lines[] = 'TRIALS ENDING';
-            foreach ($trials as $reminder) {
-                $lines[] = sprintf('- %s: trial ends %s, then the first charge is %s', $reminder->subscription->getServiceName(), $this->when($reminder), $this->amount($reminder));
-            }
-            $lines[] = '  Keep it, or cancel with the provider before then.';
-            $lines[] = '';
-        }
-        if ([] !== $renewals) {
-            $lines[] = 'RENEWALS';
-            foreach ($renewals as $reminder) {
-                $lines[] = sprintf('- %s: %s %s', $reminder->subscription->getServiceName(), $this->amount($reminder), $this->when($reminder));
-            }
-            $lines[] = '';
-        }
-        $lines[] = sprintf('See all your subscriptions: %s/my-subs', $frontend);
-        $lines[] = '';
-        $lines[] = 'You get this email because payment reminders are on.';
-        $lines[] = sprintf('Turn them off: %s/unsubscribe?token=%s', $frontend, rawurlencode($token));
-
-        $email = (new Email())
-            ->from(self::FROM)
-            ->to((string) $user->getEmail())
-            ->subject($this->subject($reminders))
-            ->text(implode("\n", $lines));
+        $email = $this->emails->create('email/reminder_digest.html.twig', (string) $user->getEmail(), $this->subject($reminders), [
+            'name' => $user->getName() ?: 'there',
+            'trials' => $items(ReminderLog::KIND_TRIAL_ENDING),
+            'renewals' => $items(ReminderLog::KIND_RENEWAL),
+            'subscriptions_url' => $this->emails->appUrl('/my-subs'),
+            'unsubscribe_url' => $this->emails->appUrl('/unsubscribe?token='.rawurlencode($token)),
+        ]);
         // One-click unsubscribe (RFC 8058), expected by Gmail and Yahoo for recurring mail.
         $email->getHeaders()->addTextHeader('List-Unsubscribe', sprintf('<%s>', $oneClickUrl));
         $email->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');

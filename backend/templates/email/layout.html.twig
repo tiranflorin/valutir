@@ -1,0 +1,143 @@
+{#
+    The one layout every ValuTir email uses. Change the look of all emails here: brand colors,
+    fonts, logo, card, button, and footer. Each email template extends this file and only fills
+    in its blocks; the plain-text part is generated from the HTML (App\Mail\EmailTextConverter; links become "[label](url)").
+
+    Built for email clients, not browsers: tables for layout, styles inlined by inline_css
+    (many clients drop <style>), no web fonts, no SVG (Gmail and Outlook don't show it), and
+    every link is a real <a href>.
+
+    Blocks: preheader (inbox preview text), content, note (highlighted aside), footer (why they got it),
+    reply_note (the "replies aren't read" line; override it when replying is expected).
+    Macros: button(url, label) and link(url, label). Import them with
+    {% import 'email/layout.html.twig' as ui %}.
+
+    Context provided by App\Mail\EmailFactory: app_url, logo_url, subject.
+#}
+{#- Brand tokens. Values are HTML-escaped where they're used (including in <style>), so don't put
+    quotes in them: unquoted multi-word font names are valid CSS. -#}
+{%- set brand = {
+    ink: '#17241d',
+    text: '#33473b',
+    muted: '#69776e',
+    green: '#176b43',
+    green_dark: '#105a37',
+    blue: '#1677ff',
+    line: '#e1e9e3',
+    paper: '#f4f8f5',
+    mint: '#eaf4ec',
+    amber: '#fff6e8',
+    amber_line: '#ecd8b7',
+    card: '#ffffff',
+    font: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif',
+    tagline: 'Track. Control. More value.',
+} -%}
+
+{#- A full-width call-to-action button that also works in Outlook (table + padding, no images). -#}
+{%- macro button(url, label) -%}
+    <table role="presentation" class="button-table" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td class="button-cell">
+                <a href="{{ url }}" class="button" target="_blank" rel="noopener">{{ label }}</a>
+            </td>
+        </tr>
+    </table>
+    <p class="fallback">If the button doesn't work, open this link:<br><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></p>
+{%- endmacro -%}
+
+{#- An inline link; the visible text defaults to the URL itself. -#}
+{%- macro link(url, label = null) -%}
+    <a href="{{ url }}" target="_blank" rel="noopener">{{ label ?? url }}</a>
+{%- endmacro -%}
+
+{% apply inline_css %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>{{ subject }}</title>
+    <style>
+        body { margin: 0; padding: 0; width: 100%; background-color: {{ brand.paper }}; color: {{ brand.text }}; font-family: {{ brand.font }}; -webkit-text-size-adjust: 100%; }
+        table { border-collapse: collapse; }
+        img { border: 0; outline: none; text-decoration: none; }
+        a { color: {{ brand.green }}; text-decoration: underline; font-weight: 600; }
+        .wrapper { width: 100%; background-color: {{ brand.paper }}; }
+        .wrapper-cell { padding: 32px 16px; }
+        .container { width: 100%; max-width: 560px; }
+        .header-cell { padding: 0 8px 20px 8px; }
+        .card { width: 100%; background-color: {{ brand.card }}; border: 1px solid {{ brand.line }}; border-radius: 14px; }
+        .card-cell { padding: 32px 32px 28px 32px; font-size: 15px; line-height: 1.6; color: {{ brand.text }}; font-family: {{ brand.font }}; }
+        h1 { margin: 0 0 14px 0; font-size: 22px; line-height: 1.3; font-weight: 800; color: {{ brand.ink }}; font-family: {{ brand.font }}; letter-spacing: -0.3px; }
+        h2 { margin: 24px 0 8px 0; font-size: 13px; line-height: 1.4; font-weight: 800; color: {{ brand.muted }}; text-transform: uppercase; letter-spacing: 0.6px; font-family: {{ brand.font }}; }
+        p { margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: {{ brand.text }}; font-family: {{ brand.font }}; }
+        strong { color: {{ brand.ink }}; }
+        .button-table { margin: 22px 0 8px 0; }
+        .button-cell { background-color: {{ brand.green }}; border-radius: 10px; }
+        .button { display: inline-block; padding: 13px 26px; font-size: 15px; font-weight: 700; line-height: 1.2; color: #ffffff; text-decoration: none; font-family: {{ brand.font }}; border-radius: 10px; }
+        .fallback { margin: 12px 0 4px 0; font-size: 12.5px; line-height: 1.5; color: {{ brand.muted }}; word-break: break-all; }
+        .fallback a { color: {{ brand.muted }}; font-weight: 400; }
+        .note { margin: 20px 0 4px 0; }
+        .note-cell { padding: 12px 14px; background-color: {{ brand.mint }}; border-radius: 10px; font-size: 13.5px; line-height: 1.5; color: {{ brand.text }}; font-family: {{ brand.font }}; }
+        .items { width: 100%; margin: 4px 0 8px 0; }
+        .item-cell { padding: 11px 0; border-bottom: 1px solid {{ brand.line }}; font-size: 15px; line-height: 1.45; color: {{ brand.text }}; font-family: {{ brand.font }}; vertical-align: top; }
+        .item-name { font-weight: 700; color: {{ brand.ink }}; }
+        .item-detail { color: {{ brand.muted }}; font-size: 13.5px; }
+        .item-amount { text-align: right; white-space: nowrap; font-weight: 700; color: {{ brand.ink }}; padding-left: 12px; }
+        .quote { margin: 8px 0 0 0; padding: 14px 16px; background-color: {{ brand.paper }}; border-left: 3px solid {{ brand.line }}; border-radius: 6px; font-size: 14.5px; color: {{ brand.ink }}; }
+        .footer-cell { padding: 20px 8px 0 8px; font-size: 12.5px; line-height: 1.6; color: {{ brand.muted }}; text-align: center; font-family: {{ brand.font }}; }
+        .footer-cell p { font-size: 12.5px; color: {{ brand.muted }}; margin: 0 0 6px 0; }
+        .footer-cell a { color: {{ brand.muted }}; font-weight: 600; }
+        .preheader { display: none; max-height: 0; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: {{ brand.paper }}; opacity: 0; }
+        @media only screen and (max-width: 600px) {
+            .wrapper-cell { padding: 20px 10px !important; }
+            .card-cell { padding: 24px 20px 22px 20px !important; }
+        }
+    </style>
+</head>
+<body>
+    {%- if block('preheader') is defined -%}
+        <div class="preheader">{{ block('preheader') }}</div>
+    {%- endif %}
+    <table role="presentation" class="wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td class="wrapper-cell" align="center">
+                <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td class="header-cell" align="left">
+                            <a href="{{ app_url }}" target="_blank" rel="noopener"><img src="{{ logo_url }}" width="140" height="50" alt="ValuTir"></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table role="presentation" class="card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td class="card-cell">
+                                        {% block content %}{% endblock %}
+                                        {%- if block('note') is defined %}
+                                        {#- A highlighted aside, e.g. "Didn't ask for this?" -#}
+                                        <table role="presentation" class="note" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr><td class="note-cell">{{ block('note') }}</td></tr>
+                                        </table>
+                                        {%- endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="footer-cell">
+                            {% block footer %}{% endblock %}
+                            <p><a href="{{ app_url }}" target="_blank" rel="noopener">ValuTir</a> · {{ brand.tagline }}</p>
+                            {% block reply_note %}<p>This is an automated message; replies to it aren't read. Need help? <a href="{{ app_url }}/contact" target="_blank" rel="noopener">Contact us</a>.</p>{% endblock %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+{% endapply %}

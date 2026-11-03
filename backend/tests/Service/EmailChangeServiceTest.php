@@ -10,6 +10,7 @@ use App\Repository\EmailChangeRequestRepository;
 use App\Repository\UserRepository;
 use App\Service\AccountMailer;
 use App\Service\EmailChangeService;
+use App\Tests\Support\Emails;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -140,7 +141,7 @@ final class EmailChangeServiceTest extends TestCase
             $requests ?? $this->createStub(EmailChangeRequestRepository::class),
             $users ?? $this->createStub(UserRepository::class),
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
-            new AccountMailer($mailer ?? $this->createStub(MailerInterface::class), new NullLogger(), 'http://frontend.test/'),
+            new AccountMailer($mailer ?? $this->createStub(MailerInterface::class), Emails::factory(), new NullLogger()),
             new NullLogger(),
         );
     }

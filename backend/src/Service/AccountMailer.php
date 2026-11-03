@@ -4,85 +4,82 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Mail\EmailFactory;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 
 /**
- * Account-related notification emails. Delivery failures are logged and never surfaced,
- * so API responses cannot differ based on whether an email was sent.
+ * Account-related emails (templates in templates/email/, sharing email/layout.html.twig).
+ * Delivery failures are logged and never surfaced, so API responses cannot differ based on
+ * whether an email was sent.
  */
 final readonly class AccountMailer
 {
-    private const string FROM = 'noreply@valutir.com';
-
     public function __construct(
         private MailerInterface $mailer,
+        private EmailFactory $emails,
         private LoggerInterface $logger,
-        #[Autowire('%frontend_url%')] private string $frontendUrl,
     ) {
     }
 
     public function sendEmailVerification(string $email, string $rawToken): void
     {
-        $link = $this->url('/verify-email?token='.rawurlencode($rawToken));
+        $this->send('email/verify_email.html.twig', $email, 'Confirm your email address for ValuTir', [
+            'email_address' => $email,
+            'verify_url' => $this->emails->appUrl('/verify-email?token='.rawurlencode($rawToken)),
+        ]);
+    }
 
-        $this->send($email, 'Confirm your email address for ValuTir', <<<TEXT
-            Welcome to ValuTir! Confirm that this is your email address within 24 hours: {$link}
+    /** Sent instead of a verification link when someone registers with an address that already has an account. */
+    public function sendExistingAccountNotice(string $email): void
+    {
+        $this->send('email/existing_account.html.twig', $email, 'Someone tried to create a ValuTir account with your email', [
+            'login_url' => $this->emails->appUrl('/login'),
+            'reset_url' => $this->emails->appUrl('/request-password-reset'),
+        ]);
+    }
 
-            Until you confirm, you can use ValuTir, but payment reminders and the one-time upgrade stay off.
-
-            If you didn't create a ValuTir account, ignore this email. Nobody can use this address for payments or reminders without confirming it.
-            TEXT);
+    public function sendPasswordReset(string $email, string $rawToken): void
+    {
+        $this->send('email/password_reset.html.twig', $email, 'Reset your ValuTir password', [
+            'reset_url' => $this->emails->appUrl('/reset-password?token='.rawurlencode($rawToken)),
+        ]);
     }
 
     public function sendEmailChangeConfirmation(string $newEmail, string $rawToken): void
     {
-        $link = $this->url('/confirm-email?token='.rawurlencode($rawToken));
-
-        $this->send($newEmail, 'Confirm your new ValuTir email address', <<<TEXT
-            You asked to use this address for your ValuTir account.
-
-            Confirm the change within 24 hours: {$link}
-
-            If you didn't ask for this, ignore this email. Nothing will change.
-            TEXT);
+        $this->send('email/email_change_confirm.html.twig', $newEmail, 'Confirm your new ValuTir email address', [
+            'email_address' => $newEmail,
+            'confirm_url' => $this->emails->appUrl('/confirm-email?token='.rawurlencode($rawToken)),
+        ]);
     }
 
     public function sendEmailChangedNotice(string $previousEmail, string $newEmail): void
     {
-        $resetLink = $this->url('/request-password-reset');
-
-        $this->send($previousEmail, 'Your ValuTir email address was changed', <<<TEXT
-            The email address for your ValuTir account was changed to {$newEmail}, and every device was signed out.
-
-            If you didn't make this change, reset your password straight away: {$resetLink}
-            TEXT);
+        $this->send('email/email_changed.html.twig', $previousEmail, 'Your ValuTir email address was changed', [
+            'new_email' => $newEmail,
+            'reset_url' => $this->emails->appUrl('/request-password-reset'),
+        ]);
     }
 
     public function sendAccountDeletedNotice(string $email): void
     {
-        $this->send($email, 'Your ValuTir account was deleted', <<<TEXT
-            Your ValuTir account and all of its subscriptions have been permanently deleted.
-
-            You're welcome back any time.
-            TEXT);
+        $this->send('email/account_deleted.html.twig', $email, 'Your ValuTir account was deleted', [
+            'register_url' => $this->emails->appUrl('/register'),
+        ]);
     }
 
-    private function url(string $path): string
-    {
-        return rtrim($this->frontendUrl, '/').$path;
-    }
-
-    private function send(string $to, string $subject, string $text): void
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function send(string $template, string $to, string $subject, array $context): void
     {
         try {
-            $this->mailer->send((new Email())->from(self::FROM)->to($to)->subject($subject)->text($text));
+            $this->mailer->send($this->emails->create($template, $to, $subject, $context));
         } catch (TransportExceptionInterface $exception) {
             $this->logger->error('Could not send account email.', [
-                'subject' => $subject,
+                'template' => $template,
                 'exception_class' => $exception::class,
             ]);
         }

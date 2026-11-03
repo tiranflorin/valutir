@@ -14,7 +14,8 @@ const ThemeModeToggle: React.FC<Props> = ({ placement = 'header' }) => {
 
     return (
         <Button
-            className={placement === 'floating' ? 'auth-theme-toggle' : 'theme-toggle'}
+            // One look everywhere; "floating" (pages without the site header) only adds a fixed position.
+            className={placement === 'floating' ? 'theme-toggle theme-toggle--floating' : 'theme-toggle'}
             variant="outlined"
             startIcon={isDark ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
             onClick={toggleColorMode}

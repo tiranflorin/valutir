@@ -17,12 +17,12 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { registerRequest } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';
+import SuccessHeading from '../../components/SuccessHeading';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
 
@@ -159,9 +159,8 @@ const RegisterPage: React.FC = () => {
             <main className="login-layout register-layout">
                     <section className="login-panel auth-success-panel">
                         <img className="login-logo" src={theme.palette.mode === 'dark' ? '/brand/logo-dark.svg' : '/brand/logo.svg'} alt="ValuTir — Track. Control. More value." />
-                        <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 1.5 }} />
                         <div className="login-intro">
-                            <h1>Account created</h1>
+                            <SuccessHeading title="Account created" />
                             <p>Check your inbox: we sent a link to confirm your email address. You can sign in and start tracking right away. If this email was already registered, we’ve sent it a message with next steps instead.</p>
                         </div>
                         <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login')}>

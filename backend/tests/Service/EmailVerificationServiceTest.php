@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\AccountMailer;
 use App\Service\EmailVerificationService;
+use App\Tests\Support\Emails;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -100,7 +101,7 @@ final class EmailVerificationServiceTest extends TestCase
         return new EmailVerificationService(
             $repository,
             $this->createStub(EntityManagerInterface::class),
-            new AccountMailer($mailer, new NullLogger(), 'http://frontend.test'),
+            new AccountMailer($mailer, Emails::factory(), new NullLogger()),
             $clock,
             new NullLogger(),
         );

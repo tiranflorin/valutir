@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Alert, Box, Button, CircularProgress, InputAdornment, Link, TextField } from '@mui/material';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
 import { requestPasswordReset } from '../../services/auth';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';
+import SuccessHeading from '../../components/SuccessHeading';
 
 const RequestPasswordResetPage: React.FC = () => {
     const navigate = useNavigate();
@@ -51,9 +51,8 @@ const RequestPasswordResetPage: React.FC = () => {
                     </a>
                         {success ? (
                         <>
-                            <CheckCircleIcon sx={{ display: 'block', mx: 'auto', mb: 1.5, fontSize: 54, color: 'success.main' }} />
                             <div className="login-intro">
-                                <h1>Check your email</h1>
+                                <SuccessHeading title="Check your email" />
                                 <p>If the email is registered, reset instructions have been sent to {email}.</p>
                             </div>
                             <p className="reset-helper">Check your inbox and spam folder, then follow the reset instructions.</p>

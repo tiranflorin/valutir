@@ -1,0 +1,46 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}{{ subject }}{% endblock %}
+
+{% block content %}
+    <h1>Coming up soon</h1>
+    <p>Hi {{ name }}, here's what's about to be charged.</p>
+
+    {% if trials is not empty %}
+        <h2>Trials ending</h2>
+        <table role="presentation" class="items" width="100%" cellpadding="0" cellspacing="0" border="0">
+            {% for item in trials %}
+                <tr>
+                    <td class="item-cell">
+                        <span class="item-name">{{ item.service }}</span><br>
+                        <span class="item-detail">Trial ends {{ item.when }}, then the first charge</span>
+                    </td>
+                    <td class="item-cell item-amount">{{ item.amount }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <p class="item-detail">Keep it, or cancel with the provider before then.</p>
+    {% endif %}
+
+    {% if renewals is not empty %}
+        <h2>Renewals</h2>
+        <table role="presentation" class="items" width="100%" cellpadding="0" cellspacing="0" border="0">
+            {% for item in renewals %}
+                <tr>
+                    <td class="item-cell">
+                        <span class="item-name">{{ item.service }}</span><br>
+                        <span class="item-detail">Renews {{ item.when }}</span>
+                    </td>
+                    <td class="item-cell item-amount">{{ item.amount }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    {{ ui.button(subscriptions_url, 'See all your subscriptions') }}
+{% endblock %}
+
+{% block footer %}
+    <p>You get this email because payment reminders are on. {{ ui.link(unsubscribe_url, 'Turn them off') }}.</p>
+{% endblock %}

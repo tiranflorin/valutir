@@ -11,6 +11,7 @@ use App\Repository\UserRepository;
 use App\Service\AccountMailer;
 use App\Service\EmailVerificationService;
 use App\Service\UserRegistrationService;
+use App\Tests\Support\Emails;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -121,15 +122,10 @@ final class UserRegistrationServiceTest extends TestCase
 
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new \DateTimeImmutable('2026-11-03 09:00:00'));
-        $verification = new EmailVerificationService(
-            $repository,
-            $entityManager,
-            new AccountMailer($mailer, new NullLogger(), 'http://frontend.test/'),
-            $clock,
-            new NullLogger(),
-        );
+        $accountMailer = new AccountMailer($mailer, Emails::factory(), new NullLogger());
+        $verification = new EmailVerificationService($repository, $entityManager, $accountMailer, $clock, new NullLogger());
 
-        return new UserRegistrationService($repository, $entityManager, $hasher, $mailer, $verification, new NullLogger(), 'http://frontend.test/');
+        return new UserRegistrationService($repository, $entityManager, $hasher, $accountMailer, $verification, new NullLogger());
     }
 
     private function request(string $email, string $password, string $name): RegisterRequest

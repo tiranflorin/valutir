@@ -10,10 +10,6 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -27,10 +23,9 @@ final readonly class UserRegistrationService
         private UserRepository $userRepository,
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
-        private MailerInterface $mailer,
+        private AccountMailer $accountMailer,
         private EmailVerificationService $emailVerificationService,
         private LoggerInterface $logger,
-        #[Autowire('%frontend_url%')] private string $frontendUrl,
     ) {
     }
 
@@ -71,25 +66,7 @@ final readonly class UserRegistrationService
     private function notifyExistingAccount(string $email): void
     {
         $this->logger->info('Registration attempted for an existing account.');
-
-        $baseUrl = rtrim($this->frontendUrl, '/');
-        $message = (new Email())
-            ->from('noreply@valutir.com')
-            ->to($email)
-            ->subject('Someone tried to create a ValuTir account with your email')
-            ->text(
-                "Someone tried to create a ValuTir account using this email address, but you already have one.\n\n"
-                ."If this was you, sign in at {$baseUrl}/login or reset your password at {$baseUrl}/request-password-reset.\n\n"
-                ."If it wasn't you, you can ignore this email. Your account has not been changed.",
-            );
-
-        try {
-            $this->mailer->send($message);
-        } catch (TransportExceptionInterface $exception) {
-            // Never surface delivery problems to the caller: the response must not differ.
-            $this->logger->error('Could not send existing-account registration notice.', [
-                'exception_class' => $exception::class,
-            ]);
-        }
+        // AccountMailer never surfaces delivery problems: the response must not differ.
+        $this->accountMailer->sendExistingAccountNotice($email);
     }
 }

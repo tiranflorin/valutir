@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import { fetchProfile, verifyEmail } from '../../services/account';
 import '../RecurringScreens.css';
+import SuccessHeading from '../../components/SuccessHeading';
 
 type Status = 'verifying' | 'verified' | 'failed';
 
@@ -61,9 +61,8 @@ const VerifyEmailPage: React.FC = () => {
                     )}
                     {status === 'verified' && (
                         <>
-                            <CheckCircleIcon color="success" sx={{ fontSize: 56, mb: 1 }} />
                             <div className="login-intro">
-                                <h1>Email confirmed</h1>
+                                <SuccessHeading title="Email confirmed" />
                                 <p>{message}</p>
                             </div>
                             <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate(next, { replace: true })}>

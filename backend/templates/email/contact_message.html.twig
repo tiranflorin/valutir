@@ -1,0 +1,13 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{#- Sent to the team (CONTACT_RECIPIENT). The sender's text is autoescaped: it can't add markup or links. -#}
+{% block preheader %}New contact form message from {{ from_email }}{% endblock %}
+
+{% block content %}
+    <h1>New contact form message</h1>
+    <p>From: {{ ui.link('mailto:' ~ from_email, from_email) }}. Reply to this email to answer them.</p>
+    <div class="quote">{{ message|nl2br }}</div>
+{% endblock %}
+
+{% block reply_note %}<p>Sent from the contact form at {{ ui.link(app_url ~ '/contact', app_url ~ '/contact') }}.</p>{% endblock %}

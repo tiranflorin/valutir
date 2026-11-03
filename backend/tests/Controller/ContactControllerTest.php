@@ -54,7 +54,9 @@ final class ContactControllerTest extends WebTestCase
                     array_map(static fn (Address $address): string => $address->getAddress(), $email->getReplyTo()),
                 );
                 self::assertSame('ValuTir contact form message', $email->getSubject());
-                self::assertSame("From: sender@example.test\n\nPlease add dark mode.", $email->getTextBody());
+                self::assertStringContainsString('From: <sender@example.test>.', (string) $email->getTextBody());
+                self::assertStringContainsString('Please add dark mode.', (string) $email->getTextBody());
+                self::assertStringContainsString('<a href="mailto:sender@example.test"', (string) $email->getHtmlBody());
 
                 return true;
             }));

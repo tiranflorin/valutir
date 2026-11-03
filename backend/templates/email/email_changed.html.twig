@@ -1,0 +1,12 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}The email address for your ValuTir account was changed.{% endblock %}
+
+{% block content %}
+    <h1>Your email address was changed</h1>
+    <p>The email address for your ValuTir account is now <strong>{{ new_email }}</strong>, and every device was signed out.</p>
+    <p>If you made this change, there's nothing else to do.</p>
+{% endblock %}
+
+{% block note %}Didn't make this change? {{ ui.link(reset_url, 'Reset your password') }} straight away, then contact us.{% endblock %}

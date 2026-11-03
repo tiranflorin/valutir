@@ -15,11 +15,11 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { submitNewPassword } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';
+import SuccessHeading from '../../components/SuccessHeading';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
 
@@ -104,9 +104,8 @@ const NewPasswordPage: React.FC = () => {
                     </a>
                         {success ? (
                         <>
-                            <CheckCircleIcon sx={{ display: 'block', mx: 'auto', mb: 1.5, fontSize: 54, color: 'success.main' }} />
                             <div className="login-intro">
-                                <h1>Password updated</h1>
+                                <SuccessHeading title="Password updated" />
                                 <p>Your password has been changed successfully. Sign in with your new password.</p>
                             </div>
                             <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login')}>

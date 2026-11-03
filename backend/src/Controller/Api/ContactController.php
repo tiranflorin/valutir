@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Mail\EmailFactory;
 use App\Service\TurnstileVerificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -21,6 +21,7 @@ final class ContactController extends AbstractController
         Request $request,
         TurnstileVerificationService $turnstileVerifier,
         MailerInterface $mailer,
+        EmailFactory $emails,
         #[Autowire('%contact_recipient%')] string $contactRecipient,
         #[Autowire(service: 'limiter.contact_submit')] RateLimiterFactory $rateLimiterFactory,
     ): JsonResponse {
@@ -74,12 +75,12 @@ final class ContactController extends AbstractController
             return $this->json(['message' => 'Contact message delivery is not configured. Please try again later.'], 503);
         }
 
-        $mailer->send((new Email())
-            ->from('noreply@valutir.com')
-            ->to($contactRecipient)
-            ->replyTo($email)
-            ->subject('ValuTir contact form message')
-            ->text("From: {$email}\n\n{$message}"));
+        $mailer->send($emails
+            ->create('email/contact_message.html.twig', $contactRecipient, 'ValuTir contact form message', [
+                'from_email' => $email,
+                'message' => $message,
+            ])
+            ->replyTo($email));
 
         return $this->json(['message' => 'Your message has been successfully sent.']);
     }

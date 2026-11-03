@@ -1,0 +1,11 @@
+{% extends 'email/layout.html.twig' %}
+{% import 'email/layout.html.twig' as ui %}
+
+{% block preheader %}Your ValuTir account and its data have been deleted.{% endblock %}
+
+{% block content %}
+    <h1>Your account was deleted</h1>
+    <p>Your ValuTir account and all of its subscriptions have been permanently deleted.</p>
+    <p>You're welcome back any time.</p>
+    {{ ui.button(register_url, 'Create a new account') }}
+{% endblock %}
