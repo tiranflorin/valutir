@@ -12,6 +12,12 @@ interface CheckoutGateway
     public function isConfigured(): bool;
 
     /**
+     * Why checkout is off (missing key, or a key that doesn't match STRIPE_MODE), or null when it's on.
+     * Safe to log: it names variables and modes, never key material.
+     */
+    public function configurationProblem(): ?string;
+
+    /**
      * @param array<string, mixed> $params Provider parameters built by CheckoutService
      *
      * @throws PaymentProviderException

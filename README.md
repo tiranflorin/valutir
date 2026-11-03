@@ -90,7 +90,8 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `SYMFONY_TRUSTED_PROXIES` | backend | Reverse proxies allowed to pass on the client IP and scheme; empty locally. See [Client IPs behind proxies](#client-ips-behind-proxies) |
 | `CONTACT_RECIPIENT` | backend | Mailbox for contact-form messages |
 | `TURNSTILE_SECRET_KEY`, `TURNSTILE_ALLOWED_HOSTNAMES` | backend | Cloudflare Turnstile verification |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | backend | Stripe API key and webhook signing secret; empty turns checkout off. See [Payments](#payments) |
+| `STRIPE_MODE` | backend | `test` (default: test keys only, on any machine, including staging) or `live` (live keys only, and only with `APP_ENV=prod`). A key from the other environment turns checkout off. See [Stripe keys and modes](#stripe-keys-and-modes) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | backend | Stripe API key (`sk_…` or restricted `rk_…`) and webhook signing secret (`whsec_…`); empty turns checkout off. See [Payments](#payments) |
 | `STRIPE_AUTOMATIC_TAX` | backend | `1` (default) to calculate VAT with Stripe Tax at checkout, `0` to turn it off |
 | `VITE_API_URL` | frontend | API base URL; required for builds (a Cloudflare build variable in production). Its origin is also the only API origin the CSP allows |
 | `VITE_TURNSTILE_SITE_KEY` | frontend | Cloudflare Turnstile site key (public) |
@@ -163,10 +164,10 @@ Symfony reads the visitor's IP and scheme from `X-Forwarded-For` / `-Proto` / `-
 
 Check after deploying: the client IP logged for a request (or a rate-limit hit from two networks) must differ per visitor, not be the proxy's address. Cloudflare's ranges change rarely; update the variable when they do.
 
-Still to do when deploying:
+Still to do when deploying (the complete pre-production list, including Stripe and what the architecture must provide for it, is [docs/go-live-checklist.md](docs/go-live-checklist.md)):
 
 1. Proxy the API hostname through Cloudflare with SSL mode Full (strict), allow only Cloudflare's IP ranges on the AWS load balancer, and add `X-Content-Type-Options: nosniff`, `Content-Security-Policy: frame-ancestors 'none'`, and `Cache-Control: no-store` to API responses with a Response Header Transform Rule.
-2. Make sure the API can only be reached through your own Cloudflare zone. Cloudflare's IP ranges are shared by every Cloudflare customer, so an IP allow-list alone lets anyone route requests to the origin through their own zone or Worker and skip your WAF and edge rules. Prefer a Cloudflare Tunnel (`cloudflared` next to PHP, no public ingress on the load balancer); otherwise turn on Authenticated Origin Pulls with your own certificate (zone-specific mTLS, checked at the load balancer or nginx). Also add a WAF rule on the API hostname that blocks everything except `/api/*` and `/health`. (Cloudflare Access isn't a fit: it's a login gate for internal apps, not for a public API.)
+2. Make sure the API can only be reached through your own Cloudflare zone. Cloudflare's IP ranges are shared by every Cloudflare customer, so an IP allow-list alone lets anyone route requests to the origin through their own zone or Worker and skip your WAF and edge rules. Prefer a Cloudflare Tunnel (`cloudflared` next to PHP, no public ingress on the load balancer); otherwise turn on Authenticated Origin Pulls with your own certificate (zone-specific mTLS, checked at the load balancer or nginx). Also add a WAF rule on the API hostname that blocks everything except `/api/*` and `/health`, and a skip rule so Bot Fight Mode, managed challenges, and tight rate limits never apply to `/api/billing/webhook`: Stripe can't solve a challenge, and blocked webhooks mean paid accounts stay locked. (Cloudflare Access isn't a fit: it's a login gate for internal apps, not for a public API.)
 3. The CSP ships as `Content-Security-Policy-Report-Only`. Click through the deployed app (sign-in, Turnstile on the contact page, calendar), fix what the browser console reports, then set `ENFORCE_CSP = true`.
 4. Turn on HSTS in the Cloudflare dashboard (SSL/TLS > Edge Certificates) with a short `max-age` once the app and API both work over HTTPS; raise it, and consider `includeSubDomains`, once it's stable.
 
@@ -193,9 +194,23 @@ How it works:
 
 Tax: with `STRIPE_AUTOMATIC_TAX=1` Checkout uses Stripe Tax on the tax-inclusive price, requires a billing address (VAT location evidence), and accepts a VAT ID (EU business reverse charge). Before going live, set up Stripe Tax in the Dashboard: your origin address, the registrations you hold (e.g. Romania, plus EU OSS once you're over the threshold), and a default product tax code for SaaS. Check the setup with your accountant.
 
+### Stripe keys and modes
+
+Stripe keeps a separate test environment (a *sandbox*, called "test mode" in older docs). Test keys (`sk_test_…`, `rk_test_…`) never move money, and a real card is declined there, so a demo can't charge anyone. Live keys (`sk_live_…`, `rk_live_…`) charge real cards.
+
+`STRIPE_MODE` says which of the two a deployment is for, and `App\Payment\StripeKeyPolicy` checks the key against it before anything is sent to Stripe:
+
+| Deployment | `APP_ENV` | `STRIPE_MODE` | Allowed key |
+|---|---|---|---|
+| Laptop, CI | `dev` / `test` | `test` (default) | `sk_test_` / `rk_test_` |
+| Staging / demo server | `prod` | `test` | `sk_test_` / `rk_test_` |
+| Production | `prod` | `live` | `sk_live_` / `rk_live_` |
+
+Anything else turns checkout off: a live key with `STRIPE_MODE=test`, `STRIPE_MODE=live` outside `APP_ENV=prod`, a test key in live mode, or a publishable `pk_` key. The Plans page then says payments are unavailable, `POST /api/billing/checkout` returns 503, and the log line "Stripe Checkout is turned off." gives the reason without the key. The webhook signing secret (`whsec_…`) doesn't show its mode, so take it from the same environment as the key: from `stripe listen` locally, from the test-mode webhook endpoint on staging, and from the live one in production.
+
 ### Testing payments locally
 
-Use **test-mode keys only** (`sk_test_…`); test mode never moves money.
+Use **test-mode keys only** (`sk_test_…`) and leave `STRIPE_MODE=test`; test mode never moves money.
 
 1. In the Stripe Dashboard (test mode), copy the secret key from Developers → API keys. Put it in `backend/.env` as `STRIPE_SECRET_KEY`. Turn on Stripe Tax in test mode, or set `STRIPE_AUTOMATIC_TAX=0`.
 2. Get the local webhook signing secret and put it in `backend/.env` as `STRIPE_WEBHOOK_SECRET`. It stays the same for your key, so you only do this once:
@@ -228,7 +243,9 @@ Use **test-mode keys only** (`sk_test_…`); test mode never moves money.
 
 ### Going live
 
-- Create a webhook endpoint in the Dashboard (live mode) for `https://<api-host>/api/billing/webhook` with exactly the six events above. Set its signing secret as `STRIPE_WEBHOOK_SECRET` and a **restricted key** as `STRIPE_SECRET_KEY`, both as deployment secrets, never in git. The restricted key needs Checkout Sessions write access, plus Customers write access when Stripe Tax is on.
+Tick off [docs/go-live-checklist.md](docs/go-live-checklist.md) first. It covers code blockers, Stripe account settings, infrastructure, and what the production architecture must provide for Stripe. The short version:
+
+- Create a webhook endpoint in the Dashboard (live mode) for `https://<api-host>/api/billing/webhook` with exactly the six events above. Set `STRIPE_MODE=live`, its signing secret as `STRIPE_WEBHOOK_SECRET`, and a **restricted live key** (`rk_live_…`) as `STRIPE_SECRET_KEY`. Keep the secrets in deployment secrets, never in git. The restricted key needs Checkout Sessions write access, plus Customers write access when Stripe Tax is on.
 - Activate the account, finish Stripe Tax, and enable the payment methods you want (Checkout shows the ones turned on in the Dashboard).
 - A webhook that fails returns 500, and Stripe retries it for up to three days. Alarm on repeated "Rejected Stripe webhook." or "Stripe session does not match its purchase" log lines.
 
@@ -270,7 +287,7 @@ Fixed items are removed from this list; the git history records what changed. It
 ### Security and operations
 
 5. **A JWT passphrase was committed.** It's in the backend CI env file and was in `backend/.env.sample` (now a placeholder) and remains in git history. Treat it as exposed: rotate it if it protects anything real, and move CI secrets to GitHub Actions secrets.
-6. **Dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high), and `composer audit` hasn't been run (AGENTS.md asks for it before releases). Apply safe updates and list anything that needs a major upgrade.
+6. **npm dependency audit.** `npm` reported 28 known vulnerabilities (19 moderate, 9 high). Apply safe updates and list anything that needs a major upgrade. (`composer audit` is clean as of 2026-11-03, after the Symfony 7.4.22 update. It only flags `doctrine/cache` as abandoned, which is not a vulnerability. Re-run it before each release, as AGENTS.md asks.)
 7. **The dev admin command hard-codes a password** and prints it to the console (`app:create-admin`). Read it from a prompt or option instead.
 8. **No email verification for new accounts.** Anyone can register with an address they don't own; the account works without confirming it. (Emails are case-insensitive: stored lowercase, enforced by migration `Version20261102200300`.)
 9. **Rate limiters run without a lock.** Counters live in PostgreSQL (`cache.rate_limiter`), but `symfony/lock` isn't installed, so parallel requests can read the same count and exceed a limit (e.g. more than 5 password guesses). Add `symfony/lock` with the PostgreSQL advisory-lock store (`PostgreSqlStore`, no table needed).

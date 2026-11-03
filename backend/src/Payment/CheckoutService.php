@@ -48,6 +48,8 @@ final class CheckoutService
             throw new ConflictHttpException('Your account is already unlocked.');
         }
         if (!$this->gateway->isConfigured()) {
+            $this->logger->error('Stripe Checkout is turned off.', ['reason' => $this->gateway->configurationProblem()]);
+
             throw new ServiceUnavailableHttpException(null, 'Payments are not available right now.');
         }
 

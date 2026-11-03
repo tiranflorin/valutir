@@ -17,12 +17,19 @@ final class StripeCheckoutGateway implements CheckoutGateway
 
     public function __construct(
         #[Autowire('%stripe_secret_key%')] private readonly string $secretKey,
+        #[Autowire('%stripe_mode%')] private readonly string $mode,
+        #[Autowire('%kernel.environment%')] private readonly string $appEnv,
     ) {
     }
 
     public function isConfigured(): bool
     {
-        return '' !== $this->secretKey;
+        return null === $this->configurationProblem();
+    }
+
+    public function configurationProblem(): ?string
+    {
+        return StripeKeyPolicy::problem($this->secretKey, $this->mode, $this->appEnv);
     }
 
     public function createSession(array $params, string $idempotencyKey): CheckoutSession
@@ -52,8 +59,8 @@ final class StripeCheckoutGateway implements CheckoutGateway
 
     private function client(): StripeClient
     {
-        if (!$this->isConfigured()) {
-            throw new PaymentProviderException('Stripe is not configured (STRIPE_SECRET_KEY is empty).');
+        if (null !== $problem = $this->configurationProblem()) {
+            throw new PaymentProviderException('Stripe is not configured: '.$problem);
         }
 
         return $this->client ??= new StripeClient([

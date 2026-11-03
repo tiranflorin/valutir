@@ -20,6 +20,9 @@ parameters:
     stripe_secret_key: '%env(default:stripe_secret_key_default:STRIPE_SECRET_KEY)%'
     stripe_webhook_secret_default: ''
     stripe_webhook_secret: '%env(default:stripe_webhook_secret_default:STRIPE_WEBHOOK_SECRET)%'
+    # "test" (default; test keys only, any APP_ENV) or "live" (live keys only, APP_ENV=prod only). See StripeKeyPolicy.
+    stripe_mode_default: 'test'
+    stripe_mode: '%env(default:stripe_mode_default:STRIPE_MODE)%'
     stripe_automatic_tax_default: 'true'
     stripe_automatic_tax: '%env(bool:default:stripe_automatic_tax_default:STRIPE_AUTOMATIC_TAX)%'
 
