@@ -5,6 +5,7 @@ import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { type BillingStatus, fetchBillingStatus, formatPrice, startCheckout } from '../services/account';
+import { LEGAL } from '../legal';
 import './PlansPage.css';
 
 /** Shown before the account's status loads (and to visitors); the server's figure wins once loaded. */
@@ -177,7 +178,11 @@ const PlansPage: React.FC = () => {
                             {unlockFeatures.map((feature) => <li key={feature}>{feature}</li>)}
                         </ul>
                         {upgradeButton}
-                        <p className="plan-secure-note">Secure payment by Stripe. ValuTir never sees your card details.</p>
+                        <p className="plan-secure-note">
+                            Secure payment by Stripe. ValuTir never sees your card details.<br />
+                            {LEGAL.refundDays}-day money-back guarantee. By paying you agree to the{' '}
+                            <RouterLink to="/terms">Terms</RouterLink> and <RouterLink to="/refunds">Refund policy</RouterLink>.
+                        </p>
                     </Paper>
                 </Box>
 
@@ -217,8 +222,8 @@ const PlansPage: React.FC = () => {
                 {error && <Alert className="plans-upgrade-notice" severity="error">{error}</Alert>}
                 <p className="plans-footnote">
                     At 50 active subscriptions, your current records remain available to view, edit, review and archive.
-                    Add a 51st after the one-time unlock. Some advanced business tools are still being built and
-                    will be included when they ship.
+                    Add a 51st after the one-time unlock. Some advanced business tools are still being built; they
+                    aren&apos;t part of the purchase until they&apos;re released (see the <RouterLink to="/terms">Terms</RouterLink>).
                 </p>
             </Container>
             <AppFooter />

@@ -19,6 +19,9 @@ import ProfilePage from './pages/ProfilePage';
 import PreferencesPage from './pages/PreferencesPage';
 import PlansPage from './pages/PlansPage';
 import ContactPage from './pages/ContactPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import RefundPage from './pages/RefundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
@@ -30,6 +33,9 @@ const AppRoutes: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refunds" element={<RefundPage />} />
 
             <Route
                 path="/login"

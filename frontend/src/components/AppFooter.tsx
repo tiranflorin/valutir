@@ -11,8 +11,9 @@ const AppFooter: React.FC = () => {
                 <nav aria-label="Footer navigation">
                     <a href="/#how-it-works">How it works</a>
                     <a href="/#business">For business</a>
-                    <RouterLink to="/my-subs">Subscriptions</RouterLink>
-                    <RouterLink to="/calendar">Calendar</RouterLink>
+                    <RouterLink to="/privacy">Privacy</RouterLink>
+                    <RouterLink to="/terms">Terms</RouterLink>
+                    <RouterLink to="/refunds">Refunds</RouterLink>
                     <RouterLink to="/plans">Plan</RouterLink>
                     {isAuthenticated ? (
                         <RouterLink to="/contact">Contact</RouterLink>

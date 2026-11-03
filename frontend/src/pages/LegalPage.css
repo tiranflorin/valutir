@@ -1,0 +1,127 @@
+/* Legal pages (Privacy, Terms, Refunds): readable prose and tables inside the shared settings card. */
+.legal-card.MuiPaper-root {
+    padding: 30px 34px;
+    color: #33473b;
+    font-size: 14.5px;
+    line-height: 1.65;
+}
+
+.legal-card section + section {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid #e1e9e3;
+}
+
+.legal-card h2 {
+    margin: 0 0 10px;
+    color: #17241d;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+}
+
+.legal-card p {
+    margin: 0 0 10px;
+}
+
+.legal-card ul,
+.legal-card ol {
+    margin: 0 0 10px;
+    padding-left: 20px;
+}
+
+.legal-card li + li {
+    margin-top: 5px;
+}
+
+.legal-card strong {
+    color: #17241d;
+}
+
+.legal-card a {
+    color: var(--vt-green, #176b43);
+    font-weight: 700;
+}
+
+.legal-summary {
+    padding: 16px 18px 8px;
+    border-radius: 12px;
+    background: #eaf4ec;
+}
+
+.legal-table-wrap {
+    margin: 4px 0 12px;
+    overflow-x: auto;
+    border: 1px solid #e1e9e3;
+    border-radius: 12px;
+}
+
+.legal-table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.legal-table th {
+    padding: 10px 12px;
+    background: #f4f8f5;
+    color: #526258;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.legal-table td {
+    padding: 10px 12px;
+    border-top: 1px solid #e1e9e3;
+    vertical-align: top;
+}
+
+.legal-table code {
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    .legal-card.MuiPaper-root {
+        padding: 22px 18px;
+    }
+}
+
+:root[data-theme='dark'] .legal-card.MuiPaper-root {
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .legal-card h2,
+:root[data-theme='dark'] .legal-card strong {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .legal-card a {
+    color: #8dd5a3;
+}
+
+:root[data-theme='dark'] .legal-card section + section,
+:root[data-theme='dark'] .legal-table-wrap,
+:root[data-theme='dark'] .legal-table td {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .legal-summary {
+    background: #1b2a2a;
+}
+
+:root[data-theme='dark'] .legal-table th {
+    background: #1e293b;
+    color: #a8b4c8;
+}
+
+/* Keep storage names (valutir_auth_token, ...) on one line; the table scrolls on small screens. */
+.legal-table td:first-child code {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
