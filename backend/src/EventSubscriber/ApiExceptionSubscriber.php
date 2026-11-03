@@ -41,7 +41,7 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $exception = $event->getThrowable();
         $user = $this->security->getUser();
-        $isSensitiveRoute = (bool) preg_match('~^/api/(login_check|logout|profile|reset-password(?:/|$)|contact(?:/|$))~', $request->getPathInfo());
+        $isSensitiveRoute = (bool) preg_match('~^/api/(login_check|logout|profile|reset-password(?:/|$)|contact(?:/|$)|billing/webhook$)~', $request->getPathInfo());
 
         $headers = $request->headers->all();
         if (isset($headers['authorization'])) {
@@ -50,7 +50,10 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
 
         $content = $request->getContent();
         $decodedContent = json_decode($content, true);
-        if (JSON_ERROR_NONE === json_last_error() && is_array($decodedContent)) {
+        if (str_starts_with($request->getPathInfo(), '/api/billing/webhook')) {
+            // Stripe events carry the buyer's name, email, and address.
+            $content = '[REDACTED payment webhook body]';
+        } elseif (JSON_ERROR_NONE === json_last_error() && is_array($decodedContent)) {
             $redactSensitiveValues = static function (array $value) use (&$redactSensitiveValues): array {
                 foreach ($value as $key => $item) {
                     if (preg_match('/password|token|secret/i', (string) $key)) {

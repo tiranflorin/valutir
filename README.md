@@ -32,7 +32,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - At most one email a day per user, and only on days when a payment needs attention (a trial ending or a renewal coming up). Sent after 01:00 in their time zone, with one-click unsubscribe. See [Scheduled commands](#scheduled-commands).
 
 **Other pages**
-- Plans page describing free tracking and the proposed one-time unlock (the upgrade is a mock and doesn't start checkout).
+- Plans page with the one-time unlock (€19.99, VAT included) paid through Stripe Checkout. Free accounts are limited to 50 active (active or trial) subscriptions, enforced by the API. See [Payments](#payments).
 - Contact page with server-verified Cloudflare Turnstile, a honeypot, and email delivery.
 
 ## Local development
@@ -90,6 +90,8 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `SYMFONY_TRUSTED_PROXIES` | backend | Reverse proxies allowed to pass on the client IP and scheme; empty locally. See [Client IPs behind proxies](#client-ips-behind-proxies) |
 | `CONTACT_RECIPIENT` | backend | Mailbox for contact-form messages |
 | `TURNSTILE_SECRET_KEY`, `TURNSTILE_ALLOWED_HOSTNAMES` | backend | Cloudflare Turnstile verification |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | backend | Stripe API key and webhook signing secret; empty turns checkout off. See [Payments](#payments) |
+| `STRIPE_AUTOMATIC_TAX` | backend | `1` (default) to calculate VAT with Stripe Tax at checkout, `0` to turn it off |
 | `VITE_API_URL` | frontend | API base URL; required for builds (a Cloudflare build variable in production). Its origin is also the only API origin the CSP allows |
 | `VITE_TURNSTILE_SITE_KEY` | frontend | Cloudflare Turnstile site key (public) |
 
@@ -97,8 +99,9 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 
 Send `Authorization: Bearer <token>` with authenticated requests. Errors are always JSON; validation failures return 422 with per-field `errors`.
 
-- **Public:** `POST /api/register`, `POST /api/login_check`, `POST /api/contact`, `POST /api/reset-password/request`, `POST /api/reset-password/new`, `POST /api/profile/email/confirm` (link token), `POST /api/reminders/unsubscribe` (signed link token), and `GET /health`.
+- **Public:** `POST /api/register`, `POST /api/login_check`, `POST /api/contact`, `POST /api/reset-password/request`, `POST /api/reset-password/new`, `POST /api/profile/email/confirm` (link token), `POST /api/reminders/unsubscribe` (signed link token), `POST /api/billing/webhook` (Stripe-signed), and `GET /health`.
 - **Account (authenticated):** `GET`/`PATCH`/`DELETE /api/profile`, `PATCH /api/profile/password`, `POST /api/profile/email`, `POST /api/logout`, `POST /api/logout/all`.
+- **Billing (authenticated):** `GET /api/billing` (plan, price, active-subscription usage), `POST /api/billing/checkout` (returns a Stripe Checkout URL).
 - **Subscriptions (authenticated, owner only):** `GET`/`POST /api/subs`, `GET`/`PUT`/`PATCH`/`DELETE /api/subs/{id}`. Updates replace every field, so send the full subscription.
 
 The full endpoint table with request details is in [AGENTS.md](AGENTS.md#api-endpoints).
@@ -176,9 +179,60 @@ frontend/  React application, calendar UI, and Vitest tests
 
 Coding and security conventions for contributors (and AI agents) are in [AGENTS.md](AGENTS.md).
 
-## Paid plan
+## Payments
 
-Ideas for the paid plan (pricing and checkout are still a mock, see Status & TODO):
+The paid plan is a **one-time unlock: €19.99, VAT included, no renewal**. It lifts the free plan's limit of 50 active (active or trial) subscriptions. Payment runs on Stripe-hosted Checkout, so card details never reach ValuTir.
+
+How it works:
+
+1. `POST /api/billing/checkout` (signed in) creates a Checkout session. The product, amount, currency, and buyer all come from the server (`App\Payment\UnlockOffer`); the request has no body. Any earlier open session of the same user is expired first, so only one can be paid. A `purchase` row records the session (status `pending`). Rate limit: 10 attempts per hour per user.
+2. The browser goes to the returned URL. The frontend only follows URLs on `https://checkout.stripe.com`.
+3. Stripe calls `POST /api/billing/webhook`. The request must carry a valid `Stripe-Signature` (an HMAC of the raw body under `STRIPE_WEBHOOK_SECRET`, at most 5 minutes old), or it gets a 400. Only this webhook unlocks an account, and only for a session the server created whose mode, amount, currency, product, and buyer match the `purchase` row. Being redirected back to `/plans?checkout=success` proves nothing; the page polls `GET /api/billing` until the webhook has landed.
+4. Handled events: `checkout.session.completed`, `checkout.session.async_payment_succeeded` / `_failed`, `checkout.session.expired`, `charge.refunded` (a full refund revokes the unlock; a partial one keeps it), and `charge.dispute.created` (revokes it). Events are applied idempotently on a locked row, in any order and any number of times; other event types get a 200 and are ignored.
+5. The free limit is enforced in `App\Payment\FreePlanLimit`. Creating a 51st active subscription, or re-activating a cancelled one at the limit, returns 402; existing records stay readable and editable. The count runs with the user's row locked, so parallel requests can't pass it.
+
+Tax: with `STRIPE_AUTOMATIC_TAX=1` Checkout uses Stripe Tax on the tax-inclusive price, requires a billing address (VAT location evidence), and accepts a VAT ID (EU business reverse charge). Before going live, set up Stripe Tax in the Dashboard: your origin address, the registrations you hold (e.g. Romania, plus EU OSS once you're over the threshold), and a default product tax code for SaaS. Check the setup with your accountant.
+
+### Testing payments locally
+
+Use **test-mode keys only** (`sk_test_…`); test mode never moves money.
+
+1. In the Stripe Dashboard (test mode), copy the secret key from Developers → API keys. Put it in `backend/.env` as `STRIPE_SECRET_KEY`. Turn on Stripe Tax in test mode, or set `STRIPE_AUTOMATIC_TAX=0`.
+2. Get the local webhook signing secret and put it in `backend/.env` as `STRIPE_WEBHOOK_SECRET`. It stays the same for your key, so you only do this once:
+
+   ```bash
+   docker compose --profile stripe run --rm stripe-cli listen --print-secret
+   ```
+
+3. Recreate the backend so it picks up the variables, apply the migrations, and start the webhook forwarder:
+
+   ```bash
+   docker compose up -d backend
+   docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
+   docker compose --profile stripe up -d stripe-cli
+   docker compose logs -f stripe-cli    # shows every forwarded event and the backend's response code
+   ```
+
+   Without Docker, `stripe login` then `stripe listen --forward-to localhost:8080/api/billing/webhook` with the Stripe CLI works the same.
+4. Sign in at `http://localhost:5173`, open **Plans**, and pay. Test cards (any future expiry, any CVC, any postcode):
+
+   | Card | Result |
+   |---|---|
+   | `4242 4242 4242 4242` | Paid: the page confirms and the account is unlocked |
+   | `4000 0025 0000 3155` | 3-D Secure challenge, then paid |
+   | `4000 0000 0000 9995` | Declined (insufficient funds): stays on the free plan |
+
+   With SEPA Direct Debit enabled in test mode, the test IBAN `DE89370400440532013000` succeeds after a short delay (the `async_payment_succeeded` path).
+5. Refund or dispute: refund the payment in the Dashboard (Payments → the payment → Refund), and the account goes back to the free plan. For a dispute, pay with `4000 0000 0000 0259`.
+6. Check the result: `GET /api/billing` returns `"unlocked": true`, and the `purchase` row has status `paid`. `stripe trigger checkout.session.completed` creates sessions the server didn't make, so they're logged as unknown and ignored, which is expected.
+
+### Going live
+
+- Create a webhook endpoint in the Dashboard (live mode) for `https://<api-host>/api/billing/webhook` with exactly the six events above. Set its signing secret as `STRIPE_WEBHOOK_SECRET` and a **restricted key** as `STRIPE_SECRET_KEY`, both as deployment secrets, never in git. The restricted key needs Checkout Sessions write access, plus Customers write access when Stripe Tax is on.
+- Activate the account, finish Stripe Tax, and enable the payment methods you want (Checkout shows the ones turned on in the Dashboard).
+- A webhook that fails returns 500, and Stripe retries it for up to three days. Alarm on repeated "Rejected Stripe webhook." or "Stripe session does not match its purchase" log lines.
+
+Ideas for the paid plan:
 
 - **Custom reminder lead times.** Reminder timing is fixed for now (table above). Letting users choose when they're reminded, globally or per subscription, is a candidate paid-plan feature.
 
@@ -202,7 +256,7 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ### Correctness and reliability
 
-1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 115 backend and 54 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
+1. **Later: tests don't cover the rules that matter most.** Decided for now: backend tests stay database-free. There are 166 backend and 69 frontend tests, but no backend test reaches a database. User isolation on subscriptions (user B can't read or change user A's), the subscription create/update/delete flow over HTTP, token revocation through the firewall, and the reminder commands' database queries (claiming a user's day, the reminder log) are untested against a real database. Several service tests are mock-heavy and assert implementation details.
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
 2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see Scheduled commands) but nothing schedules them in production yet:
@@ -225,7 +279,7 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ### Product gaps and mocks
 
-12. **Plans / Business upgrade is a mock.** The price is "to be decided", the upgrade button only shows a notice, and there is no checkout and no plan stored on the account.
+12. **Most paid-plan tools aren't built yet.** The one-time unlock is paid through Stripe and lifts the 50-subscription limit. The Plans page also lists project and cost-center allocation, a bookkeeping export, custom reminder timing, and price history, and none of them exist yet. Build them, or take them off the page before charging real customers. Also missing: no receipt or invoice email from ValuTir (Stripe can send receipts: Dashboard → Settings → Emails), and no USD or RON prices, since everyone is charged in EUR.
 13. **The Business view is only a filter** on the `b2b` flag (no business account or team).
 14. **No account data export** before deletion.
 15. **Later: who pays a shared bill.** Household sharing assumes you pay the full bill and others owe you their share. If someone else pays, the charge isn't on your card but you owe your share; that needs a "payer" field, calendar charges that follow it, and settle-up reminders.

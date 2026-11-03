@@ -8,6 +8,7 @@ use App\Dto\SubscriptionUpsertRequest;
 use App\Entity\Subscription;
 use App\Entity\User;
 use App\Exception\ApiValidationException;
+use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -20,6 +21,7 @@ final class SubscriptionService
         private readonly EntityManagerInterface $entityManager,
         private readonly SubscriptionRepository $subscriptionRepository,
         private readonly ValidatorInterface $validator,
+        private readonly FreePlanLimit $freePlanLimit,
     ) {
     }
 
@@ -46,24 +48,35 @@ final class SubscriptionService
     {
         $this->validateDto($dto);
 
-        $subscription = new Subscription();
-        $subscription->setUser($user);
+        return $this->entityManager->wrapInTransaction(function () use ($user, $dto): Subscription {
+            $this->freePlanLimit->assertCanSave($user, null, $dto->status);
 
-        $this->mapDto($subscription, $dto);
-        $this->entityManager->persist($subscription);
-        $this->entityManager->flush();
+            $subscription = new Subscription();
+            $subscription->setUser($user);
 
-        return $subscription;
+            $this->mapDto($subscription, $dto);
+            $this->entityManager->persist($subscription);
+            $this->entityManager->flush();
+
+            return $subscription;
+        });
     }
 
     public function update(Subscription $subscription, SubscriptionUpsertRequest $dto): Subscription
     {
         $this->validateDto($dto);
 
-        $this->mapDto($subscription, $dto);
-        $this->entityManager->flush();
+        return $this->entityManager->wrapInTransaction(function () use ($subscription, $dto): Subscription {
+            $user = $subscription->getUser();
+            if (null !== $user) {
+                $this->freePlanLimit->assertCanSave($user, $subscription, $dto->status);
+            }
 
-        return $subscription;
+            $this->mapDto($subscription, $dto);
+            $this->entityManager->flush();
+
+            return $subscription;
+        });
     }
 
     public function delete(Subscription $subscription, ?bool $usedAndUseful = null): void

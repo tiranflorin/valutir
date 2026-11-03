@@ -64,6 +64,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $remindersProcessedOn = null;
 
+    /**
+     * When the one-time unlock was paid (lifts the free plan's active-subscription limit); null on the
+     * free plan. Server-owned: set and cleared only by the verified Stripe webhook.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $unlockedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -220,5 +227,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRemindersProcessedOn(): ?\DateTimeImmutable
     {
         return $this->remindersProcessedOn;
+    }
+
+    public function isUnlocked(): bool
+    {
+        return null !== $this->unlockedAt;
+    }
+
+    public function getUnlockedAt(): ?\DateTimeImmutable
+    {
+        return $this->unlockedAt;
+    }
+
+    public function unlock(\DateTimeImmutable $at): static
+    {
+        $this->unlockedAt ??= $at;
+
+        return $this;
+    }
+
+    public function revokeUnlock(): static
+    {
+        $this->unlockedAt = null;
+
+        return $this;
     }
 }

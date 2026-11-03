@@ -41,6 +41,8 @@ security:
         - { path: ^/api/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/profile/email/confirm$, roles: PUBLIC_ACCESS }
         - { path: ^/api/reminders/unsubscribe$, roles: PUBLIC_ACCESS }
+        # Stripe calls it; StripeWebhookVerifier checks the signature over the raw body.
+        - { path: ^/api/billing/webhook$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

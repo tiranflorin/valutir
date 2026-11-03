@@ -6,9 +6,10 @@ namespace App\Tests\Dto;
 
 use App\Dto\SubscriptionUpsertRequest;
 use App\Entity\Subscription;
+use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use App\Service\SubscriptionService;
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -48,10 +49,14 @@ final class SubscriptionHouseholdSharingTest extends KernelTestCase
     public function testSharingIsStoredAndClearedThroughTheService(): void
     {
         self::bootKernel();
+        $entityManager = $this->createStub(EntityManager::class);
+        $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $work): mixed => $work());
+        $repository = $this->createStub(SubscriptionRepository::class);
         $service = new SubscriptionService(
-            $this->createStub(EntityManagerInterface::class),
-            $this->createStub(SubscriptionRepository::class),
+            $entityManager,
+            $repository,
             self::getContainer()->get(ValidatorInterface::class),
+            new FreePlanLimit($entityManager, $repository),
         );
         $subscription = new Subscription();
 

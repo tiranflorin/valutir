@@ -6,8 +6,10 @@ namespace App\Tests\Service;
 
 use App\Dto\SubscriptionUpsertRequest;
 use App\Entity\Subscription;
+use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use App\Service\SubscriptionService;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -27,6 +29,7 @@ final class SubscriptionServiceTest extends TestCase
             $entityManager,
             $this->createStub(SubscriptionRepository::class),
             $this->createStub(ValidatorInterface::class),
+            new FreePlanLimit($entityManager, $this->createStub(SubscriptionRepository::class)),
         );
         $service->delete($subscription, true);
 
@@ -67,10 +70,16 @@ final class SubscriptionServiceTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $validator->method('validate')->willReturn(new ConstraintViolationList());
 
+        $entityManager = $this->createStub(EntityManager::class);
+        $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $work): mixed => $work());
+
+        $repository = $this->createStub(SubscriptionRepository::class);
+
         return new SubscriptionService(
-            $this->createStub(EntityManagerInterface::class),
-            $this->createStub(SubscriptionRepository::class),
+            $entityManager,
+            $repository,
             $validator,
+            new FreePlanLimit($entityManager, $repository),
         );
     }
 

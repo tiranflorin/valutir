@@ -166,7 +166,7 @@ const HomePage: React.FC = () => (
                     <h2>Start free. Keep using it free.</h2>
                     <p>
                         Personal and Business views are part of the free tracker. If your list grows beyond 50 active
-                        subscriptions, or you need advanced business tools, there will be a one-time upgrade. No monthly software bill.
+                        subscriptions, or you need advanced business tools, there's a one-time upgrade. No monthly software bill.
                     </p>
                 </div>
                 <div className="price-band">
@@ -177,7 +177,7 @@ const HomePage: React.FC = () => (
                     <div className="price-tag"><strong>€0</strong><span>Free forever</span></div>
                 </div>
                 <div className="price-details">
-                    <div className="price-detail"><b>Need more than 50?</b>A one-time payment will unlock tracking beyond 50 active subscriptions. No recurring charge. Check <a href="/#free">Plan</a> </div>
+                    <div className="price-detail"><b>Need more than 50?</b>A one-time payment of €19.99 (VAT included) unlocks tracking beyond 50 active subscriptions. No recurring charge. Check <a href="/#free">Plan</a> </div>
                     <div className="price-detail"><b>Running a small business?</b>Core Business tracking stays free. Optional advanced tools, such as project or cost-center reports, are planned as part of the one-time upgrade.</div>
                 </div>
             </section>

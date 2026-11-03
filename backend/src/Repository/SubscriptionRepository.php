@@ -64,6 +64,19 @@ class SubscriptionRepository extends ServiceEntityRepository
     }
 
     /**
+     * @param list<string> $statuses
+     */
+    public function countWithStatuses(User $user, array $statuses): int
+    {
+        return (int) $this->createVisibleForUserQueryBuilder($user)
+            ->select('COUNT(s.id)')
+            ->andWhere('s.status IN (:statuses)')
+            ->setParameter('statuses', $statuses)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
      * Subscriptions owned by the user that have not been soft-deleted.
      */
     public function createVisibleForUserQueryBuilder(User $user): QueryBuilder

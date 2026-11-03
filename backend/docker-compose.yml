@@ -38,6 +38,9 @@ services:
             CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
             TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
             TURNSTILE_ALLOWED_HOSTNAMES: ${TURNSTILE_ALLOWED_HOSTNAMES:-}
+            STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+            STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+            STRIPE_AUTOMATIC_TAX: ${STRIPE_AUTOMATIC_TAX:-1}
             PHP_IDE_CONFIG: ${PHP_IDE_CONFIG:-serverName=valutir-backend}
         volumes:
             - .:/var/www/html
@@ -58,6 +61,17 @@ services:
             retries: 2
             start_period: 15s
         restart: unless-stopped
+
+    # Local payments only: forwards Stripe test-mode webhooks to the backend (README "Payments").
+    # Start it with: docker compose --profile stripe up -d stripe-cli
+    stripe-cli:
+        image: stripe/stripe-cli:v1.21.8
+        profiles: [stripe]
+        command: listen --forward-to http://backend:8080/api/billing/webhook --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.refunded,charge.dispute.created
+        environment:
+            STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
+        depends_on:
+            - backend
 
 volumes:
     pgdata:

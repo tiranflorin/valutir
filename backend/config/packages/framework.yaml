@@ -25,6 +25,11 @@ framework:
             policy: fixed_window
             limit: 5
             interval: '15 minutes'
+        # Each attempt creates a Stripe Checkout session; per user.
+        billing_checkout:
+            policy: fixed_window
+            limit: 10
+            interval: '1 hour'
     secret: '%env(APP_SECRET)%'
 
     # Real client IPs behind a reverse proxy (Cloudflare, a load balancer, a tunnel). Rate limits,

@@ -11,8 +11,9 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 │   ├── src/
 │   │   ├── Controller/      # API and health endpoints
 │   │   ├── Dto/             # Request DTOs and validation
-│   │   ├── Entity/          # Doctrine User and Subscription entities
+│   │   ├── Entity/          # Doctrine entities (User, Subscription, Purchase, ...)
 │   │   ├── EventSubscriber/ # JSON API exception handling
+│   │   ├── Payment/         # Stripe Checkout, webhook handling, free-plan limit
 │   │   ├── Repository/      # User-scoped persistence queries
 │   │   ├── Security/        # API auth error responses
 │   │   └── Service/         # Subscription business logic
@@ -41,7 +42,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - `POST /api/login_check` authenticates JSON `{ "email", "password" }` and LexikJWTAuthenticationBundle returns a JWT.
 - JWTs are stateless, sent as `Authorization: Bearer <token>`, and have a 24-hour TTL.
 - Token revocation: `POST /api/logout` adds the current token to Lexik's blocklist (`cache.jwt_blocklist`). The blocklist and rate limiters/login throttling (`cache.rate_limiter`) are PostgreSQL-backed pools (`cache_items` table, `cache.yaml`) so they survive deploys and are shared across instances; keep such state out of `cache.app`, which is per-container filesystem. Tests swap both pools for array adapters. Every JWT also carries a `tv` claim matching `User::$tokenVersion`; `TokenVersionListener` rejects mismatches. Call `User::revokeAllTokens()` whenever every session must end (sign out everywhere, password change or reset, email change).
-- Public endpoints: `/api/login*`, `/api/register`, `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, and `/api/reminders/unsubscribe` (signed token). All other `/api` endpoints require a fully authenticated user.
+- Public endpoints: `/api/login*`, `/api/register`, `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, `/api/reminders/unsubscribe` (signed token), and `/api/billing/webhook` (Stripe signature). All other `/api` endpoints require a fully authenticated user.
 - `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, and `ApiExceptionSubscriber` keep API errors JSON-shaped.
 - Do not read, print, grep, expose, log, commit, or repeat values from local `.env` files (`.env`, `.env.local`, `.env.ci`, `.env.dev`, `.env.test`, ...), JWT keys (`config/jwt/*.pem`), or environment dumps (`printenv`, `env`, `docker compose config`, `docker inspect`, `debug:dotenv`). Use the committed templates (`.env.dist`, `.env.sample`) for variable names. For AI agents this is enforced by `.claude/settings.json` and `.claude/hooks/block-env-secrets.py`; treat a block as intended and ask the user instead of working around it.
 
@@ -55,6 +56,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Billing dates: charges are counted from the stored `nextBillingDate` with month-end clamping (`App\Billing\BillingSchedule`, mirrored by `frontend/src/utils/buildRecurringOccurrences.ts`; keep them in sync). "Today" for a user is their local calendar day (`App\Billing\UserTime`); servers and the database stay on UTC. Use the `App\Clock\Clock` interface instead of `new \DateTimeImmutable()` in code that the scheduled commands run.
 - Reminders: `app:subscriptions:advance-billing-dates` then `app:reminders:send`, hourly, plus `cache:pool:prune` for expired cache rows (see README "Scheduled commands"). `reminder_log` has a unique key per subscription, kind, and charge date so a charge is reminded once; lead times live in `App\Reminder\ReminderPolicy` (mirrored in `frontend/src/utils/reminders.ts`).
 - Subscription repository queries must remain scoped to the authenticated user. `findOneByIdAndUser()` is the pattern for single-record access.
+- Payments (`App\Payment`, README "Payments"): a one-time unlock, €19.99 VAT included, on Stripe-hosted Checkout. Price, currency, and product live in `UnlockOffer` and are never taken from a request. `User::$unlockedAt` is server-owned: only `StripeWebhookHandler` sets or clears it, after `StripeWebhookVerifier` checks the signature, and only for a `purchase` row the server created whose figures match. Keep webhook handling idempotent (one-way status transitions on a row locked `FOR UPDATE`) and never log webhook bodies (they hold buyer PII). Free accounts are limited to `FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS` (50) active or trial subscriptions; enforce it with `FreePlanLimit::assertCanSave()` inside the transaction of every write that can make a subscription active. Purchases keep their row on account deletion (`user_id` SET NULL) for bookkeeping.
 - Deleting a subscription is a soft delete: record `deletedAt`, cancellation metadata, and `deletedUseful`; do not assume a DELETE removes its row.
 
 ### API endpoints
@@ -75,6 +77,9 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | `POST /api/profile/email/confirm` | Public; apply an email change from its link token and sign out every device |
 | `DELETE /api/profile` | Permanently delete the account and its data (current password required) |
 | `POST /api/reminders/unsubscribe?token=…` | Public; turn payment reminders off from the signed link in a reminder email (one-click unsubscribe) |
+| `GET /api/billing` | Current user's plan (`unlocked`), price, free limit, and active-subscription count |
+| `POST /api/billing/checkout` | Start Stripe Checkout for the one-time unlock; returns `{ url }` (409 when already unlocked, 503 when Stripe isn't configured) |
+| `POST /api/billing/webhook` | Public; Stripe events, verified by `Stripe-Signature`. The only path that unlocks or revokes an account |
 | `GET /api/subs` | List the current user's subscriptions |
 | `POST /api/subs` | Create a subscription |
 | `GET /api/subs/{id}` | Read a user-owned subscription |

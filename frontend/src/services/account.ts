@@ -135,3 +135,47 @@ export const unsubscribeFromReminders = (unsubscribeToken: string) =>
         method: 'POST',
         fallbackError: 'This unsubscribe link is invalid.',
     });
+
+/** The account's plan: free (limited active subscriptions) or unlocked by the one-time payment. */
+export type BillingStatus = {
+    unlocked: boolean;
+    unlockedAt: string | null;
+    /** False when the server has no Stripe keys: the upgrade button is disabled. */
+    checkoutAvailable: boolean;
+    /** amountInCents: 1999 = €19.99, tax included. */
+    price: { amountInCents: number; currency: string; taxInclusive: boolean };
+    freeActiveLimit: number;
+    activeCount: number;
+};
+
+export const fetchBillingStatus = (token: string) =>
+    apiRequest<BillingStatus>('/api/billing', { token, fallbackError: 'Unable to load your plan.' });
+
+/** The only place the browser may be sent to pay. */
+const STRIPE_CHECKOUT_ORIGIN = 'https://checkout.stripe.com';
+
+/** Asks the API for a Stripe Checkout URL; amount and product are decided by the server. */
+export async function startCheckout(token: string): Promise<string> {
+    const { url } = await apiRequest<{ url?: unknown }>('/api/billing/checkout', {
+        method: 'POST',
+        token,
+        fallbackError: 'Unable to start the payment. Please try again later.',
+    });
+    if (typeof url !== 'string' || !isStripeCheckoutUrl(url)) {
+        throw new ApiError(502, 'Unable to start the payment. Please try again later.');
+    }
+
+    return url;
+}
+
+export const isStripeCheckoutUrl = (url: string): boolean => {
+    try {
+        const parsed = new URL(url);
+        return parsed.origin === STRIPE_CHECKOUT_ORIGIN;
+    } catch {
+        return false;
+    }
+};
+
+export const formatPrice = ({ amountInCents, currency }: BillingStatus['price']): string =>
+    new Intl.NumberFormat('en-IE', { style: 'currency', currency }).format(amountInCents / 100);
