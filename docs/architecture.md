@@ -104,6 +104,12 @@ The result holds the code and the compiled cache, and no secrets. It's pushed to
 
 Port 8080 isn't published on the host: only `cloudflared`, on the same Compose network, can reach it.
 
+**One-off console commands** (for example making someone an admin): open a shell on the instance with SSM Session Manager (`aws ssm start-session --target <instance-id>`; no SSH or open port), then run the command in a one-off container of the deployed image. For an admin: register in the app and confirm the email first, then grant the role, so no password is ever typed on the server:
+
+```bash
+sudo docker compose -f /opt/valutir/compose.yaml run --rm valutir-api php bin/console app:create-admin you@example.com
+```
+
 **Try it locally:** `docker compose --profile prod up -d --build backend-prod` builds the same target and runs it on port 8081 against the local database, with no code mounted ([development.md](development.md)).
 
 ## Scheduled commands

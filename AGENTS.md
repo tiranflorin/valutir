@@ -103,7 +103,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - `AuthContext` stores the JWT in browser `localStorage` under `valutir_auth_token`, loads the account from `GET /api/profile`, and revokes the token on logout; `ProtectedRoute` redirects unauthenticated users to `/login`. Account API calls live in `services/account.ts`.
 - MUI supplies the UI system. `AppThemeProvider` owns light/dark mode, while `AppHeader` and `AppShell` are shared layout primitives.
 - API calls use `fetch` and attach the JWT bearer token. Build URLs from `API_URL` in `src/config.ts` (the only place that reads `VITE_API_URL`); never read `import.meta.env` directly in components. Production builds require `VITE_API_URL` (set by the deploy pipeline, which builds on Node 24).
-- Cookies and browser storage (GDPR/ePrivacy, TODO #10 in `docs/status-and-todo.md`): today everything is strictly necessary (`valutir_auth_token`, `valutir_dashboard_view`, and Cloudflare/Stripe security cookies), so there is no consent banner. Before adding a `localStorage`/`sessionStorage` key, a cookie, or an analytics, marketing, or embed script, update that inventory and the Privacy Policy (`frontend/src/pages/PrivacyPage.tsx`, the `storageItems` list and the data table). Anything not strictly necessary must wait for opt-in consent through a consent manager (none exists yet), and the user must be able to load the page without it.
+- Cookies and browser storage (GDPR/ePrivacy, TODO #9 in `docs/status-and-todo.md`): today everything is strictly necessary (`valutir_auth_token`, `valutir_dashboard_view`, and Cloudflare/Stripe security cookies), so there is no consent banner. Before adding a `localStorage`/`sessionStorage` key, a cookie, or an analytics, marketing, or embed script, update that inventory and the Privacy Policy (`frontend/src/pages/PrivacyPage.tsx`, the `storageItems` list and the data table). Anything not strictly necessary must wait for opt-in consent through a consent manager (none exists yet), and the user must be able to load the page without it.
 - Legal pages (`PrivacyPage`, `TermsPage`, `RefundPage`, styled by `LegalPage.css`): the shared details (controller, governing law, dates, refund days, price) live in `src/legal.ts`. When plans, pricing, refunds, the free limit, or collected data change, update these pages in the same change and bump their date. The 14-day money-back guarantee is why checkout doesn't ask buyers to waive the EU withdrawal right; don't shorten it without adding that consent.
 - Production hosting is Cloudflare Pages; the API and database run on AWS. Security headers are generated at build time into `dist/_headers` by `frontend/build/securityHeaders.ts` (CSP `connect-src` comes from `VITE_API_URL`). When adding an external script, frame, font, image, or API origin, add it to that CSP. HSTS is set in the Cloudflare dashboard, not in `_headers`.
 - The calendar uses FullCalendar. It derives recurring events from subscriptions client-side through `useCalendarEvents` and the recurrence utilities.
@@ -128,13 +128,13 @@ Local services:
 
 The current Docker configuration uses port `5173` for Vite.
 
-Optional development admin:
+Admin accounts (`ROLE_ADMIN`; no endpoint checks it yet):
 
 ```bash
-docker compose exec backend php bin/console app:create-admin
+docker compose exec backend php bin/console app:create-admin you@example.com
 ```
 
-The command has hard-coded development credentials. Do not use it for production or repeat those credentials in documentation/output.
+`app:create-admin` adds `ROLE_ADMIN` to an existing account without touching its password. If the account doesn't exist, it creates one only in an interactive terminal, with the password typed at a hidden prompt (checked by `PasswordPolicy`) and the email marked verified. Never pass a password as an argument or option, and never print one.
 
 ## Verification commands
 

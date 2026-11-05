@@ -50,8 +50,10 @@ framework:
     trusted_proxies: '%env(default::SYMFONY_TRUSTED_PROXIES)%'
     trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # No sessions: the API is stateless (JWT bearer tokens, stateless firewalls), so nothing ever
+    # needs server-side session state or a session cookie. Off, so no future change can start one
+    # by accident (docs/status-and-todo.md, TODO #9).
+    session: false
 
     #esi: true
     #fragments: true
@@ -59,5 +61,3 @@ framework:
 when@test:
     framework:
         test: true
-        session:
-            storage_factory_id: session.storage.factory.mock_file
