@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppThemeProvider } from './context/ThemeContext';
 import HomePage from './pages/HomePage';

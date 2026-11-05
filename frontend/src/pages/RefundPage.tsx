@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Container, Paper } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { LEGAL, OPERATOR_DETAILS } from '../legal';

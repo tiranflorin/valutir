@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import ProfilePage from '../pages/ProfilePage';
 import PreferencesPage from '../pages/PreferencesPage';
 import ConfirmEmailPage from '../pages/auth/ConfirmEmailPage';

@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
 import { API_URL } from '../config';
 import type { SubscriptionRecord } from '../types/subscription';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import './CalendarPage.css';
 
 const CalendarPage: React.FC = () => {

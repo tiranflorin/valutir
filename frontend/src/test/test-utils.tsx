@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { AppThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
 

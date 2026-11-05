@@ -98,11 +98,13 @@ The result holds the code and the compiled cache, and no secrets. It's pushed to
 |---|---|
 | Settings and secrets | The script reads `/valutir/prod/*` from SSM Parameter Store into a root-only env file (`/opt/valutir/app.env`, mode 600) that Compose passes to the container, and writes the JWT key pair to files mounted read-only (`JWT_SECRET_KEY=/run/jwt/private.pem`, as in the local `backend-prod` service). Real environment variables take precedence over the image's `.env.local.php`. |
 | Pull | `docker pull <ecr-repository>:<tag>` |
-| Migrate | A one-off container from the new image runs `php bin/console doctrine:migrations:migrate --no-interaction` while the old container still serves traffic |
+| Migrate | A one-off container from the new image, with the same env file, runs `php bin/console doctrine:migrations:migrate --no-interaction` while the old container still serves traffic. This is also the deploy's database check: the command always connects, even with nothing to migrate, so a wrong `DATABASE_URL`, credentials, or RDS TLS setup fails here. On failure the script stops, and the old container keeps running untouched |
 | Restart | Compose replaces the `valutir-api` container with the new image. The API answers 502 through the Tunnel for the few seconds this takes |
-| Check | `/health` from inside the instance. On failure, the previous tag is started again. The migration stays applied, so each migration must also work with the previous release |
+| Check | `/health` from inside the instance: the container booted, PHP serves requests, and the compiled cache works. On failure, the previous tag is started again. The migration stays applied, so each migration must also work with the previous release |
 
 Port 8080 isn't published on the host: only `cloudflared`, on the same Compose network, can reach it.
+
+**Why `/health` doesn't check the database.** It's a liveness check (is the process up?), used by Docker's `HEALTHCHECK` and the deploy. Checking the database there would make a short RDS outage look like a broken container, so Docker would restart healthy containers and a deploy would roll back for no reason; on the public hostname it would also let anyone trigger a database query. Database connectivity is checked where it matters: by the migration step on every deploy, and by RDS CloudWatch alarms plus an outside uptime check while running. A separate readiness endpoint only becomes useful with a load balancer that picks between several instances.
 
 **One-off console commands** (for example making someone an admin): open a shell on the instance with SSM Session Manager (`aws ssm start-session --target <instance-id>`; no SSH or open port), then run the command in a one-off container of the deployed image. For an admin: register in the app and confirm the email first, then grant the role, so no password is ever typed on the server:
 
@@ -224,7 +226,7 @@ Frankfurt, on-demand, approximate. Check the AWS pricing calculator; the free ti
    2. Build the ARM64 backend image and push it to ECR, tagged with the commit SHA.
    3. Through SSM on the instance:
       - pull the image;
-      - run Doctrine migrations (RDS backups allow point-in-time recovery);
+      - run Doctrine migrations, which also proves the new image reaches the database; if they fail, stop here with the old container still serving;
       - restart the app container;
       - check `/health`. If the check fails, the previous image comes back automatically.
    4. Only once the backend is healthy, build the frontend with `VITE_API_URL=https://api.valutir.app` and deploy it to Cloudflare Pages with `wrangler`, so new UI never talks to an old API.

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import type { CalendarEvent } from '../../types/calendar';
 
 interface CalendarDayDetailsProps {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Alert, Button, Paper } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { logoutEverywhereRequest } from '../../services/account';

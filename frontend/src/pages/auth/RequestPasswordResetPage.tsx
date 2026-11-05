@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Box, Button, CircularProgress, InputAdornment, Link, TextField } from '@mui/material';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { requestPasswordReset } from '../../services/auth';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';

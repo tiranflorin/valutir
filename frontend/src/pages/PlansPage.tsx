@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Box, Button, Container, Paper } from '@mui/material';
-import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';

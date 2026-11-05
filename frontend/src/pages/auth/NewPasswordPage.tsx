@@ -15,7 +15,7 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { submitNewPassword } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';

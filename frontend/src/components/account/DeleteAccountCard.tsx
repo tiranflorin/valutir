@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { deleteAccount } from '../../services/account';

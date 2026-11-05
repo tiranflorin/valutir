@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import AppHeader from '../components/AppHeader';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import PlansPage from '../pages/PlansPage';
