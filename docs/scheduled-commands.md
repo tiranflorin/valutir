@@ -1,6 +1,6 @@
 # Scheduled commands
 
-Two console commands keep billing data current and send payment reminders. Both are safe to run at any time and repeatedly, and both take `--dry-run` (show what would happen) and `--user=EMAIL` (one user only). Run them **hourly, in this order**:
+Two console commands keep billing data current and send payment reminders. In production, a systemd timer on the instance runs them, and the cache prune below, every hour in one-off containers of the deployed image ([architecture.md](architecture.md#scheduled-commands)). The examples here are for local development. Both are safe to run at any time and repeatedly, and both take `--dry-run` (show what would happen) and `--user=EMAIL` (one user only). Run them **hourly, in this order**:
 
 ```bash
 docker compose exec backend php bin/console app:subscriptions:advance-billing-dates

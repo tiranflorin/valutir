@@ -10,7 +10,8 @@ Related: [go-live checklist](go-live-checklist.md) (what must be true before rea
 |---|---|---|
 | Domain | `valutir.app` (registered in Cloudflare). App at `https://valutir.app`, API at `https://api.valutir.app` | Decided |
 | Edge and bot protection | Cloudflare Free plan only: DNS, TLS, CDN, free WAF managed rules, one rate-limiting rule, Turnstile | Decided |
-| Frontend hosting | Cloudflare Pages (static Vite build) | Decided |
+| Frontend hosting | Cloudflare Pages (static Vite build), deployed by the pipeline with `wrangler`. Workers static assets was considered and not chosen; see below | Decided (2026-11-05) |
+| Node.js | 24 (LTS) everywhere: CI, the deploy build, and the local dev image | Decided |
 | Backend hosting | One small EC2 instance running the PHP app in Docker. No load balancer, NAT gateway, Kubernetes, ECS, or Lambda | Decided |
 | Server size | EC2 `t4g.small` (2 vCPU, 2 GB RAM, ARM/Graviton), 20 GB gp3 storage | Decided |
 | Origin connectivity | Cloudflare Tunnel: connections go out from AWS only, and the instance accepts no inbound traffic | Decided |
@@ -30,6 +31,7 @@ Deliberately not used for the MVP:
 - **Cloudflare Access:** a login gate for internal tools, not for a public API.
 - **Bot Fight Mode:** on the Free plan it can't be bypassed with WAF rules, so it could challenge Stripe's webhooks and other non-browser API calls.
 - **A PHP 8.5 upgrade:** possible later; not a deployment blocker.
+- **Workers static assets instead of Pages:** Cloudflare now recommends Workers for new projects and adds new features there first. For a plain static SPA both are free, both read `_headers`, and both serve `index.html` for client-side routes. Workers would add a `wrangler.jsonc` file and only matters once server-side code at the edge is needed. Revisit only if the app needs code at the edge; moving later is a config change, not a code change.
 
 ## Target architecture
 
@@ -70,6 +72,50 @@ The comparison that led to the decision:
 
 Why classic mode first: it gives the single container and the simpler setup with no request-isolation risk. ValuTir's early traffic doesn't need worker mode's speed. Turn it on later, after a load test and once the backend has database-backed tests (TODO #1).
 
+## Production image
+
+There's one Dockerfile, `backend/docker/Dockerfile`, with two targets on a shared base (FrankenPHP 1.13.1 with PHP 8.3, the PHP extensions, and the Caddyfile). `dev` is what Docker Compose runs locally; `prod` is what ships. Nothing is built on the server: the pipeline builds the image once, and the instance only pulls and runs it.
+
+**Build** (GitHub Actions, on merge to `release`, on an ARM64 runner):
+
+```bash
+docker build -f docker/Dockerfile --target prod -t <ecr-repository>:<commit-sha> backend/
+```
+
+What the `prod` target does:
+
+1. Sets `APP_ENV=prod` and `APP_DEBUG=0`, and uses PHP's production `php.ini` plus `docker/php-prod.ini` (OPcache never re-checks files; 256 MB per request).
+2. `composer install --no-dev`: no test tools, no Xdebug.
+3. Copies the code. `.dockerignore` keeps out every `.env*` file, the JWT keys, `vendor/`, `var/`, and `.git`.
+4. Writes a `.env.local.php` holding only `APP_ENV=prod` and `APP_DEBUG=0` (Symfony needs one to boot), builds an optimized autoloader, and warms Symfony's cache with throwaway build-time values. Nothing connects to a database during the build.
+5. Removes Composer, switches to an unprivileged `app` user (uid 10001), and adds a Docker `HEALTHCHECK` on `/health`.
+
+The result holds the code and the compiled cache, and no secrets. It's pushed to ECR tagged with the commit SHA, and that exact image is what the migration, the app container, and the hourly commands run.
+
+**Run** (on the instance, by `/opt/valutir/deploy.sh <tag>` from `valutir-infra`):
+
+| Step | What happens |
+|---|---|
+| Settings and secrets | The script reads `/valutir/prod/*` from SSM Parameter Store into a root-only env file (`/opt/valutir/app.env`, mode 600) that Compose passes to the container, and writes the JWT key pair to files mounted read-only (`JWT_SECRET_KEY=/run/jwt/private.pem`, as in the local `backend-prod` service). Real environment variables take precedence over the image's `.env.local.php`. |
+| Pull | `docker pull <ecr-repository>:<tag>` |
+| Migrate | A one-off container from the new image runs `php bin/console doctrine:migrations:migrate --no-interaction` while the old container still serves traffic |
+| Restart | Compose replaces the `valutir-api` container with the new image. The API answers 502 through the Tunnel for the few seconds this takes |
+| Check | `/health` from inside the instance. On failure, the previous tag is started again. The migration stays applied, so each migration must also work with the previous release |
+
+Port 8080 isn't published on the host: only `cloudflared`, on the same Compose network, can reach it.
+
+**Try it locally:** `docker compose --profile prod up -d --build backend-prod` builds the same target and runs it on port 8081 against the local database, with no code mounted ([development.md](development.md)).
+
+## Scheduled commands
+
+A systemd timer on the instance (`OnCalendar=hourly`, with `Persistent=true` so a run missed while the instance was down happens at boot) starts a oneshot service. The service runs each command in a one-off container of the currently deployed image, in this order:
+
+1. `app:subscriptions:advance-billing-dates`
+2. `app:reminders:send`
+3. `cache:pool:prune`
+
+A failing step stops the rest of that run, and the next hourly run retries: every command is idempotent (a unique key per charge in `reminder_log`). There's no queue, worker, EventBridge, or ECS. The timer and service units are part of `valutir-infra`. Still open: how a failed run raises an alert (TODO #2). Command details: [scheduled-commands.md](scheduled-commands.md).
+
 ## Repository visibility
 
 Public for now. Making it private later changes no access between the systems: the AWS OIDC trust is tied to the repository name and the `release` branch, not to visibility, and Cloudflare, Stripe, EC2, and RDS don't see GitHub at all. What changes is on GitHub's side:
@@ -84,6 +130,8 @@ Public for now. Making it private later changes no access between the systems: t
 ## Cloudflare (Free plan)
 
 - **DNS:** `valutir.app` points to the Pages project, and `api.valutir.app` to the Tunnel.
+- **Routing to the API, with no load balancer:** there's one backend, so there's nothing to balance. `api.valutir.app` is a proxied record for the Tunnel. Cloudflare's edge sends each API request through the Tunnel to `cloudflared` on the instance, which forwards it to `http://valutir-api:8080`. `cloudflared` keeps four outbound connections to two Cloudflare data centers, so one dropped connection doesn't cut the API off. That's redundancy for the tunnel, not load balancing.
+  - Scaling out later: a second instance running its own `cloudflared` for the same Tunnel. Cloudflare then sends each request to the nearest connected replica, without health checks, so it's still not real load balancing. For balancing with health checks, add Cloudflare Load Balancing (paid). The app keeps no state in the container, so either works without code changes.
 - **TLS:** Full (strict). HSTS goes on once both hostnames work over HTTPS.
 - **Bot and abuse protection:**
   - the free managed WAF rules;
@@ -101,8 +149,8 @@ Public for now. Making it private later changes no access between the systems: t
 | Component | Setup |
 |---|---|
 | EC2 | `t4g.small`, Amazon Linux 2023, 20 GB encrypted gp3, IMDSv2 required, automatic security updates. A public IPv4 address for outbound traffic only (cheaper than a NAT gateway); the security group has **no inbound rules**. Shell access through SSM Session Manager. |
-| Containers | `cloudflared` and the PHP app container, run by Docker Compose and kept running by systemd. The app image is ARM64 and production-only: `APP_ENV=prod`, OPcache, no dev dependencies, no Xdebug, no secrets baked in, and it runs as a non-root user. The current `backend/docker/Dockerfile` is for development only (Xdebug, PHP's built-in server). |
-| Scheduled commands | A systemd timer runs the three hourly commands in order, inside the app image. |
+| Containers | `cloudflared` and the PHP app container, run by Docker Compose and kept running by systemd. The app container runs the `prod` target of `backend/docker/Dockerfile`, built for ARM64 by the pipeline; see [Production image](#production-image). |
+| Scheduled commands | A systemd timer runs the three hourly commands in order, in one-off containers of the deployed image; see [Scheduled commands](#scheduled-commands). |
 | Database | RDS for PostgreSQL, see [Database](#database). |
 | Email | Amazon SES in `eu-central-1` through the existing Mailer SMTP transport. Domain verified with SPF, DKIM, and DMARC. |
 | Secrets | SSM Parameter Store SecureStrings under `/valutir/prod/` (free tier): the database password, `APP_SECRET`, newly generated JWT keys and passphrase, Stripe keys, the Turnstile secret, and the Tunnel token. The instance reads them at deploy time. |

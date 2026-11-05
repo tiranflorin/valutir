@@ -17,7 +17,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * for reporting. Every user-facing query must go through createVisibleForUserQueryBuilder()
  * so deleted rows are never listed, read, updated, or deleted again through the API.
  *
- * TODO: Add an app:subscriptions:purge-deleted console command, run by cron, that archives
+ * TODO: Add an app:subscriptions:purge-deleted console command, run by the hourly systemd timer, that archives
  *       or permanently removes subscriptions soft-deleted longer than a retention period.
  */
 class SubscriptionRepository extends ServiceEntityRepository

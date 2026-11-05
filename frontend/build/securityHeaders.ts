@@ -1,5 +1,5 @@
 /**
- * Builds the Cloudflare `_headers` file (Pages / Workers static assets) for the production bundle.
+ * Builds the Cloudflare Pages `_headers` file for the production bundle.
  * vite.config.ts writes it to dist/_headers from VITE_API_URL, so the API origin in the CSP never
  * needs to be hard-coded.
  */

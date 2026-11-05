@@ -8,7 +8,7 @@ Fixed items are removed from this list; the git history records what changed. It
    - Plan: a base test case on a real test database (`valutir_test`, tables truncated per test), and a few HTTP and command scenario tests replacing most mock tests.
    - CI: the CI env file points `DATABASE_URL` at host `db`, which the GitHub Actions Postgres service doesn't provide (it needs `127.0.0.1` and a published port), and the workflow never generates JWT keys. Both block database tests in CI.
 2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see [Scheduled commands](scheduled-commands.md)) but nothing schedules them in production yet:
-   - Schedule the commands hourly (`advance-billing-dates` before `reminders:send`, plus `cache:pool:prune`), for example EventBridge Scheduler starting the backend image as an ECS task with each command, and alarm in CloudWatch when a run fails.
+   - Schedule the commands hourly with a systemd timer on the EC2 instance, running them in one-off containers of the deployed image (`advance-billing-dates` before `reminders:send`, plus `cache:pool:prune`); see [architecture.md](architecture.md#scheduled-commands). The units belong in `valutir-infra`. Still to decide: how a failed run raises an alert.
    - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
    - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's origin (links in the email, and CORS).
    - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.
@@ -41,7 +41,7 @@ Fixed items are removed from this list; the git history records what changed. It
       - The user is asked again when the list changes, or after about 12 months.
       - Recommended: the open-source, self-hosted [vanilla-cookieconsent](https://github.com/orestbida/cookieconsent). It needs no new CSP origin and has no fees. Hosted consent managers (Cookiebot, Usercentrics) add a third-party origin and a monthly cost.
     - **Rule:** any new `localStorage`/`sessionStorage` key, cookie, or CSP origin in `frontend/build/securityHeaders.ts` needs this inventory updated first (see AGENTS.md).
-11. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by cron, that archives or removes subscriptions soft-deleted longer than a retention period. Update the Privacy policy's retention section ("kept with your account until the account is deleted") in the same change.
+11. **Lowest priority: purge old soft-deleted subscriptions.** Add an `app:subscriptions:purge-deleted` command, run by the hourly systemd timer, that archives or removes subscriptions soft-deleted longer than a retention period. Update the Privacy policy's retention section ("kept with your account until the account is deleted") in the same change.
 
 ## Product gaps and mocks
 

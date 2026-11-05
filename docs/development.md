@@ -72,7 +72,7 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `STRIPE_MODE` | backend | `test` (default: test keys only, on any machine, including staging) or `live` (live keys only, and only with `APP_ENV=prod`). A key from the other environment turns checkout off. See [Stripe keys and modes](payments.md#stripe-keys-and-modes) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | backend | Stripe API key (`sk_…` or restricted `rk_…`) and webhook signing secret (`whsec_…`); empty turns checkout off. See [Payments](payments.md) |
 | `STRIPE_AUTOMATIC_TAX` | backend | `1` (default) to calculate VAT with Stripe Tax at checkout, `0` to turn it off |
-| `VITE_API_URL` | frontend | API base URL; required for builds (a Cloudflare build variable in production). Its origin is also the only API origin the CSP allows |
+| `VITE_API_URL` | frontend | API base URL; required for builds (set by the deploy pipeline in production). Its origin is also the only API origin the CSP allows |
 | `VITE_TURNSTILE_SITE_KEY` | frontend | Cloudflare Turnstile site key (public) |
 
 ## Repository layout
