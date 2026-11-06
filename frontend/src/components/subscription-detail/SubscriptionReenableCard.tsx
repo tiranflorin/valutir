@@ -11,6 +11,8 @@ import {
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import AppSurfaceCard from '../AppSurfaceCard';
 import { API_URL } from '../../config';
+import { nextChargeOnOrAfter } from '../../utils/buildRecurringOccurrences';
+import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
 type Props = {
@@ -43,10 +45,24 @@ const SubscriptionReenableCard: React.FC<Props> = ({
             return;
         }
 
+        if (isAfterToday(reenabledFromDate)) {
+            setError("The re-enabled date can't be in the future.");
+            return;
+        }
+
+        if (subscription.cancelledAt && reenabledFromDate < subscription.cancelledAt) {
+            setError("The re-enabled date can't be before the cancellation date.");
+            return;
+        }
+
         if (!reenabledPrice || Number(reenabledPrice) <= 0) {
             setError('Please provide a valid re-enabled price.');
             return;
         }
+
+        // The restart starts a new billing cycle: the next charge counts from the re-enabled date,
+        // not from the old cycle's billing date.
+        const nextBillingDate = nextChargeOnOrAfter(reenabledFromDate, subscription.billingCadence, todayIsoDate());
 
         try {
             setSaving(true);
@@ -64,7 +80,7 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                     amount: Number(reenabledPrice),
                     currency: subscription.currency,
                     billingCadence: subscription.billingCadence,
-                    nextBillingDate: subscription.nextBillingDate,
+                    nextBillingDate,
                     notes: subscription.notes,
                     paymentMethod: subscription.paymentMethod ?? null,
                     status: 'active',
@@ -95,6 +111,8 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                 status: 'active',
                 autoRenew: true,
                 cancelledAt: null,
+                startedAt: reenabledFromDate,
+                nextBillingDate,
             });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -152,6 +170,8 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                         value={reenabledFromDate}
                         onChange={(e) => setReenabledFromDate(e.target.value)}
                         InputLabelProps={{ shrink: true }}
+                        // Already restarted: today or earlier, and not before it was cancelled.
+                        inputProps={{ min: subscription.cancelledAt ?? undefined, max: todayIsoDate() }}
                         disabled={wasReenabled !== true}
                     />
 

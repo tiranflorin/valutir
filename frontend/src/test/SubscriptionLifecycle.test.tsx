@@ -7,6 +7,12 @@ import type { SubscriptionRecord } from '../types/subscription';
 import { todayIsoDate } from '../utils/dates';
 import { STORAGE_KEY, authHeader, bodyOf, callsTo, mockApi, profile, signIn, type Handlers } from './api';
 
+const daysFromToday = (days: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return todayIsoDate(date);
+};
+
 const renderApp = (route: string) => render(<MemoryRouter initialEntries={[route]}><App /></MemoryRouter>);
 
 const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord => ({
@@ -89,7 +95,7 @@ describe('adding a subscription', () => {
 describe('managing a subscription from its detail page', () => {
     it('edits the price and sends every field (updates replace the whole subscription)', async () => {
         signIn();
-        const calls = fakeBackend([record({ householdShared: true, householdSize: 3 })]);
+        const calls = fakeBackend([record({ householdShared: true, householdSize: 3, paymentMethod: 'Visa' })]);
         const user = userEvent.setup();
         renderApp('/subscriptions/1');
 
@@ -101,6 +107,7 @@ describe('managing a subscription from its detail page', () => {
         expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({
             serviceName: 'Netflix', amount: 15.49, currency: 'EUR', billingCadence: 'monthly', status: 'active',
             nextBillingDate: '2099-01-15', autoRenew: true, b2b: false, householdShared: true, householdSize: 3,
+            startedAt: '2026-01-01', paymentMethod: 'Visa',
         });
     });
 
@@ -125,21 +132,43 @@ describe('managing a subscription from its detail page', () => {
         expect(bodyOf(callsTo(calls, 'DELETE /api/subs/1')[0])).toEqual({ usedAndUseful: true });
     });
 
-    it('re-enables a cancelled subscription at a new price', async () => {
+    it('re-enables a cancelled subscription at a new price, starting a new billing cycle', async () => {
         signIn();
-        const calls = fakeBackend([record({ status: 'cancelled', autoRenew: false, cancelledAt: '2026-10-01' })]);
+        const calls = fakeBackend([record({ status: 'cancelled', autoRenew: false, cancelledAt: daysFromToday(-30), nextBillingDate: daysFromToday(-20) })]);
         const user = userEvent.setup();
         renderApp('/subscriptions/1');
 
         await user.click(await screen.findByRole('button', { name: 'Yes' }));
-        fireEvent.change(screen.getByLabelText(/re-enabled from/i), { target: { value: todayIsoDate() } });
+        const reenabledFrom = screen.getByLabelText(/re-enabled from/i);
+        expect(reenabledFrom).toHaveAttribute('min', daysFromToday(-30));
+        expect(reenabledFrom).toHaveAttribute('max', todayIsoDate());
+        fireEvent.change(reenabledFrom, { target: { value: todayIsoDate() } });
         fireEvent.change(screen.getByLabelText(/^price/i), { target: { value: '15.99' } });
         await user.click(screen.getByRole('button', { name: 'Re-enable subscription' }));
 
         expect(await screen.findByRole('button', { name: 'Edit subscription' })).toBeInTheDocument();
         expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({
             status: 'active', autoRenew: true, cancelledAt: null, amount: 15.99, startedAt: todayIsoDate(),
+            // Charged on the restart day, not on the old cycle's date.
+            nextBillingDate: todayIsoDate(),
         });
+    });
+
+    it.each([
+        [1, "The re-enabled date can't be in the future."],
+        [-31, "The re-enabled date can't be before the cancellation date."],
+    ])('rejects a re-enabled date %i days from today without saving', async (days, message) => {
+        signIn();
+        const calls = fakeBackend([record({ status: 'cancelled', autoRenew: false, cancelledAt: daysFromToday(-30) })]);
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.click(await screen.findByRole('button', { name: 'Yes' }));
+        fireEvent.change(screen.getByLabelText(/re-enabled from/i), { target: { value: daysFromToday(days) } });
+        await user.click(screen.getByRole('button', { name: 'Re-enable subscription' }));
+
+        expect(screen.getByText(message)).toBeInTheDocument();
+        expect(callsTo(calls, 'PATCH /api/subs/1')).toHaveLength(0);
     });
 
     it('sends the user to sign in again when the session has expired', async () => {

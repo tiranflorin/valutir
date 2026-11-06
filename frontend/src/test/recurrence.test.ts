@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRecurringOccurrences } from '../utils/buildRecurringOccurrences';
+import { buildRecurringOccurrences, nextChargeOnOrAfter } from '../utils/buildRecurringOccurrences';
 import type { SubscriptionRecord } from '../types/subscription';
 
 const subscription = (billingCadence: SubscriptionRecord['billingCadence'], nextBillingDate: string): SubscriptionRecord => ({
@@ -24,5 +24,15 @@ describe('calendar recurrence', () => {
     it('starts from the stored date and only returns charges inside the range', () => {
         expect(dates('weekly', '2026-10-01', '2026-11-01', '2026-11-16')).toEqual(['2026-11-05', '2026-11-12']);
         expect(dates('quarterly', '2026-01-15', '2026-03-01', '2027-01-01')).toEqual(['2026-04-15', '2026-07-15', '2026-10-15']);
+    });
+});
+
+describe('next charge after a restart', () => {
+    it('counts from the restart date, including the restart day itself', () => {
+        expect(nextChargeOnOrAfter('2026-11-06', 'monthly', '2026-11-06')).toBe('2026-11-06');
+        expect(nextChargeOnOrAfter('2026-10-20', 'monthly', '2026-11-06')).toBe('2026-11-20');
+        expect(nextChargeOnOrAfter('2026-08-31', 'monthly', '2026-11-06')).toBe('2026-11-30');
+        expect(nextChargeOnOrAfter('2026-10-20', 'weekly', '2026-11-06')).toBe('2026-11-10');
+        expect(nextChargeOnOrAfter('2026-02-01', 'yearly', '2026-11-06')).toBe('2027-02-01');
     });
 });

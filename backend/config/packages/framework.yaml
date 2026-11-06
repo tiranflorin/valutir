@@ -62,7 +62,7 @@ framework:
 
     # No sessions: the API is stateless (JWT bearer tokens, stateless firewalls), so nothing ever
     # needs server-side session state or a session cookie. Off, so no future change can start one
-    # by accident (docs/status-and-todo.md, TODO #6).
+    # by accident (docs/status-and-todo.md, TODO #5).
     session: false
 
     #esi: true

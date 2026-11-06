@@ -99,6 +99,9 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     currency: values.currency,
                     billingCadence: values.billingInterval,
                     nextBillingDate: values.renewalDate || null,
+                    // Not on this form, but updates replace every field: send them back unchanged.
+                    startedAt: subscription.startedAt ?? null,
+                    paymentMethod: subscription.paymentMethod ?? null,
                     trialEndsAt: isTrial ? values.renewalDate || null : null,
                     notes: values.notes.trim() || null,
                     status: statusPayload,

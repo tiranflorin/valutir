@@ -10,6 +10,8 @@ docker compose exec backend php bin/console lexik:jwt:generate-keypair --skip-if
 docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
+The private key is encrypted with `JWT_PASSPHRASE`. If you change the passphrase, regenerate the key pair with `lexik:jwt:generate-keypair --overwrite` (then `docker compose restart backend` if the new value isn't picked up). Otherwise signing in fails with a 500 (`JWTEncodeFailureException`). Tokens already issued keep working until you sign out, so the problem shows up late. Regenerating signs everyone out.
+
 Local services:
 
 | Service | Address |

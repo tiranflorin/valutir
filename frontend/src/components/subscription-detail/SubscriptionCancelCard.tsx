@@ -52,6 +52,10 @@ const SubscriptionCancelCard: React.FC<Props> = ({
             setError("The provider cancellation date can't be in the future.");
             return;
         }
+        if (subscription.startedAt && cancellationDate < subscription.startedAt) {
+            setError("The provider cancellation date can't be before the subscription started.");
+            return;
+        }
         if (accessEndsAt && accessEndsAt < cancellationDate) {
             setError("Access can't end before the provider cancellation date.");
             return;
@@ -153,8 +157,8 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                         value={cancellationDate}
                         onChange={(event) => setCancellationDate(event.target.value)}
                         InputLabelProps={{ shrink: true }}
-                        // You can only have cancelled already: today or earlier.
-                        inputProps={{ max: todayIsoDate() }}
+                        // You can only have cancelled already (today or earlier), and not before it started.
+                        inputProps={{ min: subscription.startedAt ?? undefined, max: todayIsoDate() }}
                         fullWidth
                         required
                     />

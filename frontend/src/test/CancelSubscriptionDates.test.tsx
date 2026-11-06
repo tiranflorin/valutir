@@ -18,6 +18,7 @@ const subscription: SubscriptionCardModel = {
     autoRenew: true,
     b2b: false,
     cancelledAt: null,
+    startedAt: '2026-01-01',
     householdShared: true,
     householdSize: 3,
 };
@@ -47,6 +48,7 @@ describe('provider cancellation dates', () => {
     it('limits the cancellation date to today and access to on or after the cancellation', async () => {
         const { cancellation, accessEnds } = await renderCard();
         expect(cancellation).toHaveAttribute('max', todayIsoDate());
+        expect(cancellation).toHaveAttribute('min', '2026-01-01');
 
         fireEvent.change(cancellation, { target: { value: daysFromToday(-3) } });
         expect(accessEnds).toHaveAttribute('min', daysFromToday(-3));
@@ -58,6 +60,15 @@ describe('provider cancellation dates', () => {
         await user.click(screen.getByRole('button', { name: /mark as cancelled/i }));
 
         expect(screen.getByText("The provider cancellation date can't be in the future.")).toBeInTheDocument();
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects a cancellation date before the subscription started', async () => {
+        const { user, cancellation } = await renderCard();
+        fireEvent.change(cancellation, { target: { value: '2025-12-31' } });
+        await user.click(screen.getByRole('button', { name: /mark as cancelled/i }));
+
+        expect(screen.getByText("The provider cancellation date can't be before the subscription started.")).toBeInTheDocument();
         expect(fetchMock).not.toHaveBeenCalled();
     });
 

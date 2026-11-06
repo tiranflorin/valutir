@@ -61,6 +61,19 @@ final class SubscriptionUpsertRequest
     public ?string $trialEndsAt = null;
 
     #[Assert\Callback]
+    public function validateCancellationDate(ExecutionContextInterface $context): void
+    {
+        // Both are Y-m-d strings (checked by Assert\Date), so they compare as dates. Skip invalid
+        // values: Assert\Date already reports those.
+        $isDate = static fn (?string $value): bool => null !== $value && 1 === preg_match('/^\d{4}-\d{2}-\d{2}$/', $value);
+        if ($isDate($this->startedAt) && $isDate($this->cancelledAt) && $this->cancelledAt < $this->startedAt) {
+            $context->buildViolation("The cancellation date can't be before the start date.")
+                ->atPath('cancelledAt')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
     public function validateHouseholdSharing(ExecutionContextInterface $context): void
     {
         if (!$this->householdShared) {

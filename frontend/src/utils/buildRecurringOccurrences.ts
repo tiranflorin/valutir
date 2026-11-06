@@ -52,6 +52,26 @@ export const chargeDate = (
     }
 };
 
+/**
+ * The first charge on or after `fromIso`, counting from `anchorIso` (both YYYY-MM-DD). Used when a
+ * subscription restarts: the restart date becomes the new billing anchor. Returns the anchor itself
+ * for an unknown cadence.
+ */
+export const nextChargeOnOrAfter = (
+    anchorIso: string,
+    // A plain string: rows saved earlier may hold a cadence the app no longer offers (e.g. daily).
+    frequency: string,
+    fromIso: string
+): string => {
+    const anchor = parseDateOnly(anchorIso);
+    const from = parseDateOnly(fromIso);
+    for (let n = 0; ; n += 1) {
+        const charge = chargeDate(anchor, frequency as SubscriptionRecord['billingCadence'], n);
+        if (!charge) return anchorIso;
+        if (charge >= from) return toIsoDate(charge);
+    }
+};
+
 const shouldIncludeSubscription = (subscription: SubscriptionRecord) => {
     if (!subscription.nextBillingDate) return false;
     if (subscription.status === 'cancelled' && !subscription.autoRenew) return false;

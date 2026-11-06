@@ -76,6 +76,28 @@ final class SubscriptionUpsertRequestTest extends KernelTestCase
         );
     }
 
+    public function testASubscriptionCannotBeCancelledBeforeItStarted(): void
+    {
+        $request = $this->request();
+        $request->status = 'cancelled';
+        $request->startedAt = '2026-03-10';
+
+        foreach (['2026-03-10', '2026-04-01'] as $cancelledAt) {
+            $request->cancelledAt = $cancelledAt;
+            self::assertSame([], $this->violations($request), $cancelledAt);
+        }
+
+        $request->cancelledAt = '2026-03-09';
+        self::assertSame(
+            ['cancelledAt' => "The cancellation date can't be before the start date."],
+            $this->violations($request),
+        );
+
+        // Without a start date there's nothing to compare against.
+        $request->startedAt = null;
+        self::assertSame([], $this->violations($request));
+    }
+
     private function request(string $cadence = 'monthly', bool $shared = false, ?int $size = null, bool $b2b = false): SubscriptionUpsertRequest
     {
         $request = new SubscriptionUpsertRequest();
