@@ -8,15 +8,16 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 
 ### Blockers: code and content
 
-- [ ] **Fix the npm audit findings:** 7 moderate left after the 2026-11-05 updates, all in the development-only lint tooling and not exploitable; click through the app on React Router 7 (TODO #6). Re-run `composer audit` right before release.
-- [ ] **Rotate the committed JWT passphrase**, and move CI secrets to GitHub Actions secrets (TODO #5).
-- [ ] **Match the Plans page to what's built.** Only lifting the 50-subscription limit exists today; the page also promises project/cost-center allocation, a bookkeeping export, custom reminder timing, and price history (TODO #11). Build them, or take them off the page, before charging anyone.
+- [x] **Fix the npm audit findings and check React Router 7:** every high finding cleared on 2026-11-05, and the app was clicked through on React Router 7 on 2026-11-06. The 7 moderate findings left are all one advisory in the development-only lint tooling (typescript-eslint's `minimatch` 10), not exploitable; they clear when typescript-eslint moves to minimatch 11 (don't force it with an npm override).
+- [ ] **Re-run `npm audit` and `composer audit` right before release.**
+- [x] **Retire the committed JWT passphrase:** removed from the CI env file and the sample, and local keys regenerated on 2026-11-06. It never protected a committed key, and the git history is left as is (the repository is public, so rewriting it wouldn't un-expose anything).
+- [ ] **Match the Plans page to what's built.** Only lifting the 50-subscription limit exists today; the page also promises project/cost-center allocation, a bookkeeping export, custom reminder timing, and price history (TODO #8). Build them, or take them off the page, before charging anyone.
 - [ ] **Honor the 14-day money-back guarantee** promised in the Terms and Refund policy (instead of asking buyers to waive the EU withdrawal right at checkout). Refund requests arrive through the contact form; issue them in the Stripe Dashboard within 5 business days. A full refund returns the account to the free plan automatically.
-- [x] **Finish the legal pages:** Privacy (`/privacy`), Terms (`/terms`), and Refunds (`/refunds`), all linked in the footer and from the Plans page. Fill in the Trade Register number and CUI (the name, registered office, and governing law are set) once in `frontend/src/legal.ts`, then have all three reviewed by a lawyer. The Privacy policy already includes the cookies and storage table (TODO #9).
+- [x] **Finish the legal pages:** Privacy (`/privacy`), Terms (`/terms`), and Refunds (`/refunds`), all linked in the footer and from the Plans page. Have all three reviewed by a lawyer. The Privacy policy already includes the cookies and storage table (TODO #6).
 - [ ] **Make the Privacy Policy's promises true in production:** error logs kept for at most 30 days (set CloudWatch log-group retention to 30 days), contact messages deleted from the `CONTACT_RECIPIENT` mailbox once handled, and data processing agreements in place with AWS, Cloudflare and Stripe.
 - [ ] **Add the Terms and Refunds URLs in the Stripe Dashboard** (Settings → Public details), and set the support email and the `VALUTIR` statement descriptor that the Refund policy names.
-- [ ] **A process for GDPR access and portability requests.** The Privacy policy promises an answer within one month, but there's no self-service export (TODO #13). Until there is, export the user's account, subscriptions, and purchases from the database by hand, as JSON or CSV.
-- [ ] **Add locking to the rate limiters** (`symfony/lock` with `PostgreSqlStore`), so parallel requests can't go past a limit (TODO #7).
+- [ ] **A process for GDPR access and portability requests.** The Privacy policy promises an answer within one month, but there's no self-service export (TODO #10). Until there is, export the user's account, subscriptions, and purchases from the database by hand, as JSON or CSV.
+- [x] **Add locking to the rate limiters:** done on 2026-11-06. Every limiter and login throttling takes a PostgreSQL advisory lock (`symfony/lock`, `DoctrineDbalPostgreSqlStore` on the app's own connection), so parallel requests can't go past a limit. Locally, 20 parallel sign-ups passed a limit of 5 before the change and exactly 5 after.
 
 ### Should fix
 
@@ -26,7 +27,7 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 
 - [ ] **Run one full payment in the Stripe sandbox first** ([payments.md, "Testing payments locally"](payments.md#testing-payments-locally)): pay with `4242 4242 4242 4242`, see the account unlock, refund it in the Dashboard, and see it return to the free plan.
 - [ ] 2FA on every Dashboard login (security key or authenticator app). Team members get their own logins with the smallest role that works.
-- [ ] Activate the account for **TECHDIVISION SRL** (Romania), with the same Trade Register number and CUI as on the legal pages. Use a payout bank account in **EUR**, matching the charge currency, if Stripe offers it.
+- [ ] Activate the account for **TECHDIVISION SRL** (Romania), with its Trade Register number and CUI (the CUI matches the legal pages). Use a payout bank account in **EUR**, matching the charge currency, if Stripe offers it.
 - [ ] Industry: **Software as a service (SaaS)**, with an accurate product description (subscription tracker, free plan, optional one-time €19.99 unlock, delivered digitally and immediately).
 - [ ] Statement descriptor `VALUTIR` (or `VALUTIR.COM`), so buyers recognize the charge.
 - [ ] Public details: support email, website, phone. Branding: name, logo, color.
@@ -46,6 +47,7 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 - [ ] WAF rule: only `/api/*` and `/health` on the API hostname.
 - [ ] **WAF skip rule for `/api/billing/webhook`:** no Bot Fight Mode, managed challenge, "Under Attack" mode, or tight rate limit on it. Optionally allow only [Stripe's webhook IPs](https://docs.stripe.com/ips) there.
 - [ ] `SYMFONY_TRUSTED_PROXIES` set to the Compose network subnet where `cloudflared` runs ([cloudflare-and-proxies.md](cloudflare-and-proxies.md#client-ips-behind-proxies)); check that the logged client IP differs per visitor.
+- [ ] **Production JWT keys:** generate a new key pair with a new passphrase for production only (`openssl rand -hex 32`, then `lexik:jwt:generate-keypair`), store both keys and the passphrase as SecureStrings under `/valutir/prod/`, and never reuse a development or CI value. They never go into git or the image ([architecture.md, Settings and secrets](architecture.md#production-image)).
 - [ ] `FRONTEND_URL` is the app's HTTPS origin (Stripe returns buyers to `FRONTEND_URL/plans`), and `DEFAULT_URI` is the API's public URL.
 - [ ] Hourly scheduled commands through the systemd timer on the instance: `app:subscriptions:advance-billing-dates`, `app:reminders:send`, `cache:pool:prune`, with alarms on failure (TODO #2).
 - [ ] Email via Amazon SES, with the domain verified (SPF, DKIM, DMARC) and production access granted (TODO #2).

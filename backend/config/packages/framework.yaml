@@ -1,43 +1,53 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
+    # Every limiter locks its counter while it updates it (app.rate_limiter.lock_factory, services.yaml).
     rate_limiter:
         password_reset_request:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 5
             interval: '15 minutes'
         password_reset_submit:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 10
             interval: '15 minutes'
         registration:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 5
             interval: '15 minutes'
         account_password_check:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 5
             interval: '15 minutes'
         email_change_confirm:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 10
             interval: '15 minutes'
         contact_submit:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 5
             interval: '15 minutes'
         # Verification links opened, per client IP (guessing a 256-bit token is hopeless; this caps noise).
         email_verification_confirm:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 10
             interval: '15 minutes'
         # "Resend confirmation link", per user: each one sends an email.
         email_verification_resend:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 3
             interval: '1 hour'
         # Each attempt creates a Stripe Checkout session; per user.
         billing_checkout:
             policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
             limit: 10
             interval: '1 hour'
     secret: '%env(APP_SECRET)%'
@@ -52,7 +62,7 @@ framework:
 
     # No sessions: the API is stateless (JWT bearer tokens, stateless firewalls), so nothing ever
     # needs server-side session state or a session cookie. Off, so no future change can start one
-    # by accident (docs/status-and-todo.md, TODO #9).
+    # by accident (docs/status-and-todo.md, TODO #6).
     session: false
 
     #esi: true

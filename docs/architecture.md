@@ -23,7 +23,7 @@ Related: [go-live checklist](go-live-checklist.md) (what must be true before rea
 | Scheduled commands | A systemd timer on the instance runs the hourly commands. No queue or worker: the commands are already idempotent (a unique key per charge) | Decided |
 | PHP runtime in the container | FrankenPHP in classic mode, the same image locally (`dev` target) and in production (`prod` target); see [PHP runtime](#php-runtime) | Decided, running locally |
 | Terraform state | S3 bucket in the AWS account, `eu-central-1`: versioning on, encrypted, public access blocked, S3 native state locking (`use_lockfile`, so no DynamoDB table) | Decided |
-| Repository visibility | Public for now; may become private later. See [Repository visibility](#repository-visibility). The committed JWT passphrase (TODO #5) is exposed either way, so production gets newly generated JWT keys and passphrase | Decided (public) |
+| Repository visibility | Public for now; may become private later. See [Repository visibility](#repository-visibility). A JWT passphrase was once committed (no keys ever were), so production gets newly generated JWT keys and a passphrase that has never been in git | Decided (public) |
 
 Deliberately not used for the MVP:
 
