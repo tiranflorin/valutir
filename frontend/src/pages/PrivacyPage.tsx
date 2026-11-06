@@ -172,7 +172,8 @@ const PrivacyPage: React.FC = () => (
                     <ul>
                         <li><strong>See and correct</strong> your data: most of it is on your <RouterLink to="/profile">Profile</RouterLink> and in your subscriptions.</li>
                         <li><strong>Delete</strong> your account and all of its data: Profile &rarr; Delete account.</li>
-                        <li><strong>Get a copy</strong> of your data (access and portability), <strong>restrict</strong> or <strong>object to</strong> processing: ask us through the <RouterLink to="/contact">contact form</RouterLink>. We answer within one month.</li>
+                        <li><strong>Get a copy</strong> of your data (access and portability): <RouterLink to="/profile">Profile</RouterLink> &rarr; Download my data gives you everything we keep about your account as a JSON file, and your subscriptions as a CSV spreadsheet, at any time. The file is made when you ask and isn&rsquo;t stored on our servers.</li>
+                        <li><strong>Restrict</strong> or <strong>object to</strong> processing, or get a copy if you can&rsquo;t sign in: ask us through the <RouterLink to="/contact">contact form</RouterLink>. We answer within one month.</li>
                         <li><strong>Complain</strong> to a data protection authority, such as the Romanian ANSPDCP (<a href="https://www.dataprotection.ro" target="_blank" rel="noreferrer">dataprotection.ro</a>) or the one where you live.</li>
                     </ul>
                 </section>

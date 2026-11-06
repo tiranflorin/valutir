@@ -38,6 +38,16 @@ class PurchaseRepository extends ServiceEntityRepository
     }
 
     /**
+     * The user's purchases, oldest first (for the user's own data export).
+     *
+     * @return Purchase[]
+     */
+    public function findByUserForExport(User $user): array
+    {
+        return $this->findBy(['user' => $user], ['createdAt' => 'ASC', 'id' => 'ASC']);
+    }
+
+    /**
      * @return Purchase[]
      */
     public function findPendingForUser(User $user): array

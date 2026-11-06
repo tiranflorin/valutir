@@ -50,6 +50,12 @@ framework:
             lock_factory: app.rate_limiter.lock_factory
             limit: 10
             interval: '1 hour'
+        # "Download my data" (JSON and CSV together); each one reads every row the user has. Per user.
+        account_export:
+            policy: fixed_window
+            lock_factory: app.rate_limiter.lock_factory
+            limit: 10
+            interval: '1 hour'
     secret: '%env(APP_SECRET)%'
 
     # Real client IPs behind a reverse proxy (Cloudflare, a load balancer, a tunnel). Rate limits,

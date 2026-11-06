@@ -22,7 +22,8 @@ export const profile = (overrides: Record<string, unknown> = {}) => ({
 });
 
 export type ApiCall = { key: string; url: string; init: RequestInit };
-export type Reply = { status: number; body?: unknown };
+/** A string body is sent as it is (a file download); anything else as JSON. */
+export type Reply = { status: number; body?: unknown; headers?: Record<string, string> };
 export type Handlers = Record<string, (call: ApiCall) => Reply>;
 
 /**
@@ -36,9 +37,10 @@ export const mockApi = (handlers: Handlers) => {
         const call = { key: `${init.method ?? 'GET'} ${new URL(url, 'http://api.test').pathname}`, url, init };
         calls.push(call);
         const handler = handlers[call.key];
-        const { status, body } = handler ? handler(call) : { status: 500, body: { message: `Unexpected ${call.key}` } };
+        const { status, body, headers }: Reply = handler ? handler(call) : { status: 500, body: { message: `Unexpected ${call.key}` } };
+        const payload = status === 204 ? null : typeof body === 'string' ? body : JSON.stringify(body ?? {});
 
-        return new Response(status === 204 ? null : JSON.stringify(body ?? {}), { status });
+        return new Response(payload, { status, headers });
     }));
 
     return calls;

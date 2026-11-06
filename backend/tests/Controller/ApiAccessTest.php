@@ -30,6 +30,8 @@ final class ApiAccessTest extends WebTestCase
         yield 'read profile' => ['GET', '/api/profile'];
         yield 'update profile' => ['PATCH', '/api/profile'];
         yield 'delete account' => ['DELETE', '/api/profile'];
+        yield 'download my data' => ['GET', '/api/profile/export'];
+        yield 'download subscriptions CSV' => ['GET', '/api/profile/export/subscriptions.csv'];
         yield 'change password' => ['PATCH', '/api/profile/password'];
         yield 'change email' => ['POST', '/api/profile/email'];
         yield 'resend verification link' => ['POST', '/api/profile/email/verification'];

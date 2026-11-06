@@ -81,6 +81,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | `POST /api/profile/email/verification` | Resend the verification link (3 per hour; 409 when already verified) |
 | `POST /api/profile/email/confirm` | Public; apply an email change from its link token and sign out every device |
 | `DELETE /api/profile` | Permanently delete the account and its data (current password required) |
+| `GET /api/profile/export` | "Download my data": the account, every subscription (soft-deleted too), purchases and sent reminders as a JSON attachment; never secrets or Stripe IDs (10 per hour with the CSV) |
+| `GET /api/profile/export/subscriptions.csv` | Current subscriptions as a CSV attachment, formula-safe cells; optional `view=personal\|business` |
 | `POST /api/reminders/unsubscribe?token=…` | Public; turn payment reminders off from the signed link in a reminder email (one-click unsubscribe) |
 | `GET /api/billing` | Current user's plan (`unlocked`), price, free limit, and active-subscription count |
 | `POST /api/billing/checkout` | Start Stripe Checkout for the one-time unlock; returns `{ url }` (409 when already unlocked, 503 when Stripe isn't configured) |

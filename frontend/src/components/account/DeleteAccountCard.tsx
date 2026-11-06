@@ -39,7 +39,7 @@ const DeleteAccountCard: React.FC = () => {
             <Box component="form" onSubmit={(event) => void handleSubmit(event)}>
                 <div className="settings-section-heading">
                     <h2>Delete account</h2>
-                    <p>Permanently deletes your account and every subscription you track, including cancelled ones. This can't be undone.</p>
+                    <p>Permanently deletes your account and every subscription you track, including cancelled ones. This can't be undone. Want a copy first? Use Download my data above.</p>
                 </div>
                 <TextField
                     label="Current password"

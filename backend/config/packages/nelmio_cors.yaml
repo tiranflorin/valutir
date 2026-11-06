@@ -5,7 +5,8 @@ nelmio_cors:
         allow_origin: ['%frontend_url%']
         allow_headers: ['Content-Type', 'Authorization']
         allow_methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-        expose_headers: ['Link']
+        # Content-Disposition: the SPA reads the suggested file name of "Download my data" downloads.
+        expose_headers: ['Link', 'Content-Disposition']
         max_age: 3600
     paths:
         '^/api/': ~

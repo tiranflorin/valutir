@@ -143,6 +143,45 @@ export const deleteAccount = (token: string, currentPassword: string) =>
 export const logoutRequest = (token: string) =>
     apiRequest<null>('/api/logout', { method: 'POST', token, fallbackError: 'Unable to sign out.' });
 
+export type AccountExportKind = 'json' | 'csv';
+
+const EXPORT_PATHS: Record<AccountExportKind, string> = {
+    json: '/api/profile/export',
+    csv: '/api/profile/export/subscriptions.csv',
+};
+
+/** The file name from a `Content-Disposition: attachment; filename="..."` header, if it is a plain one. */
+export const attachmentFilename = (header: string | null): string | null => {
+    const match = header?.match(/filename="?([A-Za-z0-9._-]+)"?\s*(?:;|$)/);
+
+    return match ? match[1] : null;
+};
+
+/**
+ * "Download my data": the account as JSON, or the subscriptions as CSV (optionally one view only).
+ * Resolves with the file and the name the server suggests.
+ */
+export async function fetchAccountExport(
+    token: string,
+    kind: AccountExportKind,
+    view?: 'personal' | 'business',
+): Promise<{ blob: Blob; filename: string }> {
+    const query = kind === 'csv' && view ? `?view=${view}` : '';
+    const response = await fetch(`${API_URL}${EXPORT_PATHS[kind]}${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+        const data: unknown = await response.json().catch(() => null);
+        throw new ApiError(response.status, apiErrorMessage(data, 'Unable to prepare your download.'));
+    }
+
+    return {
+        blob: await response.blob(),
+        filename: attachmentFilename(response.headers.get('Content-Disposition'))
+            ?? (kind === 'json' ? 'valutir-export.json' : 'valutir-subscriptions.csv'),
+    };
+}
+
 export const logoutEverywhereRequest = (token: string) =>
     apiRequest<null>('/api/logout/all', { method: 'POST', token, fallbackError: 'Unable to sign out of all devices.' });
 

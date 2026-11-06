@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\ReminderLog;
 use App\Entity\Subscription;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +18,24 @@ class ReminderLogRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, ReminderLog::class);
+    }
+
+    /**
+     * Every reminder sent about the user's subscriptions, soft-deleted ones included, oldest first
+     * (for the user's own data export).
+     *
+     * @return ReminderLog[]
+     */
+    public function findByUserForExport(User $user): array
+    {
+        return $this->createQueryBuilder('r')
+            ->innerJoin('r.subscription', 's')
+            ->andWhere('s.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('r.sentAt', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     /**

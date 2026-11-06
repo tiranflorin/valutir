@@ -22,6 +22,7 @@ const freeFeatures = [
     'Renewal calendar and basic reminders',
     'Monthly and yearly cost summaries',
     'Trial tracking and review decisions',
+    'Download all your data (JSON) and subscriptions (CSV)',
     'One account; each subscription belongs to one view',
 ];
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar, Box, Container, Paper } from '@mui/material';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
+import DataExportCard from '../components/account/DataExportCard';
 import DeleteAccountCard from '../components/account/DeleteAccountCard';
 import EmailCard from '../components/account/EmailCard';
 import PasswordCard from '../components/account/PasswordCard';
@@ -36,6 +37,7 @@ const ProfilePage: React.FC = () => {
                 <EmailCard />
                 <PasswordCard />
                 <SessionsCard />
+                <DataExportCard />
                 <DeleteAccountCard />
             </Container>
             <AppFooter />

@@ -77,6 +77,23 @@ class SubscriptionRepository extends ServiceEntityRepository
     }
 
     /**
+     * Every subscription the user owns, soft-deleted ones included, oldest first. Only for the
+     * user's own data export; everything else goes through createVisibleForUserQueryBuilder().
+     *
+     * @return Subscription[]
+     */
+    public function findAllForExport(User $user): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('s.createdAt', 'ASC')
+            ->addOrderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Subscriptions owned by the user that have not been soft-deleted.
      */
     public function createVisibleForUserQueryBuilder(User $user): QueryBuilder

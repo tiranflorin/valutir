@@ -3950,3 +3950,35 @@ body {
 :root[data-theme='dark'] .cadence-tag {
     background: #1d3a2a;
 }
+
+/* Download my data (Profile) and the dashboard's Export CSV button. */
+.export-contents {
+    margin: 0 0 14px;
+    padding-left: 18px;
+    color: #485a4e;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.export-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.list-head-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 12px;
+}
+
+.list-head-actions .export-csv.MuiButton-root {
+    padding: 3px 10px;
+    font-size: 12px;
+    text-transform: none;
+}
+
+:root[data-theme='dark'] .export-contents {
+    color: #cbd5e1;
+}

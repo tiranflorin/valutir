@@ -14,12 +14,14 @@ import {
     ToggleButtonGroup,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import MonthSummaryCard from '../components/MonthSummaryCard';
 import { useAuth } from '../context/AuthContext';
+import { useAccountExport } from '../hooks/useAccountExport';
 import { API_URL } from '../config';
 import { shareOf, splitCount } from '../utils/householdShare';
 import { formatCurrency, groupedMoney } from '../utils/money';
@@ -346,6 +348,7 @@ const MySubscriptionsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<Filter>('all');
+    const { download: downloadExport, working: exporting, error: exportError } = useAccountExport();
     const [view, setView] = useState<'personal' | 'business'>(() =>
         window.localStorage.getItem('valutir_dashboard_view') === 'business' ? 'business' : 'personal'
     );
@@ -569,8 +572,21 @@ const MySubscriptionsPage: React.FC = () => {
                         <Paper className="dashboard-list" id="all">
                             <div className="list-head">
                                 <h2>{view === 'business' ? 'All business subscriptions' : 'All personal subscriptions'}</h2>
-                                <span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span>
+                                <span className="list-head-actions">
+                                    <span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        className="export-csv"
+                                        startIcon={<FileDownloadRoundedIcon fontSize="small" />}
+                                        disabled={exporting !== null}
+                                        onClick={() => void downloadExport('csv', view)}
+                                    >
+                                        {exporting ? 'Preparing...' : 'Export CSV'}
+                                    </Button>
+                                </span>
                             </div>
+                            {exportError && <Alert severity="error" sx={{ mx: 2, mb: 1 }}>{exportError}</Alert>}
                             <div className="dashboard-filters" aria-label="Filter subscriptions">
                                 {filters.map(([key, label]) => (
                                     <Chip key={key} label={label} onClick={() => setFilter(key)} className={filter === key ? 'selected' : ''} />
