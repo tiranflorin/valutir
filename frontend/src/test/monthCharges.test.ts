@@ -28,6 +28,15 @@ describe('this month’s charges', () => {
         expect(charges({ nextBillingDate: '2026-12-05' })).toEqual([['2026-11-05', true]]);
     });
 
+    it('doesn’t count back to a charge after today when the billing date was set later on purpose', () => {
+        expect(charges({ nextBillingDate: '2026-12-20' })).toEqual([]);
+    });
+
+    it('works for a later month too', () => {
+        expect(monthCharges([sub({ nextBillingDate: '2026-11-20' })], undefined, NOW, new Date(2027, 0, 1))
+            .map(({ date, paid }) => [date, paid])).toEqual([['2027-01-20', false]]);
+    });
+
     it('treats a charge due today as still to pay', () => {
         expect(charges({ nextBillingDate: '2026-11-15' })).toEqual([['2026-11-15', false]]);
     });

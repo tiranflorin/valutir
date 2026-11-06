@@ -44,6 +44,9 @@ const AppHeader: React.FC = () => {
                                 <Button component={RouterLink} to="/calendar" className={pathname.startsWith('/calendar') ? 'active' : ''}>
                                     Calendar
                                 </Button>
+                                <Button component={RouterLink} to="/insights" className={pathname === '/insights' ? 'active' : ''}>
+                                    Insights
+                                </Button>
                                 <ThemeModeToggle />
                                 <Button
                                     className="account-trigger"

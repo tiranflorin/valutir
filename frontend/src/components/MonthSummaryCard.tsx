@@ -13,6 +13,8 @@ type MonthSummaryCardProps = {
     subscriptions: ChargeSource[];
     /** The amount one charge counts for (the full bill or the user's share). */
     amountFor?: (subscription: ChargeSource) => number;
+    /** Shown in the card's header, e.g. the monthly average and a link to Insights. */
+    summary?: React.ReactNode;
     now?: Date;
 };
 
@@ -24,7 +26,7 @@ const dueLabel = (date: string, now: Date) => {
 };
 
 /** This month's charges: what has gone out, what is left to pay, and the dated list. */
-const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amountFor, now: nowProp }) => {
+const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amountFor, summary, now: nowProp }) => {
     const [expanded, setExpanded] = useState(false);
     // Fixed for the page's lifetime so the charges aren't recomputed on every render.
     const [mountedAt] = useState(() => new Date());
@@ -42,7 +44,7 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amou
         <Paper className="month-summary" component="section" aria-labelledby="month-summary-title">
             <div className="month-summary-head">
                 <h2 id="month-summary-title">This month · {month}</h2>
-                <span>Estimated from each subscription’s billing date</span>
+                {summary && <span className="month-summary-average" data-testid="month-average">{summary}</span>}
             </div>
 
             <div className="month-summary-body">
@@ -86,11 +88,14 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amou
                         ))}
                     </ol>
                 )}
-                {charges.length > COLLAPSED_COUNT && (
-                    <button type="button" className="month-charges-toggle" onClick={() => setExpanded((value) => !value)}>
-                        {expanded ? 'Show fewer' : `Show all ${charges.length} charges`}
-                    </button>
-                )}
+                <div className="month-summary-foot">
+                    {charges.length > COLLAPSED_COUNT && (
+                        <button type="button" className="month-charges-toggle" onClick={() => setExpanded((value) => !value)}>
+                            {expanded ? 'Show fewer' : `Show all ${charges.length} charges`}
+                        </button>
+                    )}
+                    <span>Estimated from each subscription’s billing date</span>
+                </div>
             </div>
         </Paper>
     );

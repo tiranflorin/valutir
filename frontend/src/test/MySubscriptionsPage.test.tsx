@@ -164,3 +164,53 @@ describe('MySubscriptionsPage search', () => {
         expect(screen.queryByText(/^Cancelled ·/)).not.toBeInTheDocument();
     });
 });
+
+describe('MySubscriptionsPage needs attention', () => {
+    beforeEach(() => {
+        signIn();
+    });
+
+    const attentionRows = () => {
+        const card = screen.getByRole('heading', { name: /^Needs attention ·/ }).closest('section') as HTMLElement;
+        return Array.from(card.querySelectorAll('.attention-row')).map((row) => [
+            row.querySelector('.attention-name')?.textContent,
+            row.querySelector('.attention-meta')?.textContent,
+        ]);
+    };
+
+    it('lists trials ending and renewals in the next 7 days together, trials first', async () => {
+        dashboardApi([
+            subscription(1, 'Netflix', 'active', { nextBillingDate: daysFromToday(3) }),
+            subscription(2, 'Spotify', 'trial', { trialEndsAt: daysFromToday(1), nextBillingDate: daysFromToday(1) }),
+            subscription(3, 'Later', 'active', { nextBillingDate: daysFromToday(20) }),
+        ]);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        expect(await screen.findByRole('heading', { name: 'Needs attention · 2' })).toBeInTheDocument();
+        expect(attentionRows()).toEqual([
+            ['Spotify', 'TRIAL ENDS · Tomorrow'],
+            ['Netflix', 'RENEWS · In 3 days'],
+        ]);
+    });
+
+    it('hides the block and the old figure cards when nothing needs attention', async () => {
+        dashboardApi(subscriptions);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await screen.findByText('My subscriptions · 2');
+        expect(screen.queryByRole('heading', { name: /^Needs attention/ })).not.toBeInTheDocument();
+        expect(screen.queryByText('Tracked recurring bills')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'See insights →' })).toHaveAttribute('href', '/insights');
+    });
+
+    it('offers Needs review instead of Shared in the business view', async () => {
+        window.localStorage.setItem('valutir_dashboard_view', 'business');
+        dashboardApi([...subscriptions, subscription(4, 'Mystery', 'other')].map((item) => ({ ...item, b2b: true })));
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await user.click(await screen.findByRole('button', { name: 'Needs review 1' }));
+        expect(screen.queryByRole('button', { name: /^Shared/ })).not.toBeInTheDocument();
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Mystery']);
+    });
+});

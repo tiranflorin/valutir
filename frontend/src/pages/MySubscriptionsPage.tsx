@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
 import { shareOf, splitCount } from '../utils/householdShare';
 import { formatCurrency, groupedMoney } from '../utils/money';
+import { monthlyEquivalentOf } from '../utils/insights';
 import type { ChargeSource } from '../utils/monthCharges';
 import './RecurringScreens.css';
 
@@ -61,16 +62,8 @@ const billAmount = (subscription: Subscription, mode: AmountMode = 'full') => {
     return mode === 'share' ? shareOf(amount, subscription) : amount;
 };
 
-const monthlyEquivalent = (subscription: Subscription, mode: AmountMode = 'full') => {
-    const amount = billAmount(subscription, mode);
-    switch (subscription.billingCadence.toLowerCase()) {
-        case 'weekly': return amount * 52 / 12;
-        case 'quarterly': return amount / 3;
-        case 'yearly': return amount / 12;
-        case 'monthly': return amount;
-        default: return amount;
-    }
-};
+const monthlyEquivalent = (subscription: Subscription, mode: AmountMode = 'full') =>
+    monthlyEquivalentOf(billAmount(subscription, mode), subscription.billingCadence);
 
 const dayOffset = (value: string | null) => {
     if (!value) return null;
@@ -266,119 +259,24 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
     );
 };
 
-type BusinessDashboardProps = {
-    subscriptions: Subscription[];
-    loading: boolean;
-    monthlyTotal: string;
-    activeSubscriptions: Subscription[];
-    dueSoon: Subscription[];
-    trialSubscriptions: Subscription[];
-    trialsEndingSoon: Subscription[];
-    cancelledSubscriptions: Subscription[];
+type AttentionRowProps = {
+    subscription: Subscription;
+    meta: string;
+    action: string;
+    amountMode: AmountMode;
 };
 
-const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
-    subscriptions,
-    loading,
-    monthlyTotal,
-    activeSubscriptions,
-    dueSoon,
-    trialSubscriptions,
-    trialsEndingSoon,
-    cancelledSubscriptions,
-}) => {
-    const annualCommitments = activeSubscriptions.filter((subscription) => {
-        const offset = dayOffset(subscription.nextBillingDate);
-        return subscription.billingCadence.toLowerCase() === 'yearly'
-            && offset !== null && offset >= 0 && offset <= 90;
-    });
-    const renewalAttention = dueSoon.filter((subscription) => !isTrial(subscription));
-    const businessFilters: [Filter, string][] = [
-        ['all', `All ${subscriptions.length}`],
-        ['upcoming', `Upcoming ${dueSoon.length}`],
-        ['trials', `Trials ${trialSubscriptions.length}`],
-        ['review', `Needs review ${subscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other').length}`],
-        ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
-    ];
-    const [filter, setFilter] = useState<Filter>('all');
-    const sort = useSubscriptionSort();
-    // Cancelled subscriptions are listed in their own section at the end, as in the personal view.
-    const filteredActiveSubscriptions = useMemo(() => {
-        if (filter === 'cancelled') return [];
-        if (filter === 'upcoming') return dueSoon;
-        if (filter === 'trials') return trialSubscriptions;
-        if (filter === 'review') return activeSubscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other');
-        return activeSubscriptions;
-    }, [filter, dueSoon, trialSubscriptions, activeSubscriptions]);
-
-    return (
-        <>
-            {!loading && <MonthSummaryCard subscriptions={activeSubscriptions} />}
-            <section className="metric-grid" aria-label="Business recurring costs">
-                <Paper className="metric-card">
-                    <span className="metric-label">Due in next 7 days</span>
-                    <div className="metric-value">{groupedMoney(dueSoon, (subscription) => Number(subscription.amount) || 0)}</div>
-                    <div className="metric-hint">{dueSoon.length} expected charge{dueSoon.length === 1 ? '' : 's'}</div>
-                </Paper>
-                <Paper className="metric-card trial-warning">
-                    <span className="metric-label">Trial ending soon</span>
-                    <div className="metric-value">{trialsEndingSoon.length} <small>{trialsEndingSoon.length === 1 ? 'subscription' : 'subscriptions'}</small></div>
-                    <div className="metric-hint">Review before the first charge</div>
-                </Paper>
-                <Paper className="metric-card primary-metric">
-                    <span className="metric-label">Business monthly equivalent</span>
-                    <div className="metric-value">{monthlyTotal}</div>
-                    <div className="metric-hint">{groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription) * 12)} annual run rate</div>
-                </Paper>
-            </section>
-
-            <section className="metric-grid" aria-label="Business subscription counts">
-                <Paper className="metric-card">
-                    <span className="metric-label">Annual commitments · next 90 days</span>
-                    <div className="metric-value">{groupedMoney(annualCommitments, (subscription) => Number(subscription.amount) || 0)} <small>due</small></div>
-                    <div className="metric-hint">{annualCommitments.length} annual renewal{annualCommitments.length === 1 ? '' : 's'}</div>
-                </Paper>
-                <Paper className="metric-card">
-                    <span className="metric-label">Trial subscriptions</span>
-                    <div className="metric-value">{trialSubscriptions.length} <small>tracked</small></div>
-                    <div className="metric-hint">{trialsEndingSoon.length} need attention soon</div>
-                </Paper>
-                <Paper className="metric-card">
-                    <span className="metric-label">Active business subscriptions</span>
-                    <div className="metric-value">{activeSubscriptions.length} <small>including trials</small></div>
-                    <div className="metric-hint">{cancelledSubscriptions.length} cancelled · listed at the end</div>
-                </Paper>
-            </section>
-
-            <Paper className="dashboard-list business-inventory">
-                <div className="list-head"><h2>All business subscriptions</h2><span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span></div>
-                <div className="dashboard-filters" aria-label="Filter business subscriptions">
-                    {businessFilters.map(([key, label]) => <Chip key={key} label={label} onClick={() => setFilter(key)} className={filter === key ? 'selected' : ''} />)}
-                </div>
-                <div className="list-labels"><strong>Needs attention · {trialsEndingSoon.length + renewalAttention.length}</strong><span>Trial conversion first, then upcoming renewals</span></div>
-                {trialsEndingSoon.map((subscription) => <div className="attention-row" key={subscription.id}>
-                    <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
-                    <div><div className="attention-name">{subscription.serviceName}</div><div className="attention-meta">TRIAL ENDS · {formatDate(subscription.trialEndsAt || subscription.nextBillingDate)}</div></div>
-                    <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
-                    <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review trial →</RouterLink>
-                </div>)}
-                {renewalAttention.map((subscription) => <div className="attention-row business-renewal-attention" key={subscription.id}>
-                    <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
-                    <div><div className="attention-name">{subscription.serviceName}</div><div className="attention-meta">RENEWS · {formatDate(subscription.nextBillingDate)}</div></div>
-                    <div className="attention-price">{formatCurrency(Number(subscription.amount) || 0, subscription.currency)} / {subscription.billingCadence}</div>
-                    <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review →</RouterLink>
-                </div>)}
-                <SubscriptionSections
-                    filter={filter}
-                    activeSubscriptions={filteredActiveSubscriptions}
-                    cancelledSubscriptions={cancelledSubscriptions}
-                    loading={loading}
-                    sort={sort}
-                />
-            </Paper>
-        </>
-    );
-};
+const AttentionRow: React.FC<AttentionRowProps> = ({ subscription, meta, action, amountMode }) => (
+    <div className="attention-row">
+        <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
+        <div>
+            <div className="attention-name">{subscription.serviceName}</div>
+            <div className="attention-meta">{meta}</div>
+        </div>
+        <div className="attention-price">{formatCurrency(billAmount(subscription, amountMode), subscription.currency)} / {subscription.billingCadence}</div>
+        <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>{action}</RouterLink>
+    </div>
+);
 
 type SubscriptionsTableProps = {
     subscriptions: Subscription[];
@@ -454,6 +352,7 @@ const MySubscriptionsPage: React.FC = () => {
 
     const selectView = (nextView: 'personal' | 'business') => {
         setView(nextView);
+        setFilter('all');
         window.localStorage.setItem('valutir_dashboard_view', nextView);
     };
 
@@ -539,6 +438,14 @@ const MySubscriptionsPage: React.FC = () => {
         [activeSubscriptions, personalAmountMode]
     );
 
+    // Trials are listed by when they end; other subscriptions by their next renewal.
+    const renewalsSoon = useMemo(() => dueSoon.filter((subscription) => !isTrial(subscription)), [dueSoon]);
+    const attentionCount = trialsEndingSoon.length + renewalsSoon.length;
+    const reviewSubscriptions = useMemo(
+        () => activeSubscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other'),
+        [activeSubscriptions]
+    );
+
     const sort = useSubscriptionSort();
     // "My subscriptions" never includes cancelled ones; they have their own section at the end.
     const filteredActiveSubscriptions = useMemo(() => {
@@ -546,8 +453,19 @@ const MySubscriptionsPage: React.FC = () => {
         if (filter === 'upcoming') return dueSoon;
         if (filter === 'trials') return trialSubscriptions;
         if (filter === 'shared') return sharedSubscriptions;
+        if (filter === 'review') return reviewSubscriptions;
         return activeSubscriptions;
-    }, [filter, dueSoon, trialSubscriptions, sharedSubscriptions, activeSubscriptions]);
+    }, [filter, dueSoon, trialSubscriptions, sharedSubscriptions, reviewSubscriptions, activeSubscriptions]);
+    // Shared bills exist only in the personal view; "Needs review" is the business view's chip.
+    const filters: [Filter, string][] = [
+        ['all', `All ${contextSubscriptions.length}`],
+        ['upcoming', `Upcoming ${dueSoon.length}`],
+        ['trials', `Trials ${trialSubscriptions.length}`],
+        view === 'business'
+            ? ['review', `Needs review ${reviewSubscriptions.length}`]
+            : ['shared', `Shared ${sharedSubscriptions.length}`],
+        ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
+    ];
 
     return (
         <Box className="dashboard-page">
@@ -574,42 +492,29 @@ const MySubscriptionsPage: React.FC = () => {
                 {deletedSubscriptionMessage && <Alert severity="success" sx={{ mb: 2 }}>{deletedSubscriptionMessage}</Alert>}
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {view === 'business' && !error && !loading && contextSubscriptions.length === 0 ? (
+                {!error && !loading && contextSubscriptions.length === 0 ? (
                     <Paper className="dashboard-list">
                         <div className="empty-state">
                             <div className="empty-symbol" aria-hidden="true">＋</div>
-                            <h2>No business subscriptions yet</h2>
-                            <p>Add a work subscription and mark it as Business to see it in this view.</p>
+                            {view === 'business' ? (
+                                <>
+                                    <h2>No business subscriptions yet</h2>
+                                    <p>Add a work subscription and mark it as Business to see it in this view.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h2>No subscriptions yet</h2>
+                                    <p>Add the recurring services you want to keep an eye on. Start with one and add more later.</p>
+                                </>
+                            )}
                             <Button component={RouterLink} to="/subscriptions/new" variant="contained" className="add-subscription">
-                                Add a business subscription
-                            </Button>
-                        </div>
-                    </Paper>
-                ) : view === 'business' ? (
-                    <BusinessDashboard
-                        subscriptions={contextSubscriptions}
-                        loading={loading}
-                        monthlyTotal={monthlyTotal}
-                        activeSubscriptions={activeSubscriptions}
-                        dueSoon={dueSoon}
-                        trialSubscriptions={trialSubscriptions}
-                        trialsEndingSoon={trialsEndingSoon}
-                        cancelledSubscriptions={cancelledSubscriptions}
-                    />
-                ) : !error && !loading && contextSubscriptions.length === 0 ? (
-                    <Paper className="dashboard-list">
-                        <div className="empty-state">
-                            <div className="empty-symbol" aria-hidden="true">＋</div>
-                            <h2>No subscriptions yet</h2>
-                            <p>Add the recurring services you want to keep an eye on. Start with one and add more later.</p>
-                            <Button component={RouterLink} to="/subscriptions/new" variant="contained" className="add-subscription">
-                                Add your first subscription
+                                {view === 'business' ? 'Add a business subscription' : 'Add your first subscription'}
                             </Button>
                         </div>
                     </Paper>
                 ) : (
                     <>
-                        {sharedSubscriptions.length > 0 && (
+                        {sharedSubscriptions.length > 0 && view === 'personal' && (
                             <Box className="amount-mode-switch">
                                 <ToggleButtonGroup
                                     size="small"
@@ -624,87 +529,53 @@ const MySubscriptionsPage: React.FC = () => {
                                 <span>{amountMode === 'share' ? 'Shared bills count only your part.' : 'Shared bills count in full.'}</span>
                             </Box>
                         )}
-                        {!loading && <MonthSummaryCard subscriptions={activeSubscriptions} amountFor={monthChargeAmount} />}
-                        <section className="metric-grid" aria-label="Upcoming and recurring costs">
-                            <Paper className="metric-card">
-                                <span className="metric-label">Due in next 7 days</span>
-                                <div className="metric-value">{groupedMoney(dueSoon, (subscription) => billAmount(subscription, personalAmountMode))}</div>
-                                <div className="metric-hint">{dueSoon.length ? `${dueSoon.length} expected charge${dueSoon.length === 1 ? '' : 's'}` : 'No charges due this week'}</div>
-                            </Paper>
-                            <Paper className="metric-card trial-warning">
-                                <span className="metric-label">Trial ending soon</span>
-                                <div className="metric-value">{trialsEndingSoon.length} <small>{trialsEndingSoon.length === 1 ? 'subscription' : 'subscriptions'}</small></div>
-                                <div className="metric-hint">{trialsEndingSoon.length ? 'Review before the first charge' : 'No trials ending in the next 7 days'}</div>
-                            </Paper>
-                            <Paper className="metric-card primary-metric">
-                                <span className="metric-label">Tracked recurring bills</span>
-                                <div className="metric-value">{monthlyTotal} <small>/ month</small></div>
-                                <div className="metric-hint">{groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode) * 12)} annual run rate · {personalAmountMode === 'share' ? 'your share of shared bills' : 'full bill amounts'}</div>
-                            </Paper>
-                        </section>
+                        {!loading && (
+                            <MonthSummaryCard
+                                subscriptions={activeSubscriptions}
+                                amountFor={monthChargeAmount}
+                                summary={<><strong>{monthlyTotal}</strong> / month on average · <RouterLink to="/insights">See insights →</RouterLink></>}
+                            />
+                        )}
 
-                        <section className="metric-grid" aria-label="Subscription counts">
-                            <Paper className="metric-card">
-                                <span className="metric-label">Trial subscriptions</span>
-                                <div className="metric-value">{trialSubscriptions.length} <small>tracked</small></div>
-                                <div className="metric-hint">{trialsEndingSoon.length} need attention soon</div>
+                        {!loading && attentionCount > 0 && (
+                            <Paper className="dashboard-list attention-card" component="section" aria-labelledby="attention-title">
+                                <div className="list-head">
+                                    <h2 id="attention-title">Needs attention · {attentionCount}</h2>
+                                    <span className="list-count">Trials ending and renewals in the next 7 days</span>
+                                </div>
+                                <div className="attention-list">
+                                    {trialsEndingSoon.map((subscription) => (
+                                        <AttentionRow
+                                            key={`trial-${subscription.id}`}
+                                            subscription={subscription}
+                                            meta={`TRIAL ENDS · ${formatDate(subscription.trialEndsAt || subscription.nextBillingDate)}`}
+                                            action="Review trial →"
+                                            amountMode={personalAmountMode}
+                                        />
+                                    ))}
+                                    {renewalsSoon.map((subscription) => (
+                                        <AttentionRow
+                                            key={`renewal-${subscription.id}`}
+                                            subscription={subscription}
+                                            meta={`RENEWS · ${formatDate(subscription.nextBillingDate)}`}
+                                            action="Review →"
+                                            amountMode={personalAmountMode}
+                                        />
+                                    ))}
+                                </div>
                             </Paper>
-                            <Paper className="metric-card">
-                                <span className="metric-label">Shared with household</span>
-                                <div className="metric-value">{sharedSubscriptions.length} <small>{sharedSubscriptions.length === 1 ? 'service' : 'services'}</small></div>
-                                <div className="metric-hint">{sharedSubscriptions.length
-                                    ? `${groupedMoney(sharedSubscriptions, (subscription) => monthlyEquivalent(subscription, 'share'))} / month your share`
-                                    : 'Mark a subscription as household shared to split its cost'}</div>
-                            </Paper>
-                            <Paper className="metric-card">
-                                <span className="metric-label">Active subscriptions</span>
-                                <div className="metric-value">{activeSubscriptions.length} <small>including trials</small></div>
-                                <div className="metric-hint">{cancelledSubscriptions.length} cancelled · listed at the end</div>
-                            </Paper>
-                        </section>
+                        )}
 
                         <Paper className="dashboard-list" id="all">
                             <div className="list-head">
-                                <h2>All personal subscriptions</h2>
+                                <h2>{view === 'business' ? 'All business subscriptions' : 'All personal subscriptions'}</h2>
                                 <span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span>
                             </div>
                             <div className="dashboard-filters" aria-label="Filter subscriptions">
-                                {([
-                                    ['all', `All ${contextSubscriptions.length}`],
-                                    ['upcoming', `Upcoming ${dueSoon.length}`],
-                                    ['trials', `Trials ${trialSubscriptions.length}`],
-                                    ['shared', `Shared ${sharedSubscriptions.length}`],
-                                    ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
-                                ] as [Filter, string][]).map(([key, label]) => (
+                                {filters.map(([key, label]) => (
                                     <Chip key={key} label={label} onClick={() => setFilter(key)} className={filter === key ? 'selected' : ''} />
                                 ))}
                             </div>
-
-                            <div className="list-labels" id="attention">
-                                <strong>Needs attention · {trialsEndingSoon.length}</strong>
-                                <span>Trials first, then upcoming renewals</span>
-                            </div>
-                            {trialsEndingSoon.length > 0 && (
-                                <div className="attention-list">
-                                    {trialsEndingSoon.map((subscription) => {
-                                        const endsAt = subscription.trialEndsAt || subscription.nextBillingDate;
-                                        return (
-                                            <div className="attention-row" key={subscription.id}>
-                                                <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
-                                                <div>
-                                                    <div className="attention-name">{subscription.serviceName}</div>
-                                                    <div className="attention-meta">TRIAL ENDS · {formatDate(endsAt)}</div>
-                                                </div>
-                                                <div className="attention-price">{formatCurrency(billAmount(subscription, personalAmountMode), subscription.currency)} / {subscription.billingCadence}</div>
-                                                <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>Review trial →</RouterLink>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                            {trialsEndingSoon.length === 0 && (
-                                <div className="list-labels"><span>No trials are ending in the next 7 days.</span></div>
-                            )}
 
                             <SubscriptionSections
                                 filter={filter}

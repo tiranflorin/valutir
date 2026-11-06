@@ -2122,10 +2122,6 @@ body {
     white-space: nowrap;
 }
 
-.business-inventory.MuiPaper-root {
-    margin-top: 12px;
-}
-
 .business-empty {
     padding: 24px 18px;
     color: #829087;
@@ -3612,4 +3608,345 @@ body {
 
 :root[data-theme='dark'] .month-charges .charge-state {
     color: #f0c27f;
+}
+
+/* Insights page (InsightsPage). */
+.insights-controls {
+    margin: 4px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.insights-controls > span {
+    color: #758078;
+    font-size: 12px;
+}
+
+.insights-section.MuiPaper-root {
+    margin-bottom: 12px;
+}
+
+.category-bars,
+.category-members {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.category-bars > li {
+    border-top: 1px solid #edf1ee;
+}
+
+.category-bar-row {
+    width: 100%;
+    padding: 10px 18px;
+    display: grid;
+    grid-template-columns: minmax(110px, 180px) minmax(0, 1fr) auto 44px;
+    align-items: center;
+    gap: 12px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.category-bar-row:hover,
+.category-bar-row[aria-expanded="true"] {
+    background: #f5f9f6;
+}
+
+.category-bar-row:focus-visible {
+    outline: 2px solid var(--vt-green);
+    outline-offset: -2px;
+}
+
+.category-bar-name {
+    overflow: hidden;
+    color: #17241d;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.category-bar-track {
+    height: 10px;
+    border-radius: 5px;
+    background: #edf3ee;
+    overflow: hidden;
+}
+
+.category-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 5px;
+    background: var(--vt-green);
+}
+
+.category-bar-amount {
+    color: #17241d;
+    font-size: 13px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.category-bar-share {
+    color: #758078;
+    font-size: 12px;
+    text-align: right;
+}
+
+.category-members {
+    padding: 0 18px 10px;
+}
+
+.category-members li {
+    padding: 6px 0 6px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 14px;
+    border-left: 2px solid #dcebe0;
+    font-size: 12px;
+}
+
+.category-members a {
+    color: #17241d;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.category-members a:hover {
+    text-decoration: underline;
+}
+
+.category-members span {
+    color: #758078;
+    white-space: nowrap;
+}
+
+.forecast-chart {
+    margin: 0;
+    padding: 14px 18px 4px;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 6px;
+    list-style: none;
+    border-top: 1px solid #edf1ee;
+}
+
+.forecast-chart li {
+    display: grid;
+    grid-template-rows: 16px 140px 18px;
+    gap: 4px;
+    min-width: 0;
+}
+
+.forecast-value {
+    overflow: hidden;
+    color: #69776e;
+    font-size: 10px;
+    font-weight: 650;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.forecast-bar-wrap {
+    display: flex;
+    align-items: flex-end;
+    border-bottom: 1px solid #dfe8e1;
+}
+
+.forecast-bar {
+    display: block;
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: #9ccbac;
+}
+
+.forecast-bar.peak {
+    background: var(--vt-green);
+}
+
+.forecast-month {
+    color: #758078;
+    font-size: 11px;
+    font-weight: 650;
+    text-align: center;
+}
+
+.insights-upcoming.month-charges {
+    margin: 0;
+    padding: 0 18px 6px;
+}
+
+.insights-upcoming.month-charges li {
+    grid-template-columns: 96px minmax(0, 1fr) auto 72px;
+}
+
+.charge-cadence {
+    text-align: right;
+}
+
+.cadence-tag {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #eaf4ec;
+    color: var(--vt-green);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .category-bar-row {
+        grid-template-columns: minmax(0, 1fr) auto 38px;
+        gap: 6px 10px;
+    }
+
+    .category-bar-track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .category-members li {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .category-members li span:last-child {
+        display: none;
+    }
+
+    .forecast-chart {
+        gap: 3px;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .forecast-chart li {
+        grid-template-rows: 0 120px 18px;
+    }
+
+    .forecast-value {
+        visibility: hidden;
+    }
+
+    .forecast-month {
+        font-size: 9px;
+    }
+
+    .insights-upcoming.month-charges li {
+        grid-template-columns: 76px minmax(0, 1fr) auto auto;
+    }
+}
+
+:root[data-theme='dark'] .insights-controls > span,
+:root[data-theme='dark'] .category-bar-share,
+:root[data-theme='dark'] .category-members span,
+:root[data-theme='dark'] .forecast-value,
+:root[data-theme='dark'] .forecast-month {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .category-bar-name,
+:root[data-theme='dark'] .category-bar-amount,
+:root[data-theme='dark'] .category-members a {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .category-bars > li,
+:root[data-theme='dark'] .forecast-chart {
+    border-color: #2b3548;
+}
+
+:root[data-theme='dark'] .category-bar-row:hover,
+:root[data-theme='dark'] .category-bar-row[aria-expanded="true"] {
+    background: #1c2940;
+}
+
+:root[data-theme='dark'] .category-bar-track {
+    background: #2b3548;
+}
+
+:root[data-theme='dark'] .category-bar-fill,
+:root[data-theme='dark'] .forecast-bar.peak {
+    background: #4fae78;
+}
+
+:root[data-theme='dark'] .forecast-bar {
+    background: #2f6b4a;
+}
+
+:root[data-theme='dark'] .forecast-bar-wrap,
+:root[data-theme='dark'] .category-members li {
+    border-color: #344157;
+}
+
+/* Dashboard: monthly average in the "This month" header, and the Needs attention card. */
+.month-summary-head .month-summary-average {
+    color: #69776e;
+    font-size: 13px;
+}
+
+.month-summary-average strong {
+    color: #17241d;
+    font-weight: 800;
+}
+
+.month-summary-average a {
+    color: var(--vt-green);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.month-summary-average a:hover {
+    text-decoration: underline;
+}
+
+.month-summary-foot {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+}
+
+.month-summary-foot > span {
+    margin-left: auto;
+    color: #829087;
+    font-size: 11px;
+}
+
+.month-summary-foot .month-charges-toggle {
+    margin-top: 0;
+}
+
+.attention-card.MuiPaper-root {
+    margin-bottom: 12px;
+}
+
+.attention-card .attention-row:last-child {
+    border-bottom: 0;
+}
+
+:root[data-theme='dark'] .month-summary-head .month-summary-average,
+:root[data-theme='dark'] .month-summary-foot > span {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .month-summary-average strong {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .month-summary-average a,
+:root[data-theme='dark'] .cadence-tag {
+    color: #7fd0a0;
+}
+
+:root[data-theme='dark'] .cadence-tag {
+    background: #1d3a2a;
 }

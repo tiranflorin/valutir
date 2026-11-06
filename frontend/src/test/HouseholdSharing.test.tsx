@@ -25,7 +25,7 @@ const dashboardApi = (subscriptions: unknown[]) => mockApi({
     'GET /api/subs': () => ({ status: 200, body: subscriptions }),
 });
 
-const metricCard = (label: string) => screen.getByText(label).closest('.metric-card') as HTMLElement;
+const monthAverage = () => screen.getByTestId('month-average');
 const serviceRows = () => screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
 
 beforeEach(() => {
@@ -91,15 +91,13 @@ describe('household sharing on the add form', () => {
 });
 
 describe('household sharing on the dashboard', () => {
-    it('tags shared subscriptions and summarises your share', async () => {
+    it('tags shared subscriptions', async () => {
         dashboardApi([netflix, spotify]);
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await screen.findByText('My subscriptions · 2');
 
         expect(within(screen.getByRole('row', { name: /netflix/i })).getByText('Shared')).toBeInTheDocument();
         expect(within(screen.getByRole('row', { name: /spotify/i })).queryByText('Shared')).not.toBeInTheDocument();
-        expect(metricCard('Shared with household')).toHaveTextContent('1 service');
-        expect(metricCard('Shared with household')).toHaveTextContent('€3.50 / month your share');
     });
 
     it('filters to shared subscriptions', async () => {
@@ -118,13 +116,12 @@ describe('household sharing on the dashboard', () => {
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await screen.findByText('My subscriptions · 2');
 
-        expect(metricCard('Tracked recurring bills')).toHaveTextContent('€23.99');
+        expect(monthAverage()).toHaveTextContent('€23.99 / month on average');
         expect(screen.getByRole('row', { name: /netflix/i })).toHaveTextContent('€13.99');
 
         await user.click(screen.getByRole('button', { name: 'My share' }));
 
-        expect(metricCard('Tracked recurring bills')).toHaveTextContent('€13.50');
-        expect(metricCard('Tracked recurring bills')).toHaveTextContent('your share of shared bills');
+        expect(monthAverage()).toHaveTextContent('€13.50 / month on average');
         const netflixRow = screen.getByRole('row', { name: /netflix/i });
         expect(netflixRow).toHaveTextContent('€3.50');
         expect(netflixRow).toHaveTextContent('of €13.99');
@@ -137,7 +134,6 @@ describe('household sharing on the dashboard', () => {
         await screen.findByText('My subscriptions · 1');
 
         expect(screen.queryByRole('button', { name: 'My share' })).not.toBeInTheDocument();
-        expect(metricCard('Shared with household')).toHaveTextContent('0 services');
     });
 });
 
