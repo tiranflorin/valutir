@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
@@ -6,48 +6,18 @@ import ProfilePage from '../pages/ProfilePage';
 import PreferencesPage from '../pages/PreferencesPage';
 import ConfirmEmailPage from '../pages/auth/ConfirmEmailPage';
 import AppHeader from '../components/AppHeader';
+import { STORAGE_KEY, authHeader, bodyOf, fakeJwt, mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
-const STORAGE_KEY = 'valutir_auth_token';
-const fakeJwt = (email: string, version = 1) =>
-    `header.${btoa(JSON.stringify({ username: email, roles: ['ROLE_USER'], tv: version }))}.signature`;
-
-type Handler = (init: RequestInit) => { status: number; body?: unknown };
-const profile = { email: 'ada@example.test', name: 'Ada Lovelace', defaultCurrency: 'RON', pendingEmail: null };
-
-/** Routes fetch calls by "METHOD /path" and records them. */
-const mockApi = (handlers: Record<string, Handler>) => {
-    const calls: { key: string; init: RequestInit }[] = [];
-    const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
-        const key = `${init.method ?? 'GET'} ${new URL(url, 'http://api.test').pathname}`;
-        calls.push({ key, init });
-        const handler = handlers[key];
-        if (!handler) {
-            return new Response(JSON.stringify({ message: `Unexpected ${key}` }), { status: 500 });
-        }
-        const { status, body } = handler(init);
-        return new Response(status === 204 ? null : JSON.stringify(body ?? {}), { status });
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    return calls;
-};
-
-const bodyOf = (init: RequestInit) => JSON.parse(String(init.body));
-const authHeader = (init: RequestInit) => (init.headers as Record<string, string>).Authorization;
+const accountProfile = profile({ name: 'Ada Lovelace', defaultCurrency: 'RON' });
 
 describe('account management', () => {
     beforeEach(() => {
-        window.localStorage.setItem(STORAGE_KEY, fakeJwt('ada@example.test'));
-    });
-
-    afterEach(() => {
-        window.localStorage.clear();
-        vi.unstubAllGlobals();
+        signIn();
     });
 
     it('loads the real profile instead of guessing the name from the email', async () => {
-        mockApi({ 'GET /api/profile': () => ({ status: 200, body: profile }) });
+        mockApi({ 'GET /api/profile': () => ({ status: 200, body: accountProfile }) });
         renderWithMemoryRoute(<ProfilePage />, { route: '/profile' });
 
         expect(await screen.findByDisplayValue('Ada Lovelace')).toBeInTheDocument();
@@ -63,7 +33,7 @@ describe('account management', () => {
 
     it('revokes the token on the server when logging out', async () => {
         const calls = mockApi({
-            'GET /api/profile': () => ({ status: 200, body: profile }),
+            'GET /api/profile': () => ({ status: 200, body: accountProfile }),
             'POST /api/logout': () => ({ status: 204 }),
         });
         const user = userEvent.setup();
@@ -78,8 +48,8 @@ describe('account management', () => {
 
     it('saves the default currency to the account', async () => {
         const calls = mockApi({
-            'GET /api/profile': () => ({ status: 200, body: profile }),
-            'PATCH /api/profile': (init) => ({ status: 200, body: { ...profile, ...bodyOf(init) } }),
+            'GET /api/profile': () => ({ status: 200, body: accountProfile }),
+            'PATCH /api/profile': (call) => ({ status: 200, body: { ...accountProfile, ...bodyOf(call) } }),
         });
         const user = userEvent.setup();
         renderWithMemoryRoute(<PreferencesPage />, { route: '/preferences' });
@@ -91,13 +61,13 @@ describe('account management', () => {
         await user.click(screen.getByRole('button', { name: /save preference/i }));
 
         expect(await screen.findByText(/saved to your account/i)).toBeInTheDocument();
-        expect(bodyOf(calls.find((call) => call.key === 'PATCH /api/profile')!.init)).toEqual({ defaultCurrency: 'USD' });
+        expect(bodyOf(calls.find((call) => call.key === 'PATCH /api/profile')!)).toEqual({ defaultCurrency: 'USD' });
     });
 
     it('keeps this device signed in with the new token after a password change', async () => {
         const newToken = fakeJwt('ada@example.test', 2);
         mockApi({
-            'GET /api/profile': () => ({ status: 200, body: profile }),
+            'GET /api/profile': () => ({ status: 200, body: accountProfile }),
             'PATCH /api/profile/password': () => ({ status: 200, body: { message: 'Password updated. Other devices have been signed out.', token: newToken } }),
         });
         const user = userEvent.setup();
@@ -116,7 +86,7 @@ describe('account management', () => {
 
     it('requires the password and an explicit confirmation before deleting the account', async () => {
         const calls = mockApi({
-            'GET /api/profile': () => ({ status: 200, body: profile }),
+            'GET /api/profile': () => ({ status: 200, body: accountProfile }),
             'DELETE /api/profile': () => ({ status: 204 }),
         });
         const user = userEvent.setup();
@@ -138,14 +108,14 @@ describe('account management', () => {
 
         expect(await screen.findByText('Home page')).toBeInTheDocument();
         const deleteCall = calls.find((call) => call.key === 'DELETE /api/profile')!;
-        expect(bodyOf(deleteCall.init)).toEqual({ currentPassword: 'Str0ng-pass' });
-        expect(authHeader(deleteCall.init)).toMatch(/^Bearer /);
+        expect(bodyOf(deleteCall)).toEqual({ currentPassword: 'Str0ng-pass' });
+        expect(authHeader(deleteCall)).toMatch(/^Bearer /);
         expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
     });
 
     it('confirms an email change from the emailed link and ends the old session', async () => {
         const calls = mockApi({
-            'GET /api/profile': () => ({ status: 200, body: profile }),
+            'GET /api/profile': () => ({ status: 200, body: accountProfile }),
             'POST /api/profile/email/confirm': () => ({ status: 200, body: { message: 'Your email address has been updated. Sign in with your new address.' } }),
         });
         const token = 'a'.repeat(64);
@@ -154,8 +124,8 @@ describe('account management', () => {
         expect(await screen.findByRole('heading', { name: /email updated/i })).toBeInTheDocument();
         const confirmCalls = calls.filter((call) => call.key === 'POST /api/profile/email/confirm');
         expect(confirmCalls).toHaveLength(1);
-        expect(bodyOf(confirmCalls[0].init)).toEqual({ token });
-        expect(authHeader(confirmCalls[0].init)).toBeUndefined();
+        expect(bodyOf(confirmCalls[0])).toEqual({ token });
+        expect(authHeader(confirmCalls[0])).toBeUndefined();
         expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
     });
 });

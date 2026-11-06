@@ -12,30 +12,32 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 
+/**
+ * The contact form's happy path. Turnstile's request and response rules are covered by TurnstileVerificationServiceTest.
+ */
 final class ContactControllerTest extends WebTestCase
 {
+    private const string VAR = 'CONTACT_RECIPIENT';
+
+    protected function tearDown(): void
+    {
+        unset($_SERVER[self::VAR], $_ENV[self::VAR]);
+        parent::tearDown();
+    }
+
     public function testVerifiedSubmissionIsSentToConfiguredRecipient(): void
     {
-        putenv('CONTACT_RECIPIENT=feedback@example.test');
-        $_ENV['CONTACT_RECIPIENT'] = 'feedback@example.test';
-        $_SERVER['CONTACT_RECIPIENT'] = 'feedback@example.test';
+        $_SERVER[self::VAR] = $_ENV[self::VAR] = 'feedback@example.test';
 
         $client = static::createClient();
         $container = static::getContainer();
 
         $turnstileVerifier = new TurnstileVerificationService(
-            new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
-                self::assertSame('POST', $method);
-                self::assertSame('https://challenges.cloudflare.com/turnstile/v0/siteverify', $url);
-                parse_str($options['body'], $body);
-                self::assertSame('valid-token', $body['response']);
-
-                return new MockResponse(json_encode([
-                    'success' => true,
-                    'action' => 'contact',
-                    'hostname' => 'localhost',
-                ], JSON_THROW_ON_ERROR));
-            }),
+            new MockHttpClient(new MockResponse(json_encode([
+                'success' => true,
+                'action' => 'contact',
+                'hostname' => 'localhost',
+            ], JSON_THROW_ON_ERROR))),
             'test-secret',
             '',
         );

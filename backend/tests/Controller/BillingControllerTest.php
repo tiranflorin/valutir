@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Tests\Payment\StripeWebhookVerifierTest;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Billing requests rejected before any database access. Checkout and webhook behavior is covered
- * by the CheckoutService and StripeWebhookHandler tests.
+ * The public Stripe webhook endpoint (authentication of the other billing endpoints is in ApiAccessTest).
+ * Signature rules are covered by StripeWebhookVerifierTest, and what each event does by StripeWebhookHandlerTest.
  */
 final class BillingControllerTest extends WebTestCase
 {
@@ -28,36 +27,9 @@ final class BillingControllerTest extends WebTestCase
         parent::tearDown();
     }
 
-    /**
-     * @return iterable<string, array{string, string}>
-     */
-    public static function protectedEndpoints(): iterable
-    {
-        yield 'billing status' => ['GET', '/api/billing'];
-        yield 'start checkout' => ['POST', '/api/billing/checkout'];
-    }
-
-    #[DataProvider('protectedEndpoints')]
-    public function testRequiresAuthentication(string $method, string $path): void
-    {
-        $client = static::createClient();
-        $client->request($method, $path, server: ['CONTENT_TYPE' => 'application/json']);
-
-        self::assertResponseStatusCodeSame(401);
-    }
-
-    public function testTheWebhookRejectsUnsignedRequests(): void
-    {
-        $client = static::createClient();
-        $client->request('POST', '/api/billing/webhook', server: ['CONTENT_TYPE' => 'application/json'], content: $this->payload());
-
-        self::assertResponseStatusCodeSame(400);
-        self::assertResponseHeaderSame('Content-Type', 'application/json');
-    }
-
     public function testTheWebhookRejectsAForgedSignature(): void
     {
-        $payload = $this->payload();
+        $payload = '{"id":"evt_1","object":"event","type":"checkout.session.completed","data":{"object":{"id":"cs_test_1","object":"checkout.session","payment_status":"paid"}}}';
         $client = static::createClient();
         $client->request('POST', '/api/billing/webhook', server: [
             'CONTENT_TYPE' => 'application/json',
@@ -65,6 +37,7 @@ final class BillingControllerTest extends WebTestCase
         ], content: $payload);
 
         self::assertResponseStatusCodeSame(400);
+        self::assertResponseHeaderSame('Content-Type', 'application/json');
     }
 
     public function testTheWebhookAcknowledgesASignedEventItDoesNotHandle(): void
@@ -85,10 +58,5 @@ final class BillingControllerTest extends WebTestCase
         $client->request('POST', '/api/billing/webhook', server: ['CONTENT_TYPE' => 'application/json'], content: str_repeat('x', 300000));
 
         self::assertResponseStatusCodeSame(413);
-    }
-
-    private function payload(): string
-    {
-        return '{"id":"evt_1","object":"event","type":"checkout.session.completed","data":{"object":{"id":"cs_test_1","object":"checkout.session","payment_status":"paid"}}}';
     }
 }

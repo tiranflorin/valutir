@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
 import type { SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
-import { isAfterToday, todayIsoDate } from '../utils/dates';
+import { todayIsoDate } from '../utils/dates';
 
 const subscription: SubscriptionCardModel = {
     id: 7,
@@ -18,6 +18,8 @@ const subscription: SubscriptionCardModel = {
     autoRenew: true,
     b2b: false,
     cancelledAt: null,
+    householdShared: true,
+    householdSize: 3,
 };
 
 const daysFromToday = (days: number) => {
@@ -26,16 +28,13 @@ const daysFromToday = (days: number) => {
     return todayIsoDate(date);
 };
 
+/** Date rules of the "cancelled with provider" step. The full cancel-then-remove flow is in SubscriptionLifecycle.test.tsx. */
 describe('provider cancellation dates', () => {
     const fetchMock = vi.fn();
 
     beforeEach(() => {
-        vi.stubGlobal('fetch', fetchMock.mockResolvedValue(new Response(JSON.stringify({ ...subscription, status: 'cancelled' }), { status: 200 })));
-    });
-
-    afterEach(() => {
-        vi.unstubAllGlobals();
         fetchMock.mockReset();
+        vi.stubGlobal('fetch', fetchMock.mockResolvedValue(new Response(JSON.stringify({ ...subscription, status: 'cancelled' }), { status: 200 })));
     });
 
     const renderCard = async () => {
@@ -44,12 +43,6 @@ describe('provider cancellation dates', () => {
         await user.click(screen.getByLabelText(/yes, cancelled with provider/i));
         return { user, cancellation: screen.getByLabelText(/provider cancellation date/i), accessEnds: screen.getByLabelText(/access ends/i) };
     };
-
-    it('detects future dates by the local calendar day', () => {
-        const now = new Date(2026, 10, 2, 9, 0);
-        expect(isAfterToday('2026-11-03', now)).toBe(true);
-        expect(isAfterToday('2026-11-02', now)).toBe(false);
-    });
 
     it('limits the cancellation date to today and access to on or after the cancellation', async () => {
         const { cancellation, accessEnds } = await renderCard();
@@ -78,14 +71,19 @@ describe('provider cancellation dates', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('saves a cancellation from today with access running into the future', async () => {
+    it('saves access running into the future and keeps the sharing details (updates replace every field)', async () => {
         const { user, cancellation, accessEnds } = await renderCard();
         fireEvent.change(cancellation, { target: { value: todayIsoDate() } });
         fireEvent.change(accessEnds, { target: { value: daysFromToday(20) } });
         await user.click(screen.getByRole('button', { name: /mark as cancelled/i }));
 
         expect(fetchMock).toHaveBeenCalledTimes(1);
-        const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
-        expect(body).toMatchObject({ status: 'cancelled', cancelledAt: todayIsoDate(), nextBillingDate: daysFromToday(20) });
+        expect(JSON.parse(String(fetchMock.mock.calls[0][1].body))).toMatchObject({
+            status: 'cancelled',
+            cancelledAt: todayIsoDate(),
+            nextBillingDate: daysFromToday(20),
+            householdShared: true,
+            householdSize: 3,
+        });
     });
 });

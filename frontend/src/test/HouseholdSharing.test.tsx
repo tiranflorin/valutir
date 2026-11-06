@@ -1,9 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import AddSubscriptionPage from '../pages/AddSubscriptionPage';
 import MySubscriptionsPage from '../pages/MySubscriptionsPage';
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
 import type { SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
+import { householdPayload, shareOf, splitCount } from '../utils/householdShare';
+import { todayIsoDate } from '../utils/dates';
+import { bodyOf, callsTo, mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
 const subscription = (id: number, serviceName: string, amount: string, sharing: { householdShared: boolean; householdSize: number | null }) => ({
@@ -13,29 +17,82 @@ const subscription = (id: number, serviceName: string, amount: string, sharing: 
 });
 
 // Netflix €13.99 split between 4 people (your share €3.50) and Spotify €10.00 not shared.
-const subscriptions = [
-    subscription(1, 'Netflix', '13.99', { householdShared: true, householdSize: 4 }),
-    subscription(2, 'Spotify', '10.00', { householdShared: false, householdSize: null }),
-];
+const netflix = subscription(1, 'Netflix', '13.99', { householdShared: true, householdSize: 4 });
+const spotify = subscription(2, 'Spotify', '10.00', { householdShared: false, householdSize: null });
+
+const dashboardApi = (subscriptions: unknown[]) => mockApi({
+    'GET /api/profile': () => ({ status: 200, body: profile() }),
+    'GET /api/subs': () => ({ status: 200, body: subscriptions }),
+});
 
 const metricCard = (label: string) => screen.getByText(label).closest('.metric-card') as HTMLElement;
 const serviceRows = () => screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
 
+beforeEach(() => {
+    signIn();
+});
+
+describe('household share helpers', () => {
+    it('splits equally and treats unshared subscriptions as one person', () => {
+        expect(shareOf(13.99, { householdShared: true, householdSize: 4 })).toBeCloseTo(3.4975);
+        expect(splitCount({ householdShared: false, householdSize: 4 })).toBe(1);
+        expect(splitCount({ householdShared: true, householdSize: null })).toBe(1);
+    });
+
+    it('never sends sharing for business subscriptions', () => {
+        expect(householdPayload({ householdShared: true, householdSize: 3, b2b: false })).toEqual({ householdShared: true, householdSize: 3 });
+        expect(householdPayload({ householdShared: true, householdSize: 3, b2b: true })).toEqual({ householdShared: false, householdSize: null });
+        expect(householdPayload({ householdShared: false, householdSize: 3, b2b: false })).toEqual({ householdShared: false, householdSize: null });
+    });
+});
+
+describe('household sharing on the add form', () => {
+    it('shows the split and your share, and sends both to the API', async () => {
+        const calls = mockApi({
+            'GET /api/profile': () => ({ status: 200, body: profile() }),
+            'POST /api/subs': () => ({ status: 201, body: { id: 1 } }),
+        });
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<AddSubscriptionPage />, { route: '/subscriptions/new' });
+        fireEvent.change(screen.getByLabelText(/service name/i), { target: { value: 'Netflix' } });
+        fireEvent.change(screen.getByLabelText(/price/i), { target: { value: '13.99' } });
+        fireEvent.change(screen.getByLabelText(/next billing date/i), { target: { value: todayIsoDate() } });
+
+        await user.click(screen.getByRole('button', { name: /optional details/i }));
+        await user.click(screen.getByRole('button', { name: 'Not shared' }));
+        await user.click(screen.getByRole('combobox', { name: /split between/i }));
+        await user.click(screen.getByRole('option', { name: '4 people' }));
+
+        expect(screen.getByText(/your share/i)).toHaveTextContent('Your share: 3.50 EUR per monthly bill');
+
+        await user.click(screen.getByRole('button', { name: 'Save subscription' }));
+        const create = await vi.waitFor(() => {
+            const [call] = callsTo(calls, 'POST /api/subs');
+            expect(call).toBeDefined();
+            return call;
+        });
+        expect(bodyOf(create)).toMatchObject({ householdShared: true, householdSize: 4, b2b: false });
+    });
+
+    it('hides sharing for business subscriptions and turns it off', async () => {
+        dashboardApi([]);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<AddSubscriptionPage />, { route: '/subscriptions/new' });
+        await user.click(screen.getByRole('button', { name: /optional details/i }));
+        await user.click(screen.getByRole('button', { name: 'Not shared' }));
+        expect(screen.getByRole('button', { name: 'Shared' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('checkbox', { name: /business subscription/i }));
+
+        expect(screen.queryByText('Household shared')).not.toBeInTheDocument();
+        await user.click(screen.getByRole('checkbox', { name: /business subscription/i }));
+        expect(screen.getByRole('button', { name: 'Not shared' })).toBeInTheDocument();
+    });
+});
+
 describe('household sharing on the dashboard', () => {
-    beforeEach(() => {
-        window.localStorage.setItem('valutir_auth_token', `header.${btoa(JSON.stringify({ username: 'ada@example.test' }))}.signature`);
-        window.localStorage.setItem('valutir_dashboard_view', 'personal');
-        vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
-            String(url).endsWith('/api/subs') ? subscriptions : { email: 'ada@example.test', name: 'Ada', defaultCurrency: 'EUR', pendingEmail: null },
-        ), { status: 200 })));
-    });
-
-    afterEach(() => {
-        window.localStorage.clear();
-        vi.unstubAllGlobals();
-    });
-
     it('tags shared subscriptions and summarises your share', async () => {
+        dashboardApi([netflix, spotify]);
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await screen.findByText('My subscriptions · 2');
 
@@ -46,6 +103,7 @@ describe('household sharing on the dashboard', () => {
     });
 
     it('filters to shared subscriptions', async () => {
+        dashboardApi([netflix, spotify]);
         const user = userEvent.setup();
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await user.click(await screen.findByRole('button', { name: 'Shared 1' }));
@@ -55,6 +113,7 @@ describe('household sharing on the dashboard', () => {
     });
 
     it('switches totals between full bills and your share', async () => {
+        dashboardApi([netflix, spotify]);
         const user = userEvent.setup();
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await screen.findByText('My subscriptions · 2');
@@ -73,9 +132,7 @@ describe('household sharing on the dashboard', () => {
     });
 
     it('hides the switch when nothing is shared', async () => {
-        vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
-            String(url).endsWith('/api/subs') ? [subscriptions[1]] : { email: 'ada@example.test', name: 'Ada', defaultCurrency: 'EUR', pendingEmail: null },
-        ), { status: 200 })));
+        dashboardApi([spotify]);
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
         await screen.findByText('My subscriptions · 1');
 

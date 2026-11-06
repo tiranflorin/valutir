@@ -35,4 +35,15 @@ final class SubscriptionTest extends TestCase
         self::assertNull($data['trialEndsAt']);
         self::assertNull($data['trialReminderSentAt']);
     }
+
+    public function testToArrayExposesHouseholdSharing(): void
+    {
+        $shared = (new Subscription())->setHouseholdSharing(3);
+        $shared->onPrePersist();
+        $personal = new Subscription();
+        $personal->onPrePersist();
+
+        self::assertSame([true, 3], [$shared->toArray()['householdShared'], $shared->toArray()['householdSize']]);
+        self::assertSame([false, null], [$personal->toArray()['householdShared'], $personal->toArray()['householdSize']]);
+    }
 }

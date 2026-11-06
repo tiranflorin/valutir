@@ -1,37 +1,25 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PreferencesPage from '../pages/PreferencesPage';
 import UnsubscribePage from '../pages/auth/UnsubscribePage';
+import { bodyOf, callsTo, mockApi, profile, signIn, type ApiCall } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
-const profile = { email: 'ada@example.test', name: 'Ada', defaultCurrency: 'EUR', timezone: 'Europe/Bucharest', remindersEnabled: true, pendingEmail: null };
-
-type Call = { url: string; init: RequestInit };
-const mockApi = (respond: (call: Call) => { status: number; body: unknown }) => {
-    const calls: Call[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit = {}) => {
-        const call = { url: String(url), init };
-        calls.push(call);
-        const { status, body } = respond(call);
-        return new Response(JSON.stringify(body), { status });
-    }));
-    return calls;
-};
-const patches = (calls: Call[]) => calls.filter((c) => c.init.method === 'PATCH').map((c) => JSON.parse(String(c.init.body)));
+const bucharest = profile({ timezone: 'Europe/Bucharest' });
+const preferencesApi = () => mockApi({
+    'GET /api/profile': () => ({ status: 200, body: bucharest }),
+    'PATCH /api/profile': (call) => ({ status: 200, body: { ...bucharest, ...bodyOf(call) } }),
+});
+const patches = (calls: ApiCall[]) => callsTo(calls, 'PATCH /api/profile').map(bodyOf);
 
 describe('payment reminder preferences', () => {
     beforeEach(() => {
-        window.localStorage.setItem('valutir_auth_token', `header.${btoa(JSON.stringify({ username: 'ada@example.test' }))}.signature`);
-    });
-
-    afterEach(() => {
-        window.localStorage.clear();
-        vi.unstubAllGlobals();
+        signIn();
     });
 
     it('shows the saved time zone and turns reminders off', async () => {
-        const calls = mockApi(({ init }) => ({ status: 200, body: init.method === 'PATCH' ? { ...profile, ...JSON.parse(String(init.body)) } : profile }));
+        const calls = preferencesApi();
         const user = userEvent.setup();
         renderWithMemoryRoute(<PreferencesPage />, { route: '/preferences' });
 
@@ -47,7 +35,7 @@ describe('payment reminder preferences', () => {
     });
 
     it('saves a newly chosen time zone', async () => {
-        const calls = mockApi(({ init }) => ({ status: 200, body: init.method === 'PATCH' ? { ...profile, ...JSON.parse(String(init.body)) } : profile }));
+        const calls = preferencesApi();
         const user = userEvent.setup();
         renderWithMemoryRoute(<PreferencesPage />, { route: '/preferences' });
         const input = await screen.findByDisplayValue('Europe/Bucharest');
@@ -63,12 +51,8 @@ describe('payment reminder preferences', () => {
 });
 
 describe('unsubscribe link', () => {
-    afterEach(() => {
-        vi.unstubAllGlobals();
-    });
-
     it('turns reminders off once with the token from the email', async () => {
-        const calls = mockApi(() => ({ status: 200, body: { message: "You won't get payment reminder emails anymore." } }));
+        const calls = mockApi({ 'POST /api/reminders/unsubscribe': () => ({ status: 200, body: { message: "You won't get payment reminder emails anymore." } }) });
         renderWithMemoryRoute(<UnsubscribePage />, { route: '/unsubscribe?token=7.abc' });
 
         expect(await screen.findByRole('heading', { name: /reminders turned off/i })).toBeInTheDocument();
@@ -78,7 +62,7 @@ describe('unsubscribe link', () => {
     });
 
     it('explains an invalid link', async () => {
-        mockApi(() => ({ status: 400, body: { message: 'This unsubscribe link is invalid.' } }));
+        mockApi({ 'POST /api/reminders/unsubscribe': () => ({ status: 400, body: { message: 'This unsubscribe link is invalid.' } }) });
         renderWithMemoryRoute(<UnsubscribePage />, { route: '/unsubscribe?token=bad' });
 
         expect(await screen.findByText('This unsubscribe link is invalid.')).toBeInTheDocument();

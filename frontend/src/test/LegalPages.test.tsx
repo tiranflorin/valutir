@@ -1,20 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import AppFooter from '../components/AppFooter';
 import PrivacyPage from '../pages/PrivacyPage';
 import RefundPage from '../pages/RefundPage';
 import TermsPage from '../pages/TermsPage';
+import { mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
-const STORAGE_KEY = 'valutir_auth_token';
-const fakeJwt = `header.${btoa(JSON.stringify({ username: 'ada@example.test', roles: ['ROLE_USER'], tv: 1 }))}.signature`;
-
 describe('legal pages', () => {
-    afterEach(() => {
-        window.localStorage.clear();
-        vi.unstubAllGlobals();
-    });
-
     it('is public and lists every cookie and storage key the app uses', () => {
         renderWithMemoryRoute(<PrivacyPage />, { route: '/privacy' });
 
@@ -48,8 +41,8 @@ describe('legal pages', () => {
         ['a signed-in user', true],
     ])('shows the Privacy, Terms, and Refunds links in the footer for %s, instead of Calendar', (_who, signedIn) => {
         if (signedIn) {
-            window.localStorage.setItem(STORAGE_KEY, fakeJwt);
-            vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ message: 'not needed' }), { status: 500 })));
+            signIn();
+            mockApi({ 'GET /api/profile': () => ({ status: 200, body: profile() }) });
         }
         renderWithMemoryRoute(<AppFooter />);
 
