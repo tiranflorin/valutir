@@ -6,17 +6,24 @@ import {
     Chip,
     CircularProgress,
     Container,
+    InputAdornment,
+    MenuItem,
     Paper,
+    TextField,
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
+import MonthSummaryCard from '../components/MonthSummaryCard';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
 import { shareOf, splitCount } from '../utils/householdShare';
+import { formatCurrency, groupedMoney } from '../utils/money';
+import type { ChargeSource } from '../utils/monthCharges';
 import './RecurringScreens.css';
 
 type Subscription = {
@@ -27,6 +34,7 @@ type Subscription = {
     currency: string;
     billingCadence: string;
     nextBillingDate: string | null;
+    startedAt?: string | null;
     notes: string | null;
     status: string;
     autoRenew: boolean;
@@ -62,24 +70,6 @@ const monthlyEquivalent = (subscription: Subscription, mode: AmountMode = 'full'
         case 'monthly': return amount;
         default: return amount;
     }
-};
-
-const formatCurrency = (amount: number, currency: string) => {
-    try {
-        return new Intl.NumberFormat('en-GB', { style: 'currency', currency: currency || 'EUR' }).format(amount);
-    } catch {
-        return `${amount.toFixed(2)} ${currency || 'EUR'}`;
-    }
-};
-
-const groupedMoney = (items: Subscription[], valueFor: (subscription: Subscription) => number) => {
-    const totals = new Map<string, number>();
-    items.forEach((subscription) => {
-        const currency = subscription.currency || 'EUR';
-        totals.set(currency, (totals.get(currency) || 0) + valueFor(subscription));
-    });
-    if (!totals.size) return formatCurrency(0, 'EUR');
-    return Array.from(totals.entries()).map(([currency, total]) => formatCurrency(total, currency)).join(' + ');
 };
 
 const dayOffset = (value: string | null) => {
@@ -123,6 +113,15 @@ const statusLabel = (status: string) => {
         case 'other': return 'Review';
         default: return 'Active';
     }
+};
+
+const ALL_CATEGORIES = '__all__';
+const categoryOf = (subscription: Subscription) => subscription.category?.trim() || 'Uncategorized';
+
+/** "in 23 days" under a renewal date further out than formatDate's own "In N days" (up to a week). */
+const dueInNote = (value: string | null) => {
+    const offset = dayOffset(value);
+    return offset !== null && offset > 7 && offset <= 60 ? `in ${offset} days` : null;
 };
 
 /** The date a row shows: the cancellation date for cancelled subscriptions, otherwise the next renewal. */
@@ -184,13 +183,53 @@ type SubscriptionSectionsProps = {
 /** "My subscriptions" followed by a separate "Cancelled" section; shared by the personal and business views. */
 const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, sort, amountMode = 'full' }) => {
     const { sortSubscriptions, toggleSort, sortMarker } = sort;
-    const mySubscriptions = useMemo(() => sortSubscriptions(activeSubscriptions), [activeSubscriptions, sortSubscriptions]);
-    const sortedCancelled = useMemo(() => sortSubscriptions(cancelledSubscriptions), [cancelledSubscriptions, sortSubscriptions]);
+    const [query, setQuery] = useState('');
+    const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+    const categories = useMemo(
+        () => Array.from(new Set([...activeSubscriptions, ...cancelledSubscriptions].map(categoryOf))).sort((a, b) => a.localeCompare(b)),
+        [activeSubscriptions, cancelledSubscriptions]
+    );
+    // A category picked earlier may have no subscriptions left in this filter: show everything then.
+    const selectedCategory = categories.includes(category) ? category : ALL_CATEGORIES;
+    const narrowed = query.trim() !== '' || selectedCategory !== ALL_CATEGORIES;
+    const matches = useCallback((subscription: Subscription) => {
+        if (selectedCategory !== ALL_CATEGORIES && categoryOf(subscription) !== selectedCategory) return false;
+        const needle = query.trim().toLowerCase();
+        if (!needle) return true;
+        return [subscription.serviceName, subscription.category, subscription.notes]
+            .some((value) => value?.toLowerCase().includes(needle));
+    }, [query, selectedCategory]);
+    const visibleCancelled = useMemo(() => cancelledSubscriptions.filter(matches), [cancelledSubscriptions, matches]);
+    const mySubscriptions = useMemo(() => sortSubscriptions(activeSubscriptions.filter(matches)), [activeSubscriptions, matches, sortSubscriptions]);
+    const sortedCancelled = useMemo(() => sortSubscriptions(visibleCancelled), [visibleCancelled, sortSubscriptions]);
     const showMySubscriptions = filter !== 'cancelled';
-    const showCancelledSection = (filter === 'all' || filter === 'cancelled') && cancelledSubscriptions.length > 0;
+    const showCancelledSection = (filter === 'all' || filter === 'cancelled') && visibleCancelled.length > 0;
 
     return (
         <>
+            <div className="list-search">
+                <TextField
+                    size="small"
+                    type="search"
+                    placeholder="Search by name, category or notes"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    inputProps={{ 'aria-label': 'Search subscriptions', maxLength: 100 }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
+                />
+                {categories.length > 1 && (
+                    <TextField
+                        select
+                        size="small"
+                        label="Category"
+                        value={selectedCategory}
+                        onChange={(event) => setCategory(event.target.value)}
+                    >
+                        <MenuItem value={ALL_CATEGORIES}>All categories</MenuItem>
+                        {categories.map((name) => <MenuItem key={name} value={name}>{name}</MenuItem>)}
+                    </TextField>
+                )}
+            </div>
             {showMySubscriptions && (
                 <>
                     <div className="list-labels" id="my-subscriptions">
@@ -201,7 +240,7 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                         <Box sx={{ py: 7, display: 'grid', placeItems: 'center' }}><CircularProgress size={30} /></Box>
                     ) : mySubscriptions.length === 0 ? (
                         <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>
-                            {filter === 'all' ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
+                            {filter === 'all' && !narrowed ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
                         </Box>
                     ) : (
                         <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
@@ -218,8 +257,10 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                     <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
                 </>
             )}
-            {!loading && filter === 'cancelled' && cancelledSubscriptions.length === 0 && (
-                <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>No cancelled subscriptions.</Box>
+            {!loading && filter === 'cancelled' && visibleCancelled.length === 0 && (
+                <Box sx={{ px: 2.5, pb: 2.5, color: 'text.secondary', fontSize: 14 }}>
+                    {narrowed ? 'No cancelled subscriptions match this search.' : 'No cancelled subscriptions.'}
+                </Box>
             )}
         </>
     );
@@ -272,6 +313,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
     return (
         <>
+            {!loading && <MonthSummaryCard subscriptions={activeSubscriptions} />}
             <section className="metric-grid" aria-label="Business recurring costs">
                 <Paper className="metric-card">
                     <span className="metric-label">Due in next 7 days</span>
@@ -383,7 +425,12 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                                 )}
                             </td>
                             <td>{subscription.billingCadence.charAt(0).toUpperCase() + subscription.billingCadence.slice(1)}</td>
-                            <td>{formatDate(cancelled ? subscription.cancelledAt : subscription.nextBillingDate)}</td>
+                            <td>
+                                {formatDate(cancelled ? subscription.cancelledAt : subscription.nextBillingDate)}
+                                {!cancelled && dueInNote(subscription.nextBillingDate) && (
+                                    <small className="due-in-note">{dueInNote(subscription.nextBillingDate)}</small>
+                                )}
+                            </td>
                             <td><span className={`status-tag ${statusClass}`}>{statusLabel(subscription.status)}</span></td>
                         </tr>
                     );
@@ -480,6 +527,13 @@ const MySubscriptionsPage: React.FC = () => {
     const sharedSubscriptions = useMemo(() => activeSubscriptions.filter(isShared), [activeSubscriptions]);
     // Only the personal view can split bills; business totals always show full bills.
     const personalAmountMode: AmountMode = view === 'personal' && sharedSubscriptions.length > 0 ? amountMode : 'full';
+    const monthChargeAmount = useCallback(
+        (subscription: ChargeSource) => {
+            const amount = Number(subscription.amount) || 0;
+            return personalAmountMode === 'share' ? shareOf(amount, subscription) : amount;
+        },
+        [personalAmountMode]
+    );
     const monthlyTotal = useMemo(
         () => groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode)),
         [activeSubscriptions, personalAmountMode]
@@ -570,6 +624,7 @@ const MySubscriptionsPage: React.FC = () => {
                                 <span>{amountMode === 'share' ? 'Shared bills count only your part.' : 'Shared bills count in full.'}</span>
                             </Box>
                         )}
+                        {!loading && <MonthSummaryCard subscriptions={activeSubscriptions} amountFor={monthChargeAmount} />}
                         <section className="metric-grid" aria-label="Upcoming and recurring costs">
                             <Paper className="metric-card">
                                 <span className="metric-label">Due in next 7 days</span>

@@ -81,3 +81,86 @@ describe('MySubscriptionsPage sections', () => {
         expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Hosting']);
     });
 });
+
+/** A YYYY-MM-DD date `days` from today, local time. */
+const daysFromToday = (days: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+describe('MySubscriptionsPage this month', () => {
+    beforeEach(() => {
+        signIn();
+    });
+
+    it('shows this month’s charges with what is left to pay', async () => {
+        // Due today, so it is in this month and still to pay whatever the date.
+        dashboardApi([subscription(1, 'Netflix', 'active', { nextBillingDate: daysFromToday(0), startedAt: daysFromToday(0) })]);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        const card = (await screen.findByRole('heading', { name: /^This month ·/ })).closest('section') as HTMLElement;
+        const list = within(card).getByRole('list', { name: /^Charges in/ });
+
+        expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+        expect(within(list).getByText('Today')).toBeInTheDocument();
+        expect(within(card).getByTestId('month-left')).toHaveTextContent('€9.99');
+        expect(within(card).getByTestId('month-paid')).toHaveTextContent('€0.00');
+        expect(within(card).getByRole('img', { name: '0 of 1 charges this month have gone out' })).toBeInTheDocument();
+    });
+
+    it('notes how many days away a later renewal is', async () => {
+        dashboardApi([subscription(1, 'Netflix', 'active', { nextBillingDate: daysFromToday(20) })]);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        expect(await screen.findByText('in 20 days')).toBeInTheDocument();
+    });
+});
+
+describe('MySubscriptionsPage search', () => {
+    beforeEach(() => {
+        signIn();
+    });
+
+    const items = [
+        subscription(1, 'Netflix', 'active'),
+        subscription(2, 'Spotify', 'active', { category: 'Music' }),
+        subscription(3, 'GitHub', 'active', { category: 'Developer tools', notes: 'Copilot seat' }),
+        subscription(4, 'Old Hosting', 'cancelled', { cancelledAt: '2026-10-01', autoRenew: false, category: 'Developer tools' }),
+    ];
+
+    it('narrows both sections to subscriptions whose name, category or notes match', async () => {
+        dashboardApi(items);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        const search = await screen.findByRole('searchbox', { name: 'Search subscriptions' });
+        await screen.findByText('My subscriptions · 3');
+
+        await user.type(search, 'copilot');
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['GitHub']);
+        expect(screen.queryByText(/^Cancelled ·/)).not.toBeInTheDocument();
+
+        await user.clear(search);
+        await user.type(search, 'developer');
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['GitHub']);
+        expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Hosting']);
+
+        await user.clear(search);
+        await user.type(search, 'nothing like this');
+        expect(screen.getByText('No subscriptions match this filter.')).toBeInTheDocument();
+    });
+
+    it('filters by category', async () => {
+        dashboardApi(items);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await screen.findByText('My subscriptions · 3');
+        await user.click(screen.getByRole('combobox', { name: 'Category' }));
+        await user.click(screen.getByRole('option', { name: 'Music' }));
+
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Spotify']);
+        expect(screen.queryByText(/^Cancelled ·/)).not.toBeInTheDocument();
+    });
+});
