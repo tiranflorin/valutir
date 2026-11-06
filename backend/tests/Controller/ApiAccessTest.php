@@ -27,6 +27,8 @@ final class ApiAccessTest extends WebTestCase
         yield 'replace subscription' => ['PUT', '/api/subs/1'];
         yield 'update subscription' => ['PATCH', '/api/subs/1'];
         yield 'delete subscription' => ['DELETE', '/api/subs/1'];
+        yield 'flag subscription for review' => ['PUT', '/api/subs/1/review'];
+        yield 'clear review flag' => ['DELETE', '/api/subs/1/review'];
         yield 'read profile' => ['GET', '/api/profile'];
         yield 'update profile' => ['PATCH', '/api/profile'];
         yield 'delete account' => ['DELETE', '/api/profile'];

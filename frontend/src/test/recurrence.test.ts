@@ -6,6 +6,7 @@ const subscription = (billingCadence: SubscriptionRecord['billingCadence'], next
     id: 1, serviceName: 'Test', amount: '10.00', currency: 'EUR', status: 'active', billingCadence, category: null,
     startedAt: null, nextBillingDate, notes: null, paymentMethod: null, isActive: true, autoRenew: true, b2b: false,
     householdShared: false, householdSize: null, cancelledAt: null, createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
+    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
 });
 
 const dates = (cadence: SubscriptionRecord['billingCadence'], anchor: string, rangeStart: string, rangeEnd: string) =>
@@ -24,6 +25,13 @@ describe('calendar recurrence', () => {
     it('starts from the stored date and only returns charges inside the range', () => {
         expect(dates('weekly', '2026-10-01', '2026-11-01', '2026-11-16')).toEqual(['2026-11-05', '2026-11-12']);
         expect(dates('quarterly', '2026-01-15', '2026-03-01', '2027-01-01')).toEqual(['2026-04-15', '2026-07-15', '2026-10-15']);
+    });
+});
+
+describe('paused subscriptions', () => {
+    it('put nothing on the calendar until they resume', () => {
+        const paused = { ...subscription('monthly', '2026-11-20'), status: 'paused' as const };
+        expect(buildRecurringOccurrences({ subscriptions: [paused], rangeStart: '2026-11-01', rangeEnd: '2027-02-01' })).toEqual([]);
     });
 });
 

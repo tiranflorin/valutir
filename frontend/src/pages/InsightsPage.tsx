@@ -20,7 +20,7 @@ import './RecurringScreens.css';
 type View = 'personal' | 'business';
 type AmountMode = 'full' | 'share';
 
-/** Shared with the dashboard: the Personal/Business view the user picked (see TODO #5's inventory). */
+/** Shared with the dashboard: the Personal/Business view the user picked (see TODO #4's inventory). */
 const VIEW_KEY = 'valutir_dashboard_view';
 
 const readView = (): View => {
@@ -62,7 +62,7 @@ const InsightsPage: React.FC = () => {
 
     const inView = useMemo(
         () => subscriptions.filter((subscription) =>
-            subscription.status !== 'cancelled' && (view === 'business' ? subscription.b2b === true : subscription.b2b !== true)),
+            subscription.status !== 'cancelled' && subscription.status !== 'paused' && (view === 'business' ? subscription.b2b === true : subscription.b2b !== true)),
         [subscriptions, view]
     );
     const currencies = useMemo(() => currenciesOf(inView, user?.defaultCurrency), [inView, user?.defaultCurrency]);

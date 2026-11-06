@@ -64,6 +64,25 @@ class SubscriptionRepository extends ServiceEntityRepository
     }
 
     /**
+     * The user's paused subscriptions whose resume date is on or before $today (their local day).
+     *
+     * @return Subscription[]
+     */
+    public function findDueToResumeForUser(User $user, \DateTimeImmutable $today): array
+    {
+        return $this->createVisibleForUserQueryBuilder($user)
+            ->andWhere('s.status = :paused')
+            ->andWhere('s.resumesOn IS NOT NULL')
+            ->andWhere('s.resumesOn <= :today')
+            ->setParameter('paused', Subscription::STATUS_PAUSED)
+            ->setParameter('today', $today->format('Y-m-d'))
+            ->orderBy('s.resumesOn', 'ASC')
+            ->addOrderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @param list<string> $statuses
      */
     public function countWithStatuses(User $user, array $statuses): int

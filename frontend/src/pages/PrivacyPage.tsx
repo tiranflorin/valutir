@@ -95,7 +95,7 @@ const PrivacyPage: React.FC = () => (
                                     <td>Contract (Art. 6(1)(b) GDPR)</td>
                                 </tr>
                                 <tr>
-                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status, category, notes, payment method label, household sharing</td>
+                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status (including a pause and its resume date), category, notes, payment method label, household sharing, and any review flag with its note</td>
                                     <td>To show your dashboard and calendar, and to work out upcoming charges</td>
                                     <td>Contract</td>
                                 </tr>
@@ -123,7 +123,7 @@ const PrivacyPage: React.FC = () => (
                         </table>
                     </div>
                     <p>
-                        Please don't put sensitive information in notes or the payment method field. For example, never
+                        Please don't put sensitive information in notes, review notes or the payment method field. For example, never
                         enter full card numbers; a label like &ldquo;Visa ending 4242&rdquo; is enough.
                     </p>
                     <p>We don't make automated decisions about you, and ValuTir isn't meant for children under 16.</p>

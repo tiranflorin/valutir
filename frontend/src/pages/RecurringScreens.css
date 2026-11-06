@@ -2461,9 +2461,9 @@ body {
     color: #68766e;
 }
 
-.status-tag.review {
-    background: #fff3e3;
-    color: #91591c;
+.status-tag.paused {
+    background: #eef1f6;
+    color: #4f5d75;
 }
 
 .status-tag.shared {
@@ -3980,5 +3980,62 @@ body {
 }
 
 :root[data-theme='dark'] .export-contents {
+    color: #cbd5e1;
+}
+
+/* Review flag: a tag in the list, and the card on the detail page. */
+.review-tag {
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: #fff3e3;
+    color: #91591c;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.subscription-review-card.MuiPaper-root {
+    padding: 18px 20px;
+    border: 1px solid #e3eae5;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+.subscription-review-card.flagged.MuiPaper-root {
+    border-color: #efd8b7;
+    background: #fffaf3;
+}
+
+.subscription-review-card .review-note {
+    padding-left: 10px;
+    border-left: 3px solid #efd8b7;
+    color: #485a4e;
+    font-style: italic;
+}
+
+:root[data-theme='dark'] .review-tag {
+    background: #3a2c18;
+    color: #f0c27f;
+}
+
+:root[data-theme='dark'] .status-tag.paused {
+    background: #26324a;
+    color: #b9c6dd;
+}
+
+:root[data-theme='dark'] .subscription-review-card.MuiPaper-root {
+    border-color: #344157;
+    background: #172033;
+}
+
+:root[data-theme='dark'] .subscription-review-card.flagged.MuiPaper-root {
+    border-color: #5c4831;
+    background: #302617;
+}
+
+:root[data-theme='dark'] .subscription-review-card .review-note {
+    border-color: #5c4831;
     color: #cbd5e1;
 }

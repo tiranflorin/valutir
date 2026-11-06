@@ -46,9 +46,12 @@ type Subscription = {
     trialEndsAt?: string | null;
     householdShared?: boolean;
     householdSize?: number | null;
+    resumesOn?: string | null;
+    reviewFlagged?: boolean;
+    reviewNote?: string | null;
 };
 
-type Filter = 'all' | 'upcoming' | 'trials' | 'review' | 'shared' | 'cancelled';
+type Filter = 'all' | 'upcoming' | 'trials' | 'review' | 'shared' | 'paused' | 'cancelled';
 /** Whether amounts show the full bill or the owner's equal share of shared bills. */
 type AmountMode = 'full' | 'share';
 type SortKey = 'category' | 'amount' | 'billingCadence' | 'nextBillingDate' | 'status';
@@ -56,6 +59,9 @@ type SortKey = 'category' | 'amount' | 'billingCadence' | 'nextBillingDate' | 's
 const normalizeStatus = (status: string) => status.toLowerCase();
 const isCancelled = (subscription: Subscription) => normalizeStatus(subscription.status) === 'cancelled';
 const isTrial = (subscription: Subscription) => normalizeStatus(subscription.status) === 'trial';
+/** Paused: not charged, not reminded, not in totals (until it resumes). */
+const isPaused = (subscription: Subscription) => normalizeStatus(subscription.status) === 'paused';
+const isFlagged = (subscription: Subscription) => subscription.reviewFlagged === true;
 const isShared = (subscription: Subscription) => splitCount(subscription) > 1;
 
 /** One bill's amount: the full bill, or your equal share of it when shared. */
@@ -104,8 +110,8 @@ const serviceIcon = (name: string) => {
 const statusLabel = (status: string) => {
     switch (normalizeStatus(status)) {
         case 'trial': return 'Trial';
+        case 'paused': return 'Paused';
         case 'cancelled': return 'Cancelled';
-        case 'other': return 'Review';
         default: return 'Active';
     }
 };
@@ -304,7 +310,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
             <tbody>
                 {subscriptions.map((subscription) => {
                     const status = normalizeStatus(subscription.status);
-                    const statusClass = status === 'trial' ? 'trial' : status === 'cancelled' ? 'cancelled' : status === 'other' ? 'review' : '';
+                    const statusClass = status === 'trial' ? 'trial' : status === 'cancelled' ? 'cancelled' : status === 'paused' ? 'paused' : '';
                     const cancelled = isCancelled(subscription);
                     return (
                         <tr key={subscription.id}>
@@ -314,6 +320,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                                         <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
                                         <span className="service-name">{subscription.serviceName}</span>
                                         {isShared(subscription) && <span className="shared-tag" title={`Split between ${splitCount(subscription)} people`}>Shared</span>}
+                                        {isFlagged(subscription) && <span className="review-tag" title={subscription.reviewNote ?? 'Flagged for review'}>Review</span>}
                                     </span>
                                 </RouterLink>
                             </td>
@@ -326,8 +333,10 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                             </td>
                             <td>{subscription.billingCadence.charAt(0).toUpperCase() + subscription.billingCadence.slice(1)}</td>
                             <td>
-                                {formatDate(cancelled ? subscription.cancelledAt : subscription.nextBillingDate)}
-                                {!cancelled && dueInNote(subscription.nextBillingDate) && (
+                                {isPaused(subscription)
+                                    ? (subscription.resumesOn ? `Resumes ${formatDate(subscription.resumesOn)}` : 'Paused')
+                                    : formatDate(cancelled ? subscription.cancelledAt : subscription.nextBillingDate)}
+                                {!cancelled && !isPaused(subscription) && dueInNote(subscription.nextBillingDate) && (
                                     <small className="due-in-note">{dueInNote(subscription.nextBillingDate)}</small>
                                 )}
                             </td>
@@ -407,16 +416,19 @@ const MySubscriptionsPage: React.FC = () => {
         () => contextSubscriptions.filter(isCancelled),
         [contextSubscriptions]
     );
+    // What is actually charged: everything not cancelled or paused. Totals and reminders use this.
+    const chargedSubscriptions = useMemo(() => activeSubscriptions.filter((subscription) => !isPaused(subscription)), [activeSubscriptions]);
+    const pausedSubscriptions = useMemo(() => activeSubscriptions.filter(isPaused), [activeSubscriptions]);
     const trialSubscriptions = useMemo(
-        () => activeSubscriptions.filter(isTrial),
-        [activeSubscriptions]
+        () => chargedSubscriptions.filter(isTrial),
+        [chargedSubscriptions]
     );
     const dueSoon = useMemo(
-        () => activeSubscriptions.filter((subscription) => {
+        () => chargedSubscriptions.filter((subscription) => {
             const offset = dayOffset(subscription.nextBillingDate);
             return offset !== null && offset >= 0 && offset <= 7;
         }),
-        [activeSubscriptions]
+        [chargedSubscriptions]
     );
     const trialsEndingSoon = useMemo(
         () => trialSubscriptions.filter((subscription) => {
@@ -426,7 +438,7 @@ const MySubscriptionsPage: React.FC = () => {
         [trialSubscriptions]
     );
     const [amountMode, setAmountMode] = useState<AmountMode>('full');
-    const sharedSubscriptions = useMemo(() => activeSubscriptions.filter(isShared), [activeSubscriptions]);
+    const sharedSubscriptions = useMemo(() => chargedSubscriptions.filter(isShared), [chargedSubscriptions]);
     // Only the personal view can split bills; business totals always show full bills.
     const personalAmountMode: AmountMode = view === 'personal' && sharedSubscriptions.length > 0 ? amountMode : 'full';
     const monthChargeAmount = useCallback(
@@ -437,17 +449,14 @@ const MySubscriptionsPage: React.FC = () => {
         [personalAmountMode]
     );
     const monthlyTotal = useMemo(
-        () => groupedMoney(activeSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode)),
-        [activeSubscriptions, personalAmountMode]
+        () => groupedMoney(chargedSubscriptions, (subscription) => monthlyEquivalent(subscription, personalAmountMode)),
+        [chargedSubscriptions, personalAmountMode]
     );
 
     // Trials are listed by when they end; other subscriptions by their next renewal.
     const renewalsSoon = useMemo(() => dueSoon.filter((subscription) => !isTrial(subscription)), [dueSoon]);
-    const attentionCount = trialsEndingSoon.length + renewalsSoon.length;
-    const reviewSubscriptions = useMemo(
-        () => activeSubscriptions.filter((subscription) => normalizeStatus(subscription.status) === 'other'),
-        [activeSubscriptions]
-    );
+    const reviewSubscriptions = useMemo(() => activeSubscriptions.filter(isFlagged), [activeSubscriptions]);
+    const attentionCount = trialsEndingSoon.length + renewalsSoon.length + reviewSubscriptions.length;
 
     const sort = useSubscriptionSort();
     // "My subscriptions" never includes cancelled ones; they have their own section at the end.
@@ -457,18 +466,19 @@ const MySubscriptionsPage: React.FC = () => {
         if (filter === 'trials') return trialSubscriptions;
         if (filter === 'shared') return sharedSubscriptions;
         if (filter === 'review') return reviewSubscriptions;
+        if (filter === 'paused') return pausedSubscriptions;
         return activeSubscriptions;
-    }, [filter, dueSoon, trialSubscriptions, sharedSubscriptions, reviewSubscriptions, activeSubscriptions]);
-    // Shared bills exist only in the personal view; "Needs review" is the business view's chip.
-    const filters: [Filter, string][] = [
+    }, [filter, dueSoon, trialSubscriptions, sharedSubscriptions, reviewSubscriptions, pausedSubscriptions, activeSubscriptions]);
+    // Shared bills exist only in the personal view; Needs review and Paused show once there are some.
+    const filters = ([
         ['all', `All ${contextSubscriptions.length}`],
         ['upcoming', `Upcoming ${dueSoon.length}`],
         ['trials', `Trials ${trialSubscriptions.length}`],
-        view === 'business'
-            ? ['review', `Needs review ${reviewSubscriptions.length}`]
-            : ['shared', `Shared ${sharedSubscriptions.length}`],
+        view === 'personal' ? ['shared', `Shared ${sharedSubscriptions.length}`] : null,
+        reviewSubscriptions.length > 0 ? ['review', `Needs review ${reviewSubscriptions.length}`] : null,
+        pausedSubscriptions.length > 0 ? ['paused', `Paused ${pausedSubscriptions.length}`] : null,
         ['cancelled', `Cancelled ${cancelledSubscriptions.length}`],
-    ];
+    ] as ([Filter, string] | null)[]).filter((item): item is [Filter, string] => item !== null);
 
     return (
         <Box className="dashboard-page">
@@ -534,7 +544,7 @@ const MySubscriptionsPage: React.FC = () => {
                         )}
                         {!loading && (
                             <MonthSummaryCard
-                                subscriptions={activeSubscriptions}
+                                subscriptions={chargedSubscriptions}
                                 amountFor={monthChargeAmount}
                                 summary={<><strong>{monthlyTotal}</strong> / month on average · <RouterLink to="/insights">See insights →</RouterLink></>}
                             />
@@ -544,7 +554,7 @@ const MySubscriptionsPage: React.FC = () => {
                             <Paper className="dashboard-list attention-card" component="section" aria-labelledby="attention-title">
                                 <div className="list-head">
                                     <h2 id="attention-title">Needs attention · {attentionCount}</h2>
-                                    <span className="list-count">Trials ending and renewals in the next 7 days</span>
+                                    <span className="list-count">Trials ending, renewals in the next 7 days, and what you flagged</span>
                                 </div>
                                 <div className="attention-list">
                                     {trialsEndingSoon.map((subscription) => (
@@ -565,6 +575,15 @@ const MySubscriptionsPage: React.FC = () => {
                                             amountMode={personalAmountMode}
                                         />
                                     ))}
+                                    {reviewSubscriptions.map((subscription) => (
+                                        <AttentionRow
+                                            key={`flag-${subscription.id}`}
+                                            subscription={subscription}
+                                            meta={subscription.reviewNote ? `FLAGGED · ${subscription.reviewNote}` : 'FLAGGED FOR REVIEW'}
+                                            action="Decide →"
+                                            amountMode={personalAmountMode}
+                                        />
+                                    ))}
                                 </div>
                             </Paper>
                         )}
@@ -573,7 +592,7 @@ const MySubscriptionsPage: React.FC = () => {
                             <div className="list-head">
                                 <h2>{view === 'business' ? 'All business subscriptions' : 'All personal subscriptions'}</h2>
                                 <span className="list-head-actions">
-                                    <span className="list-count">{activeSubscriptions.length} active · {cancelledSubscriptions.length} cancelled</span>
+                                    <span className="list-count">{chargedSubscriptions.length} active{pausedSubscriptions.length ? ` · ${pausedSubscriptions.length} paused` : ''} · {cancelledSubscriptions.length} cancelled</span>
                                     <Button
                                         size="small"
                                         variant="outlined"

@@ -10,7 +10,8 @@ use App\Entity\Subscription;
  * Keeps stored billing data current once dates pass:
  *  - a trial whose end date has passed (and that still auto-renews) becomes active;
  *  - a next billing date in the past moves to the next charge on or after today.
- * Cancelled, "other", deleted, and non-renewing subscriptions are left alone.
+ * Paused, cancelled, deleted, and non-renewing subscriptions are left alone (AdvanceBillingDatesCommand
+ * resumes a paused one on its resume date first).
  */
 final readonly class BillingDateAdvancer
 {

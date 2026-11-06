@@ -23,7 +23,7 @@ import CurrencySelect, { type Currency } from '../CurrencySelect';
 import AppSurfaceCard from '../AppSurfaceCard';
 
 export type BillingInterval = 'monthly' | 'yearly' | 'quarterly' | 'weekly';
-export type SubscriptionStatus = 'Active' | 'Trial' | 'Other';
+export type SubscriptionStatus = 'Active' | 'Trial' | 'Paused';
 
 export type SubscriptionFormValues = {
     serviceName: string;
@@ -33,6 +33,8 @@ export type SubscriptionFormValues = {
     renewalDate: string;
     category: string;
     status: SubscriptionStatus;
+    /** Paused only: when it becomes active again (YYYY-MM-DD); empty = until changed. */
+    resumesOn: string;
     notes: string;
     providerGroup: string;
     householdShared: boolean;
@@ -56,6 +58,8 @@ type Props = {
     showCurrency?: boolean;
     showProviderGroup?: boolean;
     showHouseholdShared?: boolean;
+    /** Statuses to pick from. A new subscription is Active or Trial; Paused is for existing ones. */
+    statusOptions?: SubscriptionStatus[];
 };
 
 const intervalOptions: { label: string; value: BillingInterval }[] = [
@@ -75,7 +79,7 @@ const categoryOptions = [
     'Other',
 ];
 
-const statusOptions: SubscriptionStatus[] = ['Active', 'Trial', 'Other'];
+const DEFAULT_STATUS_OPTIONS: SubscriptionStatus[] = ['Active', 'Trial'];
 
 const requiredFieldSx = {
     '& .MuiFormLabel-asterisk': {
@@ -103,11 +107,12 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                    showCurrency = true,
                                                    showProviderGroup = true,
                                                    showHouseholdShared = true,
+                                                   statusOptions = DEFAULT_STATUS_OPTIONS,
                                                }) => {
     const theme = useTheme();
 
     const isTrial = values.status === 'Trial';
-    const isOther = values.status === 'Other';
+    const isPaused = values.status === 'Paused';
     const parsedAmount = Number(values.amount) || 0;
 
     const normalized = useMemo(() => {
@@ -283,7 +288,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             spacing={2}
                             alignItems="flex-start"
                         >
-                            <Stack spacing={1} className="subscription-status-field">
+                            {statusOptions.length > 0 && <Stack spacing={1} className="subscription-status-field">
                                 <FormFieldLabel label="Status" />
                                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                                     {statusOptions.map((option) => (
@@ -298,7 +303,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         />
                                     ))}
                                 </Stack>
-                            </Stack>
+                            </Stack>}
                             <TextField
                                 className="subscription-date-field"
                                 label={billingDateLabel}
@@ -330,10 +335,23 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             />
                         </Stack>
 
-                        {isOther && (
-                            <Alert severity="warning" sx={{ borderRadius: 3 }}>
-                                “Other” is treated as partially active in the current flow. (TODO)
-                            </Alert>
+                        {isPaused && (
+                            <Stack spacing={1.5}>
+                                <Alert severity="info" sx={{ borderRadius: 3 }}>
+                                    A paused subscription isn’t charged, gets no reminders and isn’t counted in your totals.
+                                    Pick the day it starts again, or leave it empty to keep it paused until you change it.
+                                </Alert>
+                                <TextField
+                                    className="subscription-date-field"
+                                    label="Resumes on (optional)"
+                                    type="date"
+                                    value={values.resumesOn}
+                                    onChange={(e) => patch({ resumesOn: e.target.value })}
+                                    helperText="It becomes active again on this day."
+                                    InputLabelProps={{ shrink: true }}
+                                    inputProps={{ min: todayIsoDate() }}
+                                />
+                            </Stack>
                         )}
 
                         {isTrial && (

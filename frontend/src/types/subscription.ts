@@ -1,8 +1,8 @@
 export type BackendSubscriptionStatus =
     | 'active'
     | 'trial'
-    | 'cancelled'
-    | 'other';
+    | 'paused'
+    | 'cancelled';
 
 export type SubscriptionBillingFrequency =
     | 'weekly'
@@ -33,4 +33,10 @@ export interface SubscriptionRecord {
     updatedAt: string;
     trialEndsAt: string | null;
     trialReminderSentAt: string | null;
+    /** Paused only: when it becomes active again; null = paused until changed. */
+    resumesOn: string | null;
+    /** Flagged by the owner to decide on later; a flag, not a status (still charged and reminded). */
+    reviewFlagged: boolean;
+    reviewFlaggedAt: string | null;
+    reviewNote: string | null;
 }

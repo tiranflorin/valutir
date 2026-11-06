@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Dto\ReviewFlagRequest;
 use App\Dto\SubscriptionUpsertRequest;
 use App\Entity\Subscription;
 use App\Entity\User;
+use App\Exception\ApiValidationException;
 use App\Service\SubscriptionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +18,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/subs')]
 final class SubsController extends AbstractController
@@ -23,6 +26,7 @@ final class SubsController extends AbstractController
     public function __construct(
         private readonly SubscriptionService $subscriptionService,
         private readonly SerializerInterface $serializer,
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -68,6 +72,36 @@ final class SubsController extends AbstractController
         $subscription = $this->subscriptionService->update($subscription, $dto);
 
         return $this->json($subscription->toArray());
+    }
+
+    /** Flags the subscription for review (it stays as it is: still charged and reminded), or updates the note. */
+    #[Route('/{id}/review', name: 'api_subs_review_flag', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    public function flagForReview(int $id, Request $request): JsonResponse
+    {
+        $user = $this->requireUser();
+        try {
+            /** @var ReviewFlagRequest $dto */
+            $dto = $this->serializer->deserialize('' === $request->getContent() ? '{}' : $request->getContent(), ReviewFlagRequest::class, 'json');
+        } catch (SerializerExceptionInterface|\JsonException $e) {
+            throw new BadRequestHttpException('Invalid JSON payload.', $e);
+        }
+        $violations = $this->validator->validate($dto);
+        if (\count($violations) > 0) {
+            throw new ApiValidationException($violations);
+        }
+
+        $subscription = $this->subscriptionService->getForUser($id, $user);
+
+        return $this->json($this->subscriptionService->flagForReview($subscription, $dto->note)->toArray());
+    }
+
+    #[Route('/{id}/review', name: 'api_subs_review_clear', methods: ['DELETE'], requirements: ['id' => '\d+'])]
+    public function clearReview(int $id): JsonResponse
+    {
+        $user = $this->requireUser();
+        $subscription = $this->subscriptionService->getForUser($id, $user);
+
+        return $this->json($this->subscriptionService->clearReviewFlag($subscription)->toArray());
     }
 
     #[Route('/{id}', name: 'api_subs_delete', methods: ['DELETE'])]

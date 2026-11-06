@@ -46,4 +46,17 @@ final class SubscriptionTest extends TestCase
         self::assertSame([true, 3], [$shared->toArray()['householdShared'], $shared->toArray()['householdSize']]);
         self::assertSame([false, null], [$personal->toArray()['householdShared'], $personal->toArray()['householdSize']]);
     }
+
+    public function testToArrayExposesThePauseAndReviewFields(): void
+    {
+        $subscription = (new Subscription())->setResumesOn(new \DateTimeImmutable('2027-01-15'));
+        $subscription->flagForReview(new \DateTimeImmutable('2026-11-06T10:00:00+00:00'), 'Still needed?');
+
+        $data = $subscription->toArray();
+
+        self::assertSame('2027-01-15', $data['resumesOn']);
+        self::assertTrue($data['reviewFlagged']);
+        self::assertSame('2026-11-06T10:00:00+00:00', $data['reviewFlaggedAt']);
+        self::assertSame('Still needed?', $data['reviewNote']);
+    }
 }

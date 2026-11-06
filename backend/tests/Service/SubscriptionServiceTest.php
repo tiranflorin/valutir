@@ -14,6 +14,7 @@ use App\Service\SubscriptionService;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -141,6 +142,82 @@ final class SubscriptionServiceTest extends TestCase
         self::assertNotNull($subscription->getDeletedAt());
         self::assertNotNull($subscription->getCancelledAt());
         self::assertTrue($subscription->getDeletedUseful());
+    }
+
+    public function testPausingKeepsTheResumeDateAndOtherStatusesDropIt(): void
+    {
+        $subscription = new Subscription();
+        $service = $this->service($this->transactionalEntityManager(times: 2));
+
+        $request = $this->request();
+        $request->status = 'paused';
+        $request->resumesOn = '2027-01-15';
+        $service->update($subscription, $request);
+        self::assertSame('paused', $subscription->getStatus());
+        self::assertSame('2027-01-15', $subscription->getResumesOn()?->format('Y-m-d'));
+
+        $request->status = 'active';
+        $service->update($subscription, $request);
+        self::assertNull($subscription->getResumesOn());
+    }
+
+    public function testResumingAPausedSubscriptionCountsTowardsTheFreeLimit(): void
+    {
+        $subscription = new Subscription();
+        $subscription->setStatus('paused');
+        $subscription->setUser((new User())->setEmail('a@example.test'));
+        $entityManager = $this->transactionalEntityManager();
+        $entityManager->expects(self::never())->method('flush');
+
+        $this->expectException(HttpException::class);
+        $this->service($entityManager, activeCount: FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS)->update($subscription, $this->request());
+    }
+
+    public function testFlagForReviewKeepsTheStatusAndStoresTheNote(): void
+    {
+        $subscription = new Subscription();
+        $subscription->setStatus('active');
+        $entityManager = $this->createMock(EntityManager::class);
+        $entityManager->expects(self::exactly(3))->method('flush');
+        $service = $this->service($entityManager);
+
+        $service->flagForReview($subscription, '  Do the kids still use it?  ');
+        $flaggedAt = $subscription->getReviewFlaggedAt();
+        self::assertSame('active', $subscription->getStatus());
+        self::assertNotNull($flaggedAt);
+        self::assertSame('Do the kids still use it?', $subscription->getReviewNote());
+
+        // Changing the note keeps the original flag date.
+        $service->flagForReview($subscription, '');
+        self::assertSame($flaggedAt, $subscription->getReviewFlaggedAt());
+        self::assertNull($subscription->getReviewNote());
+
+        $service->clearReviewFlag($subscription);
+        self::assertFalse($subscription->isReviewFlagged());
+    }
+
+    public function testACancelledSubscriptionCannotBeFlagged(): void
+    {
+        $subscription = new Subscription();
+        $subscription->setStatus('cancelled');
+
+        $this->expectException(ConflictHttpException::class);
+        $this->service($this->createStub(EntityManager::class))->flagForReview($subscription, null);
+    }
+
+    public function testCancellingClearsTheReviewFlag(): void
+    {
+        $subscription = new Subscription();
+        $subscription->setStatus('active');
+        $subscription->flagForReview(new \DateTimeImmutable(), 'Still needed?');
+
+        $request = $this->request();
+        $request->status = 'cancelled';
+        $request->cancelledAt = '2026-11-06';
+        $this->service($this->transactionalEntityManager())->update($subscription, $request);
+
+        self::assertFalse($subscription->isReviewFlagged());
+        self::assertNull($subscription->getReviewNote());
     }
 
     private function service(EntityManager $entityManager, int $activeCount = 0, ?ValidatorInterface $validator = null): SubscriptionService

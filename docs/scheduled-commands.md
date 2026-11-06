@@ -7,7 +7,7 @@ docker compose exec backend php bin/console app:subscriptions:advance-billing-da
 docker compose exec backend php bin/console app:reminders:send
 ```
 
-- `app:subscriptions:advance-billing-dates` moves a past `nextBillingDate` of an auto-renewing subscription to its next charge on or after the owner's local today, and turns a trial whose end date has passed into an active subscription. Cancelled, "other", deleted, and non-renewing subscriptions are left alone.
+- `app:subscriptions:advance-billing-dates` first makes paused subscriptions active again on their `resumesOn` day (a free account at its 50-subscription limit keeps the subscription paused, retried next run), then moves a past `nextBillingDate` of an auto-renewing subscription to its next charge on or after the owner's local today, and turns a trial whose end date has passed into an active subscription. Paused, cancelled, deleted, and non-renewing subscriptions are left alone.
 - `app:reminders:send` emails each user (with reminders on and a verified email address) a digest of upcoming payments, on the first run after 01:00 in their time zone; later runs that day skip them. No email goes out on a day with nothing new to remind, and a charge is reminded once, from its lead time until the charge day:
 
   | Reminder | Sent |

@@ -12,6 +12,7 @@ use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -79,12 +80,35 @@ final class SubscriptionService
         });
     }
 
+    /**
+     * @throws ConflictHttpException when the subscription is cancelled (nothing left to decide)
+     */
+    public function flagForReview(Subscription $subscription, ?string $note): Subscription
+    {
+        if (Subscription::STATUS_CANCELLED === $subscription->getStatus()) {
+            throw new ConflictHttpException("A cancelled subscription doesn't need a review.");
+        }
+        $subscription->flagForReview(new \DateTimeImmutable(), $note);
+        $this->entityManager->flush();
+
+        return $subscription;
+    }
+
+    public function clearReviewFlag(Subscription $subscription): Subscription
+    {
+        $subscription->clearReviewFlag();
+        $this->entityManager->flush();
+
+        return $subscription;
+    }
+
     public function delete(Subscription $subscription, ?bool $usedAndUseful = null): void
     {
         $subscription->setDeletedAt(new \DateTimeImmutable());
         $subscription->setCancelledAt(new \DateTimeImmutable());
         $subscription->setStatus('cancelled');
         $subscription->setDeletedUseful($usedAndUseful);
+        $subscription->clearReviewFlag();
         $this->entityManager->flush();
     }
 
@@ -114,6 +138,11 @@ final class SubscriptionService
         // A size sent without householdShared is ignored, so turning sharing off always clears it.
         $subscription->setHouseholdSharing($dto->householdShared ? $dto->householdSize : null);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));
+        $subscription->setResumesOn(Subscription::STATUS_PAUSED === $dto->status ? $this->parseDate($dto->resumesOn) : null);
+        // Cancelling is the answer to a review.
+        if (Subscription::STATUS_CANCELLED === $dto->status) {
+            $subscription->clearReviewFlag();
+        }
 
         // trialReminderSentAt is server-owned (set when a reminder is sent), never taken from the client.
         // A new trial end date needs a new reminder, so clear the old one.

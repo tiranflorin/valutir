@@ -22,6 +22,10 @@ export type SubscriptionCardModel = {
     paymentMethod?: string | null;
     trialEndsAt?: string | null;
     trialReminderSentAt?: string | null;
+    resumesOn?: string | null;
+    reviewFlagged?: boolean;
+    reviewFlaggedAt?: string | null;
+    reviewNote?: string | null;
 };
 
 type Props = {
@@ -35,6 +39,15 @@ type Props = {
 const formatBillingCadence = (value: string) => {
     if (!value) return 'Unknown';
     return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+};
+
+const statusChipLabel = ({ status, resumesOn }: SubscriptionCardModel) => {
+    if (status === 'paused') {
+        return resumesOn
+            ? `Paused until ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${resumesOn}T00:00:00`))}`
+            : 'Paused';
+    }
+    return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
 const SubscriptionHeaderCard: React.FC<Props> = ({
@@ -61,10 +74,13 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
 
                     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.25 }}>
                         <Chip
-                            label={subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                            color={subscription.status === 'active' ? 'success' : 'default'}
+                            label={statusChipLabel(subscription)}
+                            color={subscription.status === 'active' ? 'success' : subscription.status === 'paused' ? 'warning' : 'default'}
                             sx={{ fontWeight: 700 }}
                         />
+                        {subscription.reviewFlagged && (
+                            <Chip label="Flagged for review" color="warning" variant="outlined" sx={{ fontWeight: 700 }} />
+                        )}
                         {subscription.autoRenew && (
                             <Chip label="Auto renew" color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
                         )}

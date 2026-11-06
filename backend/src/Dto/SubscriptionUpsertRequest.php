@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Subscription;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -54,8 +55,12 @@ final class SubscriptionUpsertRequest
     public ?string $cancelledAt = null;
 
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['active', 'trial', 'other', 'cancelled'])]
+    #[Assert\Choice(choices: Subscription::STATUSES)]
     public ?string $status = null;
+
+    /** Paused only: when it becomes active again; null keeps it paused until changed. */
+    #[Assert\Date]
+    public ?string $resumesOn = null;
 
     #[Assert\Date]
     public ?string $trialEndsAt = null;
@@ -69,6 +74,16 @@ final class SubscriptionUpsertRequest
         if ($isDate($this->startedAt) && $isDate($this->cancelledAt) && $this->cancelledAt < $this->startedAt) {
             $context->buildViolation("The cancellation date can't be before the start date.")
                 ->atPath('cancelledAt')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
+    public function validateResumeDate(ExecutionContextInterface $context): void
+    {
+        if (null !== $this->resumesOn && '' !== $this->resumesOn && Subscription::STATUS_PAUSED !== $this->status) {
+            $context->buildViolation('Only a paused subscription has a resume date.')
+                ->atPath('resumesOn')
                 ->addViolation();
         }
     }

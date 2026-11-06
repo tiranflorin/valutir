@@ -27,6 +27,7 @@ const AddSubscriptionPage: React.FC = () => {
         renewalDate: '',
         category: 'Entertainment',
         status: 'Active' as SubscriptionStatus,
+        resumesOn: '',
         notes: '',
         providerGroup: '',
         householdShared: false,
@@ -39,13 +40,8 @@ const AddSubscriptionPage: React.FC = () => {
     const [error, setError] = useState('');
 
     const isTrial = values.status === 'Trial';
-    const isOther = values.status === 'Other';
-
-    const statusPayload = useMemo(() => {
-        if (values.status === 'Trial') return 'trial';
-        if (values.status === 'Other') return 'other';
-        return 'active';
-    }, [values.status]);
+    // A new subscription is Active or Trial; pausing is for one already tracked.
+    const statusPayload = useMemo(() => (values.status === 'Trial' ? 'trial' : 'active'), [values.status]);
 
     const billingDateLabel = isTrial ? 'First charge date' : 'Next billing date';
 
@@ -94,9 +90,10 @@ const AddSubscriptionPage: React.FC = () => {
                 notes: values.notes.trim() || null,
                 paymentMethod: values.providerGroup.trim() || null,
                 ...householdPayload(values),
-                autoRenew: !isOther && values.autoRenew,
+                autoRenew: values.autoRenew,
                 b2b: values.b2b,
-                cancelledAt: isOther ? today : null,
+                cancelledAt: null,
+                resumesOn: null,
             };
 
             const response = await fetch(`${API_URL}/api/subs`, {

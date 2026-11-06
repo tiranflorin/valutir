@@ -66,8 +66,9 @@ describe('this month’s charges', () => {
         expect(charges({ status: 'trial', nextBillingDate: '2026-12-01', startedAt: '2026-01-01' })).toEqual([]);
     });
 
-    it('skips cancelled subscriptions, missing dates and unknown cadences', () => {
+    it('skips cancelled and paused subscriptions, missing dates and unknown cadences', () => {
         expect(charges({ status: 'cancelled' })).toEqual([]);
+        expect(charges({ status: 'paused' })).toEqual([]);
         expect(charges({ nextBillingDate: null })).toEqual([]);
         expect(charges({ billingCadence: 'daily' })).toEqual([]);
     });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import App from '../App';
@@ -20,6 +20,7 @@ const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord
     status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null,
     isActive: true, autoRenew: true, b2b: false, householdShared: false, householdSize: null, cancelledAt: null,
     createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
+    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
     ...overrides,
 });
 
@@ -40,6 +41,17 @@ const fakeBackend = (initial: SubscriptionRecord[]) => {
         handlers[`PATCH /api/subs/${id}`] = (call) => {
             const payload = bodyOf(call);
             subscriptions = subscriptions.map((item) => (item.id === id ? { ...item, ...payload, amount: String(payload.amount) } : item));
+            return { status: 200, body: subscriptions.find((item) => item.id === id) };
+        };
+        handlers[`PUT /api/subs/${id}/review`] = (call) => {
+            const { note } = bodyOf(call);
+            subscriptions = subscriptions.map((item) => (item.id === id
+                ? { ...item, reviewFlagged: true, reviewFlaggedAt: item.reviewFlaggedAt ?? '2026-11-06T10:00:00+00:00', reviewNote: note ?? null }
+                : item));
+            return { status: 200, body: subscriptions.find((item) => item.id === id) };
+        };
+        handlers[`DELETE /api/subs/${id}/review`] = () => {
+            subscriptions = subscriptions.map((item) => (item.id === id ? { ...item, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null } : item));
             return { status: 200, body: subscriptions.find((item) => item.id === id) };
         };
         handlers[`DELETE /api/subs/${id}`] = () => {
@@ -89,6 +101,54 @@ describe('adding a subscription', () => {
 
         expect(await screen.findByText("Next billing date can't be in the past.")).toBeInTheDocument();
         expect(callsTo(calls, 'POST /api/subs')).toHaveLength(0);
+    });
+});
+
+describe('statuses', () => {
+    it('offers only Active and Trial for a new subscription', async () => {
+        signIn();
+        fakeBackend([]);
+        renderApp('/subscriptions/new');
+
+        await screen.findByLabelText(/service name/i);
+        // "Other" is still a category; only the status picker is checked here.
+        const statusField = document.querySelector('.subscription-status-field') as HTMLElement;
+        expect(within(statusField).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['Active', 'Trial']);
+    });
+
+    it('pauses a subscription until a resume date', async () => {
+        signIn();
+        const calls = fakeBackend([record()]);
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.click(await screen.findByRole('button', { name: 'Edit subscription' }));
+        await user.click(screen.getByRole('button', { name: 'Paused' }));
+        fireEvent.change(screen.getByLabelText(/resumes on/i), { target: { value: '2099-03-01' } });
+        await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        expect(await screen.findByText('Paused until 1 Mar 2099')).toBeInTheDocument();
+        expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({ status: 'paused', resumesOn: '2099-03-01', cancelledAt: null });
+    });
+
+    it('flags a subscription for review with a note, then keeps it', async () => {
+        signIn();
+        const calls = fakeBackend([record()]);
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.type(await screen.findByLabelText(/note \(optional\)/i), 'Do the kids still use it?');
+        await user.click(screen.getByRole('button', { name: 'Flag for review' }));
+
+        expect(await screen.findByRole('heading', { name: 'Flagged for review' })).toBeInTheDocument();
+        expect(screen.getByText('“Do the kids still use it?”')).toBeInTheDocument();
+        expect(bodyOf(callsTo(calls, 'PUT /api/subs/1/review')[0])).toEqual({ note: 'Do the kids still use it?' });
+        // A flag, not a status: the subscription stays active.
+        expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
+
+        await user.click(screen.getByRole('button', { name: 'Keep it, clear the flag' }));
+        expect(await screen.findByRole('heading', { name: 'Not sure you still need it?' })).toBeInTheDocument();
+        expect(callsTo(calls, 'DELETE /api/subs/1/review')).toHaveLength(1);
     });
 });
 

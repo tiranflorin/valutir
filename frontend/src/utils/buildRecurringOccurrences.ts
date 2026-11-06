@@ -75,6 +75,8 @@ export const nextChargeOnOrAfter = (
 const shouldIncludeSubscription = (subscription: SubscriptionRecord) => {
     if (!subscription.nextBillingDate) return false;
     if (subscription.status === 'cancelled' && !subscription.autoRenew) return false;
+    // Paused: nothing is charged until it resumes (it reappears once the hourly command resumes it).
+    if (subscription.status === 'paused') return false;
     return true;
 };
 

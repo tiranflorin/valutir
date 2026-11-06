@@ -11,11 +11,14 @@ use App\Clock\Clock;
 use App\Command\AdvanceBillingDatesCommand;
 use App\Entity\Subscription;
 use App\Entity\User;
+use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class AdvanceBillingDatesCommandTest extends TestCase
@@ -49,16 +52,76 @@ final class AdvanceBillingDatesCommandTest extends TestCase
         self::assertStringContainsString('Would update 1 subscription(s) for 1 user(s).', $tester->getDisplay());
     }
 
+    public function testResumesAPausedSubscriptionOnItsResumeDate(): void
+    {
+        $user = (new User())->setEmail('a@example.test')->setTimezone('UTC');
+        $gym = $this->paused('2026-11-20');
+        $entityManager = $this->transactionalEntityManager();
+
+        $tester = $this->tester([$user], [[]], $entityManager, '2026-11-20 08:00:00', dueToResume: [$gym], activeCount: 3);
+
+        self::assertSame(Command::SUCCESS, $tester->execute([]));
+        self::assertSame('active', $gym->getStatus());
+        self::assertNull($gym->getResumesOn());
+        self::assertStringContainsString('Updated 1 subscription(s) for 1 user(s).', $tester->getDisplay());
+    }
+
+    public function testKeepsItPausedWhenTheFreePlanLimitIsReached(): void
+    {
+        $user = (new User())->setEmail('a@example.test')->setTimezone('UTC');
+        $gym = $this->paused('2026-11-20');
+
+        $tester = $this->tester([$user], [[]], $this->transactionalEntityManager(), '2026-11-20 08:00:00', dueToResume: [$gym], activeCount: FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS);
+
+        self::assertSame(Command::SUCCESS, $tester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]));
+        self::assertSame('paused', $gym->getStatus());
+        self::assertSame('2026-11-20', $gym->getResumesOn()?->format('Y-m-d'));
+        self::assertStringContainsString('stays paused, the free plan limit is reached', $tester->getDisplay());
+    }
+
+    public function testDryRunOnlyReportsWhatWouldResume(): void
+    {
+        $gym = $this->paused('2026-11-01');
+        $entityManager = $this->createMock(EntityManager::class);
+        $entityManager->expects(self::never())->method('flush');
+        $entityManager->expects(self::never())->method('wrapInTransaction');
+
+        $tester = $this->tester([(new User())->setEmail('a@example.test')], [[]], $entityManager, '2026-11-20 08:00:00', dueToResume: [$gym]);
+
+        self::assertSame(Command::SUCCESS, $tester->execute(['--dry-run' => true]));
+        self::assertSame('paused', $gym->getStatus());
+        self::assertStringContainsString('Would update 1 subscription(s) for 1 user(s).', $tester->getDisplay());
+    }
+
+    private function transactionalEntityManager(): EntityManagerInterface
+    {
+        $entityManager = $this->createStub(EntityManager::class);
+        $entityManager->method('wrapInTransaction')->willReturnCallback(static fn (callable $work): mixed => $work());
+
+        return $entityManager;
+    }
+
+    private function paused(string $resumesOn): Subscription
+    {
+        $subscription = $this->subscription('2026-10-20')->setResumesOn(CalendarDay::fromString($resumesOn));
+        $subscription->setStatus('paused');
+
+        return $subscription;
+    }
+
     /**
      * @param list<User>               $users
      * @param list<list<Subscription>> $subscriptionsPerUser
+     * @param list<Subscription>       $dueToResume
      */
-    private function tester(array $users, array $subscriptionsPerUser, EntityManagerInterface $entityManager, string $utcNow): CommandTester
+    private function tester(array $users, array $subscriptionsPerUser, EntityManagerInterface $entityManager, string $utcNow, array $dueToResume = [], int $activeCount = 0): CommandTester
     {
         $userRepository = $this->createStub(UserRepository::class);
         $userRepository->method('findAll')->willReturn($users);
         $subscriptionRepository = $this->createStub(SubscriptionRepository::class);
         $subscriptionRepository->method('findBillableForUser')->willReturnOnConsecutiveCalls(...$subscriptionsPerUser);
+        $subscriptionRepository->method('findDueToResumeForUser')->willReturn($dueToResume);
+        $subscriptionRepository->method('countWithStatuses')->willReturn($activeCount);
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new \DateTimeImmutable($utcNow, new \DateTimeZone('UTC')));
 
@@ -68,6 +131,7 @@ final class AdvanceBillingDatesCommandTest extends TestCase
             new BillingDateAdvancer(new BillingSchedule()),
             $entityManager,
             $clock,
+            new FreePlanLimit($entityManager, $subscriptionRepository),
         ));
     }
 

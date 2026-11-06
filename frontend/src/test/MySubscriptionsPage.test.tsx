@@ -205,12 +205,47 @@ describe('MySubscriptionsPage needs attention', () => {
 
     it('offers Needs review instead of Shared in the business view', async () => {
         window.localStorage.setItem('valutir_dashboard_view', 'business');
-        dashboardApi([...subscriptions, subscription(4, 'Mystery', 'other')].map((item) => ({ ...item, b2b: true })));
+        dashboardApi([...subscriptions, subscription(4, 'Mystery', 'active', { reviewFlagged: true })].map((item) => ({ ...item, b2b: true })));
         const user = userEvent.setup();
         renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
 
         await user.click(await screen.findByRole('button', { name: 'Needs review 1' }));
         expect(screen.queryByRole('button', { name: /^Shared/ })).not.toBeInTheDocument();
-        expect(rowsUnder(/^My subscriptions/)).toEqual(['Mystery']);
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['MysteryReview']);
+    });
+});
+
+describe('MySubscriptionsPage paused and flagged subscriptions', () => {
+    beforeEach(() => {
+        signIn();
+    });
+
+    it('lists a paused subscription but leaves it out of charges and the monthly average', async () => {
+        dashboardApi([
+            subscription(1, 'Netflix', 'active', { nextBillingDate: daysFromToday(0) }),
+            subscription(2, 'Gym', 'paused', { amount: '40.00', nextBillingDate: daysFromToday(0), resumesOn: '2027-03-01' }),
+        ]);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await screen.findByText('My subscriptions · 2');
+        expect(screen.getByTestId('month-average')).toHaveTextContent('€9.99 / month on average');
+        expect(screen.getByTestId('month-left')).toHaveTextContent('€9.99');
+        expect(within(screen.getByRole('row', { name: /gym/i })).getByText('Paused')).toBeInTheDocument();
+        expect(screen.getByRole('row', { name: /gym/i })).toHaveTextContent('Resumes 1 Mar 2027');
+
+        await user.click(screen.getByRole('button', { name: 'Paused 1' }));
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Gym']);
+    });
+
+    it('shows a flagged subscription under Needs attention with its note, still charged', async () => {
+        dashboardApi([subscription(1, 'Netflix', 'active', { reviewFlagged: true, reviewNote: 'Do the kids still use it?' })]);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        expect(await screen.findByRole('heading', { name: 'Needs attention · 1' })).toBeInTheDocument();
+        expect(screen.getByText('FLAGGED · Do the kids still use it?')).toBeInTheDocument();
+        expect(within(screen.getByRole('row', { name: /netflix/i })).getByText('Review')).toBeInTheDocument();
+        expect(within(screen.getByRole('row', { name: /netflix/i })).getByText('Active')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Needs review 1' })).toBeInTheDocument();
     });
 });

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { API_URL } from '../../config';
-import { isBeforeToday, todayIsoDate } from '../../utils/dates';
+import { isBeforeToday } from '../../utils/dates';
 import { householdPayload } from '../../utils/householdShare';
 import SubscriptionFormCard, {
     type BillingInterval,
@@ -20,15 +20,17 @@ type Props = {
 
 const mapStatusToForm = (status?: string): SubscriptionStatus => {
     if (status === 'trial') return 'Trial';
-    if (status === 'other' || status === 'cancelled') return 'Other';
+    if (status === 'paused') return 'Paused';
     return 'Active';
 };
 
 const mapStatusToPayload = (status: SubscriptionStatus) => {
     if (status === 'Trial') return 'trial';
-    if (status === 'Other') return 'other';
+    if (status === 'Paused') return 'paused';
     return 'active';
 };
+
+const EDIT_STATUS_OPTIONS: SubscriptionStatus[] = ['Active', 'Trial', 'Paused'];
 
 const SubscriptionEditCard: React.FC<Props> = ({
                                                    subscription,
@@ -45,6 +47,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
         renewalDate: subscription.nextBillingDate ?? '',
         category: subscription.category ?? 'Other',
         status: mapStatusToForm(subscription.status),
+        resumesOn: subscription.resumesOn ?? '',
         notes: subscription.notes ?? '',
         providerGroup: '',
         householdShared: subscription.householdShared ?? false,
@@ -56,13 +59,15 @@ const SubscriptionEditCard: React.FC<Props> = ({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    // Cancelled is changed only through the cancel and re-enable cards: editing keeps it as it is.
+    const isCancelled = subscription.status === 'cancelled';
     const statusPayload = useMemo(
-        () => mapStatusToPayload(values.status),
-        [values.status]
+        () => (isCancelled ? 'cancelled' : mapStatusToPayload(values.status)),
+        [isCancelled, values.status]
     );
 
-    const isTrial = values.status === 'Trial';
-    const isOther = values.status === 'Other';
+    const isTrial = !isCancelled && values.status === 'Trial';
+    const isPaused = !isCancelled && values.status === 'Paused';
 
     const handleSave = async () => {
         if (!values.serviceName.trim()) {
@@ -75,7 +80,8 @@ const SubscriptionEditCard: React.FC<Props> = ({
             return;
         }
 
-        if (values.renewalDate && isBeforeToday(values.renewalDate)) {
+        // A paused or cancelled subscription may keep a past date; it moves on when charging resumes.
+        if (!isPaused && !isCancelled && values.renewalDate && isBeforeToday(values.renewalDate)) {
             setError(`${isTrial ? 'First charge date' : 'Next billing date'} can't be in the past.`);
             return;
         }
@@ -84,7 +90,9 @@ const SubscriptionEditCard: React.FC<Props> = ({
             setSaving(true);
             setError('');
 
-            const cancelledAt = isOther ? todayIsoDate() : null;
+            const cancelledAt = isCancelled ? subscription.cancelledAt : null;
+            const autoRenew = isCancelled ? subscription.autoRenew : values.autoRenew;
+            const resumesOn = isPaused ? values.resumesOn || null : null;
 
             const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
                 method: 'PATCH',
@@ -105,10 +113,11 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     trialEndsAt: isTrial ? values.renewalDate || null : null,
                     notes: values.notes.trim() || null,
                     status: statusPayload,
-                    autoRenew: !isOther && values.autoRenew,
+                    autoRenew,
                     b2b: values.b2b,
                     ...householdPayload(values),
                     cancelledAt,
+                    resumesOn,
                 }),
             });
 
@@ -134,10 +143,11 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     nextBillingDate: values.renewalDate || null,
                     notes: values.notes.trim() || null,
                     status: statusPayload,
-                    autoRenew: !isOther && values.autoRenew,
+                    autoRenew,
                     b2b: values.b2b,
                     ...householdPayload(values),
                     cancelledAt,
+                    resumesOn,
                 }
             );
         } catch (err) {
@@ -163,6 +173,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
             showHeader={false}
             showProviderGroup={false}
             showHouseholdShared
+            statusOptions={isCancelled ? [] : EDIT_STATUS_OPTIONS}
         />
     );
 };

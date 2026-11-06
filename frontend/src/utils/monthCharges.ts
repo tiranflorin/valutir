@@ -45,7 +45,7 @@ const parseDateOnly =(value: string) => {
  * calendar and the backend's BillingSchedule. Charges before it are counted backwards (the hourly
  * command moves `nextBillingDate` past each charge), but only those already in the past, never
  * before `startedAt`, and never for a trial, whose first charge is its `nextBillingDate`. Cancelled
- * subscriptions and unknown cadences give no charges. The figures are estimates: the app doesn't
+ * and paused subscriptions and unknown cadences give no charges. The figures are estimates: the app doesn't
  * see real payments.
  */
 export const monthCharges = (
@@ -61,7 +61,7 @@ export const monthCharges = (
 
     subscriptions.forEach((subscription) => {
         const status = subscription.status.toLowerCase();
-        if (status === 'cancelled' || !subscription.nextBillingDate) return;
+        if (status === 'cancelled' || status === 'paused' || !subscription.nextBillingDate) return;
 
         const cadence = subscription.billingCadence.toLowerCase() as SubscriptionRecord['billingCadence'];
         if (!CADENCES.includes(cadence)) return;

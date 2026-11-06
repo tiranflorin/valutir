@@ -98,6 +98,45 @@ final class SubscriptionUpsertRequestTest extends KernelTestCase
         self::assertSame([], $this->violations($request));
     }
 
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function allowedStatuses(): iterable
+    {
+        yield 'active' => ['active'];
+        yield 'trial' => ['trial'];
+        yield 'paused' => ['paused'];
+        yield 'cancelled' => ['cancelled'];
+    }
+
+    #[DataProvider('allowedStatuses')]
+    public function testAcceptsTheFourStatuses(string $status): void
+    {
+        $request = $this->request();
+        $request->status = $status;
+
+        self::assertSame([], $this->violations($request));
+    }
+
+    public function testRejectsTheRetiredOtherStatus(): void
+    {
+        $request = $this->request();
+        $request->status = 'other';
+
+        self::assertArrayHasKey('status', $this->violations($request));
+    }
+
+    public function testOnlyAPausedSubscriptionHasAResumeDate(): void
+    {
+        $request = $this->request();
+        $request->status = 'paused';
+        $request->resumesOn = '2027-01-01';
+        self::assertSame([], $this->violations($request));
+
+        $request->status = 'active';
+        self::assertSame(['resumesOn' => 'Only a paused subscription has a resume date.'], $this->violations($request));
+    }
+
     private function request(string $cadence = 'monthly', bool $shared = false, ?int $size = null, bool $b2b = false): SubscriptionUpsertRequest
     {
         $request = new SubscriptionUpsertRequest();

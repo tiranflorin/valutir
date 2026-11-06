@@ -14,6 +14,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 class Subscription
 {
+    /**
+     * active and trial are charged; paused isn't (no reminders, not in totals) until it resumes;
+     * cancelled is set only through the cancel flow.
+     */
+    public const array STATUSES = ['active', 'trial', 'paused', 'cancelled'];
+    public const string STATUS_PAUSED = 'paused';
+    public const string STATUS_CANCELLED = 'cancelled';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -45,8 +53,24 @@ class Subscription
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['active', 'trial', 'other', 'cancelled'])]
+    #[Assert\Choice(choices: self::STATUSES)]
     private ?string $status = null;
+
+    /** Paused only: the day it becomes active again (the hourly command resumes it); null = until changed. */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $resumesOn = null;
+
+    /**
+     * When the owner flagged it to decide whether to keep it; null when not flagged. A flag, not a
+     * status: a flagged subscription is still charged and reminded as before.
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $reviewFlaggedAt = null;
+
+    /** The owner's note on why it needs a review. */
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Assert\Length(max: 500)]
+    private ?string $reviewNote = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
@@ -348,6 +372,51 @@ class Subscription
         $this->status = $status;
     }
 
+    public function getResumesOn(): ?\DateTimeImmutable
+    {
+        return $this->resumesOn;
+    }
+
+    public function setResumesOn(?\DateTimeImmutable $resumesOn): static
+    {
+        $this->resumesOn = $resumesOn;
+
+        return $this;
+    }
+
+    public function isReviewFlagged(): bool
+    {
+        return null !== $this->reviewFlaggedAt;
+    }
+
+    public function getReviewFlaggedAt(): ?\DateTimeImmutable
+    {
+        return $this->reviewFlaggedAt;
+    }
+
+    public function getReviewNote(): ?string
+    {
+        return $this->reviewNote;
+    }
+
+    /** Flags it for review (keeping the first flag date when already flagged) with an optional note. */
+    public function flagForReview(\DateTimeImmutable $at, ?string $note): static
+    {
+        $this->reviewFlaggedAt ??= $at;
+        $note = null !== $note ? trim($note) : null;
+        $this->reviewNote = '' === $note ? null : $note;
+
+        return $this;
+    }
+
+    public function clearReviewFlag(): static
+    {
+        $this->reviewFlaggedAt = null;
+        $this->reviewNote = null;
+
+        return $this;
+    }
+
     public function getTrialEndsAt(): ?\DateTimeImmutable
     {
         return $this->trialEndsAt;
@@ -392,6 +461,10 @@ class Subscription
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
             'trialEndsAt' => $this->getTrialEndsAt()?->format('Y-m-d'),
             'trialReminderSentAt' => $this->getTrialReminderSentAt()?->format(\DateTimeInterface::ATOM),
+            'resumesOn' => $this->getResumesOn()?->format('Y-m-d'),
+            'reviewFlagged' => $this->isReviewFlagged(),
+            'reviewFlaggedAt' => $this->getReviewFlaggedAt()?->format(\DateTimeInterface::ATOM),
+            'reviewNote' => $this->getReviewNote(),
         ];
     }
 }
