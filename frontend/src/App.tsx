@@ -16,6 +16,7 @@ import AddSubscriptionPage from './pages/AddSubscriptionPage';
 import CalendarPage from './pages/CalendarPage';
 import CalendarDayPage from './pages/CalendarDayPage';
 import InsightsPage from './pages/InsightsPage';
+import ReviewSubscriptionsPage from './pages/ReviewSubscriptionsPage';
 import ProfilePage from './pages/ProfilePage';
 import PreferencesPage from './pages/PreferencesPage';
 import PlansPage from './pages/PlansPage';
@@ -123,6 +124,15 @@ const AppRoutes: React.FC = () => {
                 element={
                     <ProtectedRoute>
                         <InsightsPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/review"
+                element={
+                    <ProtectedRoute>
+                        <ReviewSubscriptionsPage />
                     </ProtectedRoute>
                 }
             />

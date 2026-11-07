@@ -82,6 +82,7 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                 householdSize: subscription.householdSize ?? null,
                 cancelledAt: cancellationDate,
                 trialEndsAt: subscription.trialEndsAt ?? null,
+                resumesOn: null,
             };
 
             const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {

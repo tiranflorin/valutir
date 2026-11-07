@@ -14,6 +14,7 @@ import {
     ToggleButtonGroup,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
@@ -92,6 +93,9 @@ const formatDate = (value: string | null) => {
     if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 };
+
+/** The keep-or-cancel review is offered once there are this many charged subscriptions in the view. */
+const REVIEW_MIN_SUBSCRIPTIONS = 3;
 
 const serviceIcon = (name: string) => {
     const normalized = name.toLowerCase();
@@ -496,6 +500,11 @@ const MySubscriptionsPage: React.FC = () => {
                         </nav>
                     </div>
                     <Box className="dashboard-heading-actions">
+                        {chargedSubscriptions.length >= REVIEW_MIN_SUBSCRIPTIONS && (
+                            <Button component={RouterLink} to="/review" startIcon={<FactCheckOutlinedIcon />} variant="outlined" className="start-review">
+                                Review my subscriptions
+                            </Button>
+                        )}
                         <Button component={RouterLink} to="/subscriptions/new" startIcon={<AddRoundedIcon />} variant="contained" className="add-subscription">
                             Add subscription
                         </Button>
