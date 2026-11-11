@@ -2142,6 +2142,26 @@ body {
     background: #105a37;
 }
 
+/* "Review my subscriptions" beside "Add subscription": same height and shape, spaced apart. */
+.dashboard-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.dashboard-heading-actions .add-subscription.MuiButton-root {
+    margin-top: 0;
+}
+
+.start-review.MuiButton-root {
+    min-height: 44px;
+    padding: 0 15px;
+    border-radius: 9px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 .metric-grid {
     margin: 16px 0 12px;
     display: grid;
@@ -4206,4 +4226,171 @@ body {
 
 :root[data-theme='dark'] .keep-review-keys kbd {
     border-color: #344157;
+}
+
+/* Popular services: catalog tiles, the add form's suggestions and "Pick what you pay for" */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.catalog-tile {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 7px;
+}
+
+.catalog-tile.letter {
+    display: inline-grid;
+    place-items: center;
+    background: #e8f4eb;
+    color: #256844;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.catalog-option {
+    gap: 10px;
+}
+
+.catalog-option small {
+    margin-left: auto;
+    color: #758078;
+    font-size: 12px;
+}
+
+.manage-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #17734a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.subscription-detail-hero .manage-link {
+    margin-top: 8px;
+}
+
+.keep-review-manage {
+    margin: 12px 0 0;
+}
+
+.empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pick-services-list.MuiPaper-root,
+.pick-services-selected.MuiPaper-root {
+    width: 100%;
+    padding: 18px;
+    border: 1px solid #e3eae5;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+.pick-services-list.MuiPaper-root {
+    flex: 1.2;
+}
+
+.pick-services-selected.MuiPaper-root {
+    flex: 1;
+}
+
+.pick-services-list ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 4px 12px;
+    max-height: 560px;
+    margin: 12px 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.pick-services-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.pick-services-list label:hover {
+    background: #f3f7f4;
+}
+
+.pick-services-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pick-services-list small {
+    margin-left: auto;
+    color: #758078;
+    font-size: 11px;
+}
+
+.pick-services-selected h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.pick-services-row {
+    margin: 0;
+    padding: 10px 12px 12px;
+    border: 1px solid #e3eae5;
+    border-radius: 10px;
+}
+
+.pick-services-row legend {
+    padding: 0 4px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.pick-services-empty {
+    margin: 12px 0 0;
+    color: #758078;
+    font-size: 14px;
+}
+
+:root[data-theme='dark'] .catalog-tile.letter {
+    background: #1f3a2b;
+    color: #9fd8b5;
+}
+
+:root[data-theme='dark'] .catalog-option small,
+:root[data-theme='dark'] .pick-services-list small,
+:root[data-theme='dark'] .pick-services-empty {
+    color: #9fb0c8;
+}
+
+:root[data-theme='dark'] .manage-link {
+    color: #7fd1a4;
+}
+
+:root[data-theme='dark'] .pick-services-list.MuiPaper-root,
+:root[data-theme='dark'] .pick-services-selected.MuiPaper-root,
+:root[data-theme='dark'] .pick-services-row {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .pick-services-list.MuiPaper-root,
+:root[data-theme='dark'] .pick-services-selected.MuiPaper-root {
+    background: #172033;
+}
+
+:root[data-theme='dark'] .pick-services-list label:hover {
+    background: #1e2a40;
 }

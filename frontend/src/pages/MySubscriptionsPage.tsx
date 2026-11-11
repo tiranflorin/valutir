@@ -529,9 +529,14 @@ const MySubscriptionsPage: React.FC = () => {
                                     <p>Add the recurring services you want to keep an eye on. Start with one and add more later.</p>
                                 </>
                             )}
-                            <Button component={RouterLink} to="/subscriptions/new" variant="contained" className="add-subscription">
-                                {view === 'business' ? 'Add a business subscription' : 'Add your first subscription'}
-                            </Button>
+                            <div className="empty-actions">
+                                <Button component={RouterLink} to="/subscriptions/pick" variant="contained" className="add-subscription">
+                                    Pick what you pay for
+                                </Button>
+                                <Button component={RouterLink} to="/subscriptions/new" variant="outlined" className="start-review">
+                                    {view === 'business' ? 'Add a business subscription' : 'Add one yourself'}
+                                </Button>
+                            </div>
                         </div>
                     </Paper>
                 ) : (

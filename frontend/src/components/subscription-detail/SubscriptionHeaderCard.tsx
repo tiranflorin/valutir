@@ -2,6 +2,8 @@ import React from 'react';
 import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import { safeManageUrl } from '../../utils/manageUrl';
 
 export type SubscriptionCardModel = {
     id: number;
@@ -20,6 +22,7 @@ export type SubscriptionCardModel = {
     cancelledAt: string | null;
     startedAt?: string | null;
     paymentMethod?: string | null;
+    manageUrl?: string | null;
     trialEndsAt?: string | null;
     trialReminderSentAt?: string | null;
     resumesOn?: string | null;
@@ -100,6 +103,13 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
                         {Number(subscription.amount).toFixed(2)} {subscription.currency}
                         <small> / {formatBillingCadence(subscription.billingCadence)}</small>
                     </Typography>
+                    {safeManageUrl(subscription.manageUrl) && (
+                        <a className="manage-link" href={safeManageUrl(subscription.manageUrl)!} target="_blank" rel="noopener noreferrer">
+                            {subscription.status === 'cancelled' ? 'Provider account' : 'Manage or cancel'}
+                            <OpenInNewRoundedIcon fontSize="inherit" aria-hidden="true" />
+                            <span className="visually-hidden"> (opens in a new tab)</span>
+                        </a>
+                    )}
                 </Box>
 
                 {subscription.status !== 'cancelled' && (

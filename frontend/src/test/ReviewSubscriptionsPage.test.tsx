@@ -87,6 +87,7 @@ describe('keep-or-cancel review', () => {
             nextBillingDate: '2099-01-15',
             notes: 'Front desk cancels',
             paymentMethod: null,
+            manageUrl: null,
             status: 'cancelled',
             autoRenew: false,
             b2b: false,

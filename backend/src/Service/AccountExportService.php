@@ -28,7 +28,7 @@ final readonly class AccountExportService
     public const array CSV_COLUMNS = [
         'Service', 'Category', 'Amount', 'Currency', 'Cadence', 'Next billing date', 'Status',
         'Business', 'Shared', 'Household size', 'My share', 'Payment method', 'Notes',
-        'Started at', 'Trial ends at', 'Cancelled at',
+        'Manage link', 'Started at', 'Trial ends at', 'Cancelled at',
     ];
 
     public function __construct(
@@ -119,6 +119,7 @@ final readonly class AccountExportService
                 $shared ? number_format((float) $amount / (int) $subscription->getHouseholdSize(), 2, '.', '') : $amount,
                 (string) $subscription->getPaymentMethod(),
                 (string) $subscription->getNotes(),
+                (string) $subscription->getManageUrl(),
                 (string) $subscription->getStartedAt()?->format('Y-m-d'),
                 (string) $subscription->getTrialEndsAt()?->format('Y-m-d'),
                 (string) $subscription->getCancelledAt()?->format('Y-m-d'),

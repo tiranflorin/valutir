@@ -72,6 +72,14 @@ class Subscription
     #[Assert\Length(max: 500)]
     private ?string $reviewNote = null;
 
+    /**
+     * Where the owner manages or cancels it with the provider (an https link). Only ever shown as a
+     * link; the server never fetches it.
+     */
+    #[ORM\Column(length: 2048, nullable: true)]
+    #[Assert\Length(max: 2048)]
+    private ?string $manageUrl = null;
+
     #[ORM\Column(length: 100, nullable: true)]
     #[Assert\Length(max: 100)]
     private ?string $category = null;
@@ -384,6 +392,19 @@ class Subscription
         return $this;
     }
 
+    public function getManageUrl(): ?string
+    {
+        return $this->manageUrl;
+    }
+
+    public function setManageUrl(?string $manageUrl): static
+    {
+        $manageUrl = null !== $manageUrl ? trim($manageUrl) : null;
+        $this->manageUrl = '' === $manageUrl ? null : $manageUrl;
+
+        return $this;
+    }
+
     public function isReviewFlagged(): bool
     {
         return null !== $this->reviewFlaggedAt;
@@ -451,6 +472,7 @@ class Subscription
             'nextBillingDate' => $this->getNextBillingDate()?->format('Y-m-d'),
             'notes' => $this->getNotes(),
             'paymentMethod' => $this->getPaymentMethod(),
+            'manageUrl' => $this->getManageUrl(),
             'isActive' => $this->isActive(),
             'autoRenew' => $this->isAutoRenew(),
             'b2b' => $this->isB2b(),

@@ -95,7 +95,7 @@ const PrivacyPage: React.FC = () => (
                                     <td>Contract (Art. 6(1)(b) GDPR)</td>
                                 </tr>
                                 <tr>
-                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status (including a pause and its resume date), category, notes, payment method label, household sharing, and any review flag with its note</td>
+                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status (including a pause and its resume date), category, notes, payment method label, the link where you manage or cancel it, household sharing, and any review flag with its note</td>
                                     <td>To show your dashboard and calendar, and to work out upcoming charges</td>
                                     <td>Contract</td>
                                 </tr>

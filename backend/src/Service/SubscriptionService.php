@@ -132,6 +132,7 @@ final class SubscriptionService
         $subscription->setNextBillingDate($this->parseDate($dto->nextBillingDate));
         $subscription->setNotes(null !== $dto->notes ? trim($dto->notes) : null);
         $subscription->setPaymentMethod(null !== $dto->paymentMethod ? trim($dto->paymentMethod) : null);
+        $subscription->setManageUrl($dto->manageUrl);
         $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setB2b($dto->b2b);

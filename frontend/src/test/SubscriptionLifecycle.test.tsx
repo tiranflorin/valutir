@@ -17,7 +17,7 @@ const renderApp = (route: string) => render(<MemoryRouter initialEntries={[route
 
 const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord => ({
     id: 1, serviceName: 'Netflix', amount: '13.99', currency: 'EUR', billingCadence: 'monthly', category: 'Streaming',
-    status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null,
+    status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null, manageUrl: null,
     isActive: true, autoRenew: true, b2b: false, householdShared: false, householdSize: null, cancelledAt: null,
     createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
     resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
@@ -97,7 +97,7 @@ describe('adding a subscription', () => {
         fireEvent.change(screen.getByLabelText(/price/i), { target: { value: '9.99' } });
         fireEvent.change(screen.getByLabelText(/next billing date/i), { target: { value: '2020-01-01' } });
         // Submit directly so the app's own check runs, not only the browser's min validation.
-        fireEvent.submit(screen.getByLabelText(/service name/i).closest('form')!);
+        fireEvent.submit(screen.getByLabelText(/price/i).closest('form')!);
 
         expect(await screen.findByText("Next billing date can't be in the past.")).toBeInTheDocument();
         expect(callsTo(calls, 'POST /api/subs')).toHaveLength(0);

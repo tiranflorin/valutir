@@ -22,6 +22,8 @@ export interface SubscriptionRecord {
     nextBillingDate: string | null;
     notes: string | null;
     paymentMethod: string | null;
+    /** The provider's page to manage or cancel it (https); null when not set. */
+    manageUrl: string | null;
     isActive: boolean;
     autoRenew: boolean;
     b2b: boolean;
