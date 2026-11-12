@@ -94,7 +94,9 @@ const PickServicesPage: React.FC = () => {
         setSaving(true);
         setError('');
         const b2b = isBusinessView();
-        let added = 0;
+        // The services this run saved, by name: the selection can't change while saving, but
+        // reconciling by name (not position) keeps it right even if it did.
+        const saved: string[] = [];
         try {
             for (const service of pickedServices) {
                 const row = rows[service.name];
@@ -131,14 +133,14 @@ const PickServicesPage: React.FC = () => {
                     const data = await response.json().catch(() => null);
                     throw new Error(data?.message || `Could not add ${service.name}.`);
                 }
-                added += 1;
+                saved.push(service.name);
             }
             navigate('/my-subs');
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Something went wrong.';
             // Drop the ones already saved, so trying again doesn't add them twice.
-            setPicked((previous) => previous.slice(added));
-            setError(added > 0 ? `Added ${added} of ${pickedServices.length}. ${message}` : message);
+            setPicked((previous) => previous.filter((name) => !saved.includes(name)));
+            setError(saved.length > 0 ? `Added ${saved.length} of ${pickedServices.length}. ${message}` : message);
         } finally {
             setSaving(false);
         }
@@ -177,6 +179,7 @@ const PickServicesPage: React.FC = () => {
                                             <Checkbox
                                                 size="small"
                                                 checked={picked.includes(service.name)}
+                                                disabled={saving}
                                                 onChange={() => toggle(service)}
                                                 inputProps={{ 'aria-label': service.name }}
                                             />
@@ -196,7 +199,7 @@ const PickServicesPage: React.FC = () => {
                             <p className="pick-services-empty">Nothing picked yet.</p>
                         ) : (
                             <Stack spacing={2}>
-                                <CurrencySelect value={currency} onChange={setCurrency} size="small" helperText="Used for all of these" />
+                                <CurrencySelect value={currency} onChange={setCurrency} size="small" helperText="Used for all of these" disabled={saving} />
                                 {pickedServices.map((service) => (
                                     <fieldset key={service.name} className="pick-services-row">
                                         <legend>{service.name}</legend>
@@ -206,6 +209,7 @@ const PickServicesPage: React.FC = () => {
                                                 type="number"
                                                 size="small"
                                                 required
+                                                disabled={saving}
                                                 value={rows[service.name]?.amount ?? ''}
                                                 onChange={(event) => updateRow(service.name, { amount: event.target.value })}
                                                 inputProps={{ min: 0, step: '0.01', 'aria-label': `${service.name} price` }}
@@ -214,6 +218,7 @@ const PickServicesPage: React.FC = () => {
                                                 select
                                                 label="Billed"
                                                 size="small"
+                                                disabled={saving}
                                                 value={rows[service.name]?.cadence ?? service.cadence}
                                                 onChange={(event) => updateRow(service.name, { cadence: event.target.value as BillingInterval })}
                                                 SelectProps={{ inputProps: { 'aria-label': `${service.name} billing cadence` } }}
@@ -224,6 +229,7 @@ const PickServicesPage: React.FC = () => {
                                                 label="Next charge"
                                                 type="date"
                                                 size="small"
+                                                disabled={saving}
                                                 required
                                                 value={rows[service.name]?.nextBillingDate ?? ''}
                                                 onChange={(event) => updateRow(service.name, { nextBillingDate: event.target.value })}

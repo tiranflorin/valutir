@@ -127,6 +127,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
     const [cadenceChosen, setCadenceChosen] = useState(false);
     const [categoryChosen, setCategoryChosen] = useState(false);
     const [filledFrom, setFilledFrom] = useState<string | null>(null);
+    // The link the catalog filled in, and for which service. A link the user typed is never in here,
+    // so it's never replaced; a filled one is replaced or cleared when the service changes.
+    const [autoLink, setAutoLink] = useState<{ service: string; url: string } | null>(null);
+    const linkIsAuto = autoLink !== null && values.manageUrl.trim() === autoLink.url;
     const manageLinkError = manageUrlError(values.manageUrl);
 
     const isTrial = values.status === 'Trial';
@@ -197,9 +201,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
             next.billingInterval = service.cadence;
             filled.push(`${service.cadence} billing`);
         }
-        if (!values.manageUrl.trim() && service.manageUrl) {
-            next.manageUrl = service.manageUrl;
-            filled.push('the manage or cancel link');
+        if (!values.manageUrl.trim() || linkIsAuto) {
+            next.manageUrl = service.manageUrl ?? '';
+            setAutoLink(service.manageUrl ? { service: service.name, url: service.manageUrl } : null);
+            if (service.manageUrl) filled.push('the manage or cancel link');
         }
         patch(next);
         setFilledFrom(filled.length ? `Filled in ${filled.join(', ')} for ${service.name}. Change anything that’s different for you.` : null);
@@ -214,7 +219,14 @@ const SubscriptionFormCard: React.FC<Props> = ({
             inputValue={values.serviceName}
             onInputChange={(_, next, reason) => {
                 if (reason === 'input' || reason === 'clear') {
-                    patch({ serviceName: next });
+                    // A filled-in link belongs to its service: once the name is something else, drop it.
+                    const stillThatService = autoLink !== null && next.toLowerCase().includes(autoLink.service.toLowerCase());
+                    if (linkIsAuto && !stillThatService) {
+                        patch({ serviceName: next, manageUrl: '' });
+                        setAutoLink(null);
+                    } else {
+                        patch({ serviceName: next });
+                    }
                     setFilledFrom(null);
                 }
             }}
@@ -489,7 +501,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         label="Manage or cancel link"
                                         type="url"
                                         value={values.manageUrl}
-                                        onChange={(e) => patch({ manageUrl: e.target.value })}
+                                        onChange={(e) => {
+                                            setAutoLink(null);
+                                            patch({ manageUrl: e.target.value });
+                                        }}
                                         placeholder="https://"
                                         error={manageLinkError !== null}
                                         helperText={manageLinkError ?? 'The provider’s page where you manage or cancel it. Shown as a link on the subscription.'}

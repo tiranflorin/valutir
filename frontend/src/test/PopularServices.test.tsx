@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
@@ -115,6 +115,55 @@ describe('adding a subscription from the catalog', () => {
         });
     });
 
+    it('replaces a filled-in link when another service is picked, and drops it for a typed name', async () => {
+        const calls = addApi();
+        const user = userEvent.setup();
+        renderAdd();
+        const name = screen.getByRole('combobox', { name: /service name/i });
+
+        await user.type(name, 'netfl');
+        await user.click(await screen.findByRole('option', { name: /Netflix/ }));
+        await user.clear(name);
+        await user.type(name, 'spotif');
+        await user.click(await screen.findByRole('option', { name: /Spotify/ }));
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://www.spotify.com/account/overview/');
+
+        // A service without a link clears the filled-in one.
+        await user.clear(name);
+        await user.type(name, 'hbo');
+        await user.click(await screen.findByRole('option', { name: /HBO Max/ }));
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('');
+
+        // Editing the name keeps the link while it still names the service, and drops it otherwise.
+        await user.clear(name);
+        await user.type(name, 'netfl');
+        await user.click(await screen.findByRole('option', { name: /Netflix/ }));
+        await user.type(name, ' Family');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://www.netflix.com/account');
+        await user.clear(name);
+        await user.type(name, 'Local gym');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('');
+        await save(user);
+
+        expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({ serviceName: 'Local gym', manageUrl: null });
+    });
+
+    it('keeps a typed link when the service changes', async () => {
+        addApi();
+        const user = userEvent.setup();
+        renderAdd();
+        const name = screen.getByRole('combobox', { name: /service name/i });
+
+        await user.type(name, 'netfl');
+        await user.click(await screen.findByRole('option', { name: /Netflix/ }));
+        fireEvent.change(screen.getByLabelText(/manage or cancel link/i), { target: { value: 'https://example.com/family-plan' } });
+        await user.clear(name);
+        await user.type(name, 'spotif');
+        await user.click(await screen.findByRole('option', { name: /Spotify/ }));
+
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://example.com/family-plan');
+    });
+
     it('stops an http manage link before sending anything', async () => {
         const calls = addApi();
         const user = userEvent.setup();
@@ -183,6 +232,42 @@ describe('Pick what you pay for', () => {
             householdShared: false, householdSize: null, resumesOn: null,
         });
         expect(bodies[1]).toMatchObject({ serviceName: 'Strava', amount: 59.99, billingCadence: 'yearly', category: 'Fitness' });
+    });
+
+    it('locks the selection while saving, and keeps an unsaved pick by name when one fails', async () => {
+        let release: (() => void) | undefined;
+        const firstSaved = new Promise<void>((resolve) => { release = resolve; });
+        let posts = 0;
+        vi.stubGlobal('fetch', vi.fn(async (input: string, init: RequestInit = {}) => {
+            const path = new URL(String(input), 'http://api.test').pathname;
+            if (path === '/api/profile') return new Response(JSON.stringify(profile()), { status: 200 });
+            if (init.method === 'POST' && ++posts === 1) {
+                await firstSaved;
+                return new Response(JSON.stringify({ id: 1 }), { status: 201 });
+            }
+            return new Response(JSON.stringify({ message: 'Server down.' }), { status: 500 });
+        }));
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<PickServicesPage />, { route: '/subscriptions/pick' });
+
+        const list = screen.getByRole('list', { name: 'Common services' });
+        for (const name of ['Netflix', 'Spotify']) {
+            await user.click(within(list).getByRole('checkbox', { name }));
+            fireEvent.change(screen.getByLabelText(`${name} price`), { target: { value: '9.99' } });
+            fireEvent.change(screen.getByLabelText(`${name} next charge`), { target: { value: inDays(5) } });
+        }
+        await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
+
+        // Netflix is still saving: nothing can be unticked or changed.
+        expect(await screen.findByRole('button', { name: 'Adding...' })).toBeDisabled();
+        expect(within(list).getByRole('checkbox', { name: 'Netflix' })).toBeDisabled();
+        expect(screen.getByLabelText('Spotify price')).toBeDisabled();
+
+        release?.();
+        expect(await screen.findByText('Added 1 of 2. Server down.')).toBeInTheDocument();
+        expect(within(list).getByRole('checkbox', { name: 'Netflix' })).not.toBeChecked();
+        expect(within(list).getByRole('checkbox', { name: 'Spotify' })).toBeChecked();
+        expect(screen.getByLabelText('Spotify price')).toHaveValue(9.99);
     });
 
     it('stops at the free-plan limit and keeps only the ones not yet added', async () => {
