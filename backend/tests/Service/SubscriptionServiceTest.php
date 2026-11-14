@@ -112,6 +112,23 @@ final class SubscriptionServiceTest extends TestCase
         self::assertNull($subscription->getHouseholdSize());
     }
 
+    public function testTheManageLinkIsStoredAndClearedByUpdates(): void
+    {
+        $subscription = new Subscription();
+        $service = $this->service($this->transactionalEntityManager(times: 2));
+
+        $request = $this->request();
+        $request->manageUrl = '  https://www.spotify.com/account/subscription/  ';
+        $service->update($subscription, $request);
+        self::assertSame('https://www.spotify.com/account/subscription/', $subscription->getManageUrl());
+        self::assertSame('https://www.spotify.com/account/subscription/', $subscription->toArray()['manageUrl']);
+
+        // Updates replace every field: leaving it out clears it.
+        $request->manageUrl = null;
+        $service->update($subscription, $request);
+        self::assertNull($subscription->getManageUrl());
+    }
+
     public function testUpdateKeepsTheTrialReminderUnlessTheTrialEndDateChanges(): void
     {
         $subscription = new Subscription();

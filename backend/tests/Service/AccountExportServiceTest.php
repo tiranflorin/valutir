@@ -95,11 +95,11 @@ final class AccountExportServiceTest extends TestCase
     {
         $rows = iterator_to_array($this->service(subscriptions: [
             $this->subscription(1, 'spotify', '10.99'),
-            $this->subscription(2, 'Netflix', '13.99')->setHouseholdSharing(4)->setNotes('Family plan'),
+            $this->subscription(2, 'Netflix', '13.99')->setHouseholdSharing(4)->setNotes('Family plan')->setManageUrl('https://www.netflix.com/account'),
         ])->subscriptionRows($this->user), false);
 
         self::assertSame(AccountExportService::CSV_COLUMNS, $rows[0]);
-        self::assertSame(['Netflix', 'Streaming', '13.99', 'EUR', 'monthly', '2026-11-20', 'active', 'no', 'yes', '4', '3.50', '', 'Family plan', '2026-01-01', '', ''], $rows[1]);
+        self::assertSame(['Netflix', 'Streaming', '13.99', 'EUR', 'monthly', '2026-11-20', 'active', 'no', 'yes', '4', '3.50', '', 'Family plan', 'https://www.netflix.com/account', '2026-01-01', '', ''], $rows[1]);
         self::assertSame('spotify', $rows[2][0]);
         self::assertSame(['no', '', '10.99'], [$rows[2][8], $rows[2][9], $rows[2][10]]);
     }

@@ -4,7 +4,7 @@ import type { SubscriptionRecord } from '../types/subscription';
 
 const subscription = (billingCadence: SubscriptionRecord['billingCadence'], nextBillingDate: string): SubscriptionRecord => ({
     id: 1, serviceName: 'Test', amount: '10.00', currency: 'EUR', status: 'active', billingCadence, category: null,
-    startedAt: null, nextBillingDate, notes: null, paymentMethod: null, isActive: true, autoRenew: true, b2b: false,
+    startedAt: null, nextBillingDate, notes: null, paymentMethod: null, manageUrl: null, isActive: true, autoRenew: true, b2b: false,
     householdShared: false, householdSize: null, cancelledAt: null, createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
     resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
 });

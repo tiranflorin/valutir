@@ -40,6 +40,11 @@ final class SubscriptionUpsertRequest
     #[Assert\Length(max: 100)]
     public ?string $paymentMethod = null;
 
+    /** Where to manage or cancel it with the provider: https only, so it can never be a javascript: or plain-http link. */
+    #[Assert\Length(max: 2048)]
+    #[Assert\Url(protocols: ['https'], requireTld: true)]
+    public ?string $manageUrl = null;
+
     public ?bool $autoRenew = true;
 
     public bool $b2b = false;

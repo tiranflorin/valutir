@@ -137,6 +137,37 @@ final class SubscriptionUpsertRequestTest extends KernelTestCase
         self::assertSame(['resumesOn' => 'Only a paused subscription has a resume date.'], $this->violations($request));
     }
 
+    public function testAcceptsAnHttpsManageLinkOrNone(): void
+    {
+        $request = $this->request();
+        self::assertSame([], $this->violations($request));
+
+        $request->manageUrl = 'https://www.netflix.com/account';
+        self::assertSame([], $this->violations($request));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function rejectedManageLinks(): iterable
+    {
+        yield 'plain http' => ['http://www.netflix.com/account'];
+        yield 'javascript' => ['javascript:alert(1)'];
+        yield 'data' => ['data:text/html,<script>alert(1)</script>'];
+        yield 'no top-level domain' => ['https://localhost/account'];
+        yield 'not a link' => ['netflix account page'];
+        yield 'too long' => ['https://example.com/'.str_repeat('a', 2030)];
+    }
+
+    #[DataProvider('rejectedManageLinks')]
+    public function testRejectsOtherManageLinks(string $url): void
+    {
+        $request = $this->request();
+        $request->manageUrl = $url;
+
+        self::assertSame(['manageUrl'], array_keys($this->violations($request)));
+    }
+
     private function request(string $cadence = 'monthly', bool $shared = false, ?int $size = null, bool $b2b = false): SubscriptionUpsertRequest
     {
         $request = new SubscriptionUpsertRequest();

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { API_URL } from '../../config';
 import { isBeforeToday } from '../../utils/dates';
 import { householdPayload } from '../../utils/householdShare';
+import { manageUrlError } from '../../utils/manageUrl';
 import SubscriptionFormCard, {
     type BillingInterval,
     type SubscriptionFormValues,
@@ -49,6 +50,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
         status: mapStatusToForm(subscription.status),
         resumesOn: subscription.resumesOn ?? '',
         notes: subscription.notes ?? '',
+        manageUrl: subscription.manageUrl ?? '',
         providerGroup: '',
         householdShared: subscription.householdShared ?? false,
         householdSize: subscription.householdSize ?? 2,
@@ -86,6 +88,12 @@ const SubscriptionEditCard: React.FC<Props> = ({
             return;
         }
 
+        const linkError = manageUrlError(values.manageUrl);
+        if (linkError) {
+            setError(`Manage or cancel link: ${linkError}`);
+            return;
+        }
+
         try {
             setSaving(true);
             setError('');
@@ -112,6 +120,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     paymentMethod: subscription.paymentMethod ?? null,
                     trialEndsAt: isTrial ? values.renewalDate || null : null,
                     notes: values.notes.trim() || null,
+                    manageUrl: values.manageUrl.trim() || null,
                     status: statusPayload,
                     autoRenew,
                     b2b: values.b2b,
@@ -142,6 +151,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     billingCadence: values.billingInterval,
                     nextBillingDate: values.renewalDate || null,
                     notes: values.notes.trim() || null,
+                    manageUrl: values.manageUrl.trim() || null,
                     status: statusPayload,
                     autoRenew,
                     b2b: values.b2b,

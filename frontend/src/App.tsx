@@ -13,6 +13,7 @@ import UnsubscribePage from './pages/auth/UnsubscribePage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import AddSubscriptionPage from './pages/AddSubscriptionPage';
+import PickServicesPage from './pages/PickServicesPage';
 import CalendarPage from './pages/CalendarPage';
 import CalendarDayPage from './pages/CalendarDayPage';
 import InsightsPage from './pages/InsightsPage';
@@ -92,6 +93,15 @@ const AppRoutes: React.FC = () => {
                 element={
                     <ProtectedRoute>
                         <AddSubscriptionPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/subscriptions/pick"
+                element={
+                    <ProtectedRoute>
+                        <PickServicesPage />
                     </ProtectedRoute>
                 }
             />

@@ -12,6 +12,7 @@ import SubscriptionFormCard, {
 import { API_URL } from '../config';
 import { isBeforeToday, todayIsoDate } from '../utils/dates';
 import { householdPayload } from '../utils/householdShare';
+import { manageUrlError } from '../utils/manageUrl';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -29,6 +30,7 @@ const AddSubscriptionPage: React.FC = () => {
         status: 'Active' as SubscriptionStatus,
         resumesOn: '',
         notes: '',
+        manageUrl: '',
         providerGroup: '',
         householdShared: false,
         householdSize: 2,
@@ -71,6 +73,12 @@ const AddSubscriptionPage: React.FC = () => {
             return;
         }
 
+        const linkError = manageUrlError(values.manageUrl);
+        if (linkError) {
+            setError(`Manage or cancel link: ${linkError}`);
+            return;
+        }
+
         try {
             setSubmitting(true);
             setError('');
@@ -89,6 +97,7 @@ const AddSubscriptionPage: React.FC = () => {
                 trialEndsAt: isTrial ? values.renewalDate : null,
                 notes: values.notes.trim() || null,
                 paymentMethod: values.providerGroup.trim() || null,
+                manageUrl: values.manageUrl.trim() || null,
                 ...householdPayload(values),
                 autoRenew: values.autoRenew,
                 b2b: values.b2b,
@@ -142,7 +151,7 @@ const AddSubscriptionPage: React.FC = () => {
                 <Box className="subscription-editor-heading">
                     {/*<span className="section-kicker">SUBSCRIPTION DETAILS</span>*/}
                     <h1>Add a subscription</h1>
-                    <p>Fill in the essentials first. You can include extra context when it helps.</p>
+                    <p>Fill in the essentials first. You can include extra context when it helps. Adding several? <RouterLink to="/subscriptions/pick">Pick them from a list →</RouterLink></p>
                 </Box>
 
                 <SubscriptionFormCard
@@ -161,6 +170,7 @@ const AddSubscriptionPage: React.FC = () => {
                     showCurrency
                     showProviderGroup
                     showHouseholdShared
+                    serviceSuggestions
                 />
             </Container>
             <AppFooter />

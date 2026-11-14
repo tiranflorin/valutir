@@ -1,12 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { todayIsoDate } from '../../utils/dates';
 import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
 import { TRIAL_REMINDER_LEAD_DAYS } from '../../utils/reminders';
+import { MANAGE_URL_MAX, manageUrlError } from '../../utils/manageUrl';
+import { type CatalogService, searchCatalog } from '../../data/services';
+import CatalogTile from '../CatalogTile';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
     Alert,
+    Autocomplete,
     Box,
     Button,
     Chip,
@@ -36,6 +40,8 @@ export type SubscriptionFormValues = {
     /** Paused only: when it becomes active again (YYYY-MM-DD); empty = until changed. */
     resumesOn: string;
     notes: string;
+    /** Where to manage or cancel it with the provider (https); empty = none. */
+    manageUrl: string;
     providerGroup: string;
     householdShared: boolean;
     /** People splitting the bill equally, the owner included (used when householdShared). */
@@ -60,7 +66,11 @@ type Props = {
     showHouseholdShared?: boolean;
     /** Statuses to pick from. A new subscription is Active or Trial; Paused is for existing ones. */
     statusOptions?: SubscriptionStatus[];
+    /** Suggest common services while typing the name; picking one fills the fields still untouched. */
+    serviceSuggestions?: boolean;
 };
+
+
 
 const intervalOptions: { label: string; value: BillingInterval }[] = [
     { label: 'Monthly', value: 'monthly' },
@@ -78,6 +88,8 @@ const categoryOptions = [
     'Cloud',
     'Other',
 ];
+
+const SERVICE_SUGGESTIONS = searchCatalog('');
 
 const DEFAULT_STATUS_OPTIONS: SubscriptionStatus[] = ['Active', 'Trial'];
 
@@ -108,8 +120,18 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                    showProviderGroup = true,
                                                    showHouseholdShared = true,
                                                    statusOptions = DEFAULT_STATUS_OPTIONS,
+                                                   serviceSuggestions = false,
                                                }) => {
     const theme = useTheme();
+    // A catalog pick never overrides a choice the user made themselves.
+    const [cadenceChosen, setCadenceChosen] = useState(false);
+    const [categoryChosen, setCategoryChosen] = useState(false);
+    const [filledFrom, setFilledFrom] = useState<string | null>(null);
+    // The link the catalog filled in, and for which service. A link the user typed is never in here,
+    // so it's never replaced; a filled one is replaced or cleared when the service changes.
+    const [autoLink, setAutoLink] = useState<{ service: string; url: string } | null>(null);
+    const linkIsAuto = autoLink !== null && values.manageUrl.trim() === autoLink.url;
+    const manageLinkError = manageUrlError(values.manageUrl);
 
     const isTrial = values.status === 'Trial';
     const isPaused = values.status === 'Paused';
@@ -168,6 +190,77 @@ const SubscriptionFormCard: React.FC<Props> = ({
         onChange({ ...values, ...partial });
     };
 
+    const pickService = (service: CatalogService) => {
+        const filled: string[] = [];
+        const next: Partial<SubscriptionFormValues> = { serviceName: service.name };
+        if (!categoryChosen && service.category !== values.category) {
+            next.category = service.category;
+            filled.push(`category ${service.category}`);
+        }
+        if (!cadenceChosen && service.cadence !== values.billingInterval) {
+            next.billingInterval = service.cadence;
+            filled.push(`${service.cadence} billing`);
+        }
+        if (!values.manageUrl.trim() || linkIsAuto) {
+            next.manageUrl = service.manageUrl ?? '';
+            setAutoLink(service.manageUrl ? { service: service.name, url: service.manageUrl } : null);
+            if (service.manageUrl) filled.push('the manage or cancel link');
+        }
+        patch(next);
+        setFilledFrom(filled.length ? `Filled in ${filled.join(', ')} for ${service.name}. Change anything that’s different for you.` : null);
+    };
+
+    const serviceNameField = serviceSuggestions ? (
+        <Autocomplete<CatalogService, false, false, true>
+            freeSolo
+            options={SERVICE_SUGGESTIONS}
+            filterOptions={(_, state) => searchCatalog(state.inputValue).slice(0, 8)}
+            getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+            inputValue={values.serviceName}
+            onInputChange={(_, next, reason) => {
+                if (reason === 'input' || reason === 'clear') {
+                    // A filled-in link belongs to its service: once the name is something else, drop it.
+                    const stillThatService = autoLink !== null && next.toLowerCase().includes(autoLink.service.toLowerCase());
+                    if (linkIsAuto && !stillThatService) {
+                        patch({ serviceName: next, manageUrl: '' });
+                        setAutoLink(null);
+                    } else {
+                        patch({ serviceName: next });
+                    }
+                    setFilledFrom(null);
+                }
+            }}
+            onChange={(_, option) => {
+                if (option && typeof option !== 'string') pickService(option);
+            }}
+            renderOption={({ key, ...props }, option) => (
+                <li key={key} {...props} className={`${props.className ?? ''} catalog-option`}>
+                    <CatalogTile service={option} />
+                    <span>{option.name}</span>
+                    <small>{option.category}</small>
+                </li>
+            )}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    label="Service name"
+                    required
+                    sx={requiredFieldSx}
+                    helperText={filledFrom ?? 'Start typing to pick a common service, or enter any name.'}
+                />
+            )}
+        />
+    ) : (
+        <TextField
+            label="Service name"
+            value={values.serviceName}
+            onChange={(e) => patch({ serviceName: e.target.value })}
+            sx={requiredFieldSx}
+            fullWidth
+            required
+        />
+    );
+
     return (
         <Stack
             className="subscription-form-layout"
@@ -215,14 +308,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             </Typography>
                         </Stack>
 
-                        <TextField
-                            label="Service name"
-                            value={values.serviceName}
-                            onChange={(e) => patch({ serviceName: e.target.value })}
-                            sx={requiredFieldSx}
-                            fullWidth
-                            required
-                        />
+                        {serviceNameField}
 
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                             <TextField
@@ -257,7 +343,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         clickable
                                         color={values.billingInterval === option.value ? 'primary' : 'default'}
                                         variant={values.billingInterval === option.value ? 'filled' : 'outlined'}
-                                        onClick={() => patch({ billingInterval: option.value })}
+                                        onClick={() => {
+                                            setCadenceChosen(true);
+                                            patch({ billingInterval: option.value });
+                                        }}
                                         sx={{ fontWeight: 600, borderRadius: 999 }}
                                     />
                                 ))}
@@ -275,7 +364,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         clickable
                                         color={values.category === option ? 'primary' : 'default'}
                                         variant={values.category === option ? 'filled' : 'outlined'}
-                                        onClick={() => patch({ category: option })}
+                                        onClick={() => {
+                                            setCategoryChosen(true);
+                                            patch({ category: option });
+                                        }}
                                         sx={{ fontWeight: 600, borderRadius: 999 }}
                                     />
                                 ))}
@@ -404,6 +496,21 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                             fullWidth
                                         />
                                     )}
+
+                                    <TextField
+                                        label="Manage or cancel link"
+                                        type="url"
+                                        value={values.manageUrl}
+                                        onChange={(e) => {
+                                            setAutoLink(null);
+                                            patch({ manageUrl: e.target.value });
+                                        }}
+                                        placeholder="https://"
+                                        error={manageLinkError !== null}
+                                        helperText={manageLinkError ?? 'The provider’s page where you manage or cancel it. Shown as a link on the subscription.'}
+                                        inputProps={{ maxLength: MANAGE_URL_MAX, inputMode: 'url' }}
+                                        fullWidth
+                                    />
 
                                     <TextField
                                         label="Notes"
