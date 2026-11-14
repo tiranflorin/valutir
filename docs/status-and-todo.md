@@ -49,3 +49,13 @@ Fixed items are removed from this list; the git history records what changed. It
     - Deleting a user reuses `AccountService::deleteAccount()`, so the same rules apply: subscriptions are removed, purchases keep their row with `user_id` set to NULL. An admin can't delete their own account from there, so the last admin can't lock themselves out.
     - Log each admin view and deletion (admin user ID, target user ID; no emails or other personal data) and test that non-admins get 403.
     - Before shipping, check whether the Privacy policy needs to mention operator access to account data.
+
+## Growth
+
+12. **Google Analytics (waiting for the measurement ID).** Needed to see whether the new homepage and the calculator (feature specs #9 and #10) bring sign-ups. Google Analytics sets cookies (`_ga`, `_ga_<ID>`) and sends visitor data to Google, so it is **not** strictly necessary and needs opt-in consent first (see TODO #4).
+    - Config: a `VITE_GA_MEASUREMENT_ID` build variable read only in `src/config.ts`. When it's empty, nothing loads (local, CI and tests).
+    - Consent: add the consent manager from TODO #4 (vanilla-cookieconsent) in the same change. Load `gtag.js` only after the visitor accepts "Analytics", start with Google Consent Mode v2 set to denied, and add a footer "Cookie settings" link to withdraw consent.
+    - Page views: the SPA changes routes without reloading, so send a `page_view` on each React Router location change. Never send emails, names, subscription data or URLs with tokens (`/reset-password`, `/verify-email`, `/confirm-email`, `/unsubscribe`): strip query strings, or skip those routes.
+    - CSP (`frontend/build/securityHeaders.ts`): `https://www.googletagmanager.com` in `script-src`, and `https://*.google-analytics.com` and `https://*.analytics.google.com` in `connect-src`.
+    - Privacy Policy: the cookies, their lifetime, Google as a processor with its transfer outside the EU, and how to withdraw consent; update `storageItems` and bump the date.
+    - Tests: nothing loads without the ID or before consent; it loads after accepting; the CSP includes the origins only when the ID is set.

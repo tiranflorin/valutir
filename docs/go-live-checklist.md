@@ -52,6 +52,7 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 - [ ] Hourly scheduled commands through the systemd timer on the instance: `app:subscriptions:advance-billing-dates`, `app:reminders:send`, `cache:pool:prune`, with alarms on failure (TODO #2).
 - [ ] Email via Amazon SES, with the domain verified (SPF, DKIM, DMARC) and production access granted (TODO #2).
 - [ ] The email logo is served at `FRONTEND_URL/brand/email-logo.png` (it's deployed with the frontend). Send yourself each email once from production and check it in Gmail and Outlook.
+- [ ] **Search and AI crawlers** ([seo.md](seo.md#after-a-deploy)): `valutir.app` verified in Google Search Console and Bing Webmaster Tools with the sitemap submitted; Cloudflare's AI crawler blocking and managed `robots.txt` turned off; `/subscriptions/12` returns 404 and `/plans` returns 200 with its own title.
 - [ ] CSP switched from report-only to enforced after a click-through, and HSTS turned on in Cloudflare ([cloudflare-and-proxies.md](cloudflare-and-proxies.md)).
 - [ ] Log alerts on `Rejected Stripe webhook.`, `Stripe session does not match its purchase`, and `Stripe Checkout is turned off.`; Stripe's own "failing endpoint" emails go to a monitored inbox.
 

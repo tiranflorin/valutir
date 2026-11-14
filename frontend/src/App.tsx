@@ -26,6 +26,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import RefundPage from './pages/RefundPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import RouteMeta from './seo/RouteMeta';
 
 const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -188,6 +189,7 @@ const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const App: React.FC = () => {
     return (
         <AppProviders>
+            <RouteMeta />
             <AppRoutes />
         </AppProviders>
     );

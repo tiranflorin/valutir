@@ -5,7 +5,8 @@ import { cloudflareHeadersFile } from './build/securityHeaders'
 /** Writes dist/_headers (security headers for Cloudflare) with the API origin from VITE_API_URL. */
 const cloudflareHeaders = (apiUrl: string): Plugin => ({
   name: 'valutir-cloudflare-headers',
-  apply: 'build',
+  // Client build only; the prerender build (--ssr) never ships.
+  apply: (_config, { command, isSsrBuild }) => command === 'build' && !isSsrBuild,
   generateBundle() {
     this.emitFile({ type: 'asset', fileName: '_headers', source: cloudflareHeadersFile(apiUrl) })
   },
@@ -20,6 +21,11 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [react(), cloudflareHeaders(apiUrl)],
+    // The prerender build (src/entry-server.tsx) bundles every dependency, so Node never has to
+    // resolve MUI's and Emotion's packages itself.
+    ssr: {
+      noExternal: true,
+    },
     server: {
       host: '0.0.0.0',
       port: 5173,

@@ -64,6 +64,7 @@ Symfony 7.4 on PHP 8.3, served by FrankenPHP; Doctrine with PostgreSQL 16; JWT a
 | Emails and their shared template | [docs/emails.md](docs/emails.md) |
 | Payments and Stripe (testing, keys, going live) | [docs/payments.md](docs/payments.md) |
 | Cloudflare hosting, security headers, and client IPs behind proxies | [docs/cloudflare-and-proxies.md](docs/cloudflare-and-proxies.md) |
+| Search engines and AI crawlers (prerendering, sitemap, `llms.txt`) | [docs/seo.md](docs/seo.md) |
 | Deployment architecture and decisions | [docs/architecture.md](docs/architecture.md) |
 | What must be done before going live | [docs/go-live-checklist.md](docs/go-live-checklist.md) |
 | Known issues and TODO list | [docs/status-and-todo.md](docs/status-and-todo.md) |

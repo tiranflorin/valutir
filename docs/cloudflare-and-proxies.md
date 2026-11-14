@@ -8,7 +8,7 @@ The frontend is a static build hosted on Cloudflare Pages on the app's domain; t
 
 - The deploy pipeline builds it, not Cloudflare: `npm run build` on Node 24 in GitHub Actions, with `VITE_API_URL` and `VITE_TURNSTILE_SITE_KEY` set by the workflow, then `wrangler pages deploy frontend/dist`. Cloudflare's own Git integration and build settings stay unused ([architecture.md](architecture.md#deployment-pipeline)).
 - The build writes `dist/_headers` (`frontend/build/securityHeaders.ts`): a Content Security Policy whose `connect-src` is the origin of `VITE_API_URL`, plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and long-lived caching for the hashed files in `/assets`. Add any new external script, frame, font, image, or API origin to that policy.
-- SPA routing: Pages serves `index.html` for unknown paths when there's no `404.html`, so React Router's routes work without extra configuration.
+- Routing: the build prerenders each public page to its own file (`dist/plans.html` is served at `/plans`) and writes an empty `noindex` page for each signed-in and token route. Any other path gets `dist/404.html` with status 404; it is the same app shell, so React Router still opens `/subscriptions/12` in a browser. See [seo.md](seo.md).
 - `FRONTEND_URL` (backend) must be the app's one canonical origin: redirect `www` to it (or the reverse) with a Cloudflare redirect rule. Preview deployments (`*.pages.dev`) aren't allowed by the API's CORS.
 
 ## Client IPs behind proxies

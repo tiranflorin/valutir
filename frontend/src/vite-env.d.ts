@@ -5,6 +5,8 @@ interface ImportMetaEnv {
     readonly VITE_API_URL?: string;
     /** Cloudflare Turnstile site key for the contact form. */
     readonly VITE_TURNSTILE_SITE_KEY?: string;
+    /** Public origin of the app for canonical links and the sitemap. Defaults to https://valutir.app. */
+    readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

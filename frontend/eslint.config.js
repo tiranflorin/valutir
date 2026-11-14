@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage', 'screens']),
+  globalIgnores(['dist', 'dist-ssr', 'coverage', 'screens']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -21,6 +21,13 @@ export default defineConfig([
     rules: {
       // The context hooks live next to their providers; editing those files triggers a full reload instead of hot refresh.
       'react-refresh/only-export-components': ['error', { allowConstantExport: true, allowExportNames: ['useAuth', 'useAppTheme'] }],
+    },
+  },
+  {
+    // Build-time prerender entry (build/prerender.ts): never loaded by the dev server, so fast refresh doesn't apply.
+    files: ['src/entry-server.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ])

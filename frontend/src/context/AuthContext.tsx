@@ -34,6 +34,10 @@ const mergeProfile = (user: AuthUser | null, profile: AccountProfile): AuthUser 
 
 /** The session saved in this browser, if its token is still readable. A broken token is discarded. */
 const readStoredSession = (): { token: string; user: AuthUser } | null => {
+    // Prerendering at build time (src/entry-server.tsx) runs without a browser: signed out.
+    if (typeof window === 'undefined') {
+        return null;
+    }
     const storedToken = window.localStorage.getItem(STORAGE_KEY);
     if (!storedToken) {
         return null;
