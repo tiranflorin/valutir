@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, Box, Button, Container, Paper, Stack, TextField } from '@mui/material';
+import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import TurnstileWidget from '../components/TurnstileWidget';
+import { LEGAL } from '../legal';
 import { submitContactForm } from '../services/contact';
 import './RecurringScreens.css';
 import './ContactPage.css';
@@ -63,7 +65,7 @@ const ContactPage: React.FC = () => {
     return (
         <Box className="dashboard-page settings-page contact-page">
             <AppHeader />
-            <Container className="settings-container contact-container">
+            <Container component="main" className="settings-container contact-container">
                 <Box className="settings-page-heading">
                     <h1>Contact us</h1>
                     <p>Have a question or feedback? Send us a message.</p>
@@ -130,6 +132,17 @@ const ContactPage: React.FC = () => {
                         </Stack>
                     </Box>
                 </Paper>
+
+                <Box component="section" className="contact-topics" aria-labelledby="contact-topics-title">
+                    <h2 id="contact-topics-title">What you can write to us about</h2>
+                    <ul>
+                        <li><strong>Your account:</strong> signing in, confirming your email address, reminders, or anything that doesn’t work as expected.</li>
+                        <li><strong>Payments and refunds:</strong> the one-time {LEGAL.unlockPrice} unlock comes with a {LEGAL.refundDays}-day money-back guarantee; ask here. See the <RouterLink to="/refunds">Refund policy</RouterLink>.</li>
+                        <li><strong>Privacy requests:</strong> questions about your data or a request under the GDPR. See the <RouterLink to="/privacy">Privacy policy</RouterLink>; you can also download or delete your data yourself from your profile.</li>
+                        <li><strong>Feedback:</strong> a service missing from the list, an idea, or something that could be clearer.</li>
+                    </ul>
+                    <p>We reply to the email address you enter. ValuTir is operated by {LEGAL.legalName}, Romania.</p>
+                </Box>
             </Container>
             <AppFooter />
         </Box>

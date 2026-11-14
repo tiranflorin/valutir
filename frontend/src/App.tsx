@@ -25,6 +25,7 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import RefundPage from './pages/RefundPage';
+import CalculatorPage from './pages/CalculatorPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RouteMeta from './seo/RouteMeta';
 
@@ -40,6 +41,10 @@ const AppRoutes: React.FC = () => {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refunds" element={<RefundPage />} />
+            <Route path="/calculator" element={<CalculatorPage />} />
+            <Route path="/streaming-cost-calculator" element={<CalculatorPage preset="streaming" />} />
+            <Route path="/ai-tools-cost-calculator" element={<CalculatorPage preset="ai-tools" />} />
+            <Route path="/software-cost-calculator" element={<CalculatorPage preset="software" />} />
 
             <Route
                 path="/login"

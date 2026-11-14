@@ -51,7 +51,7 @@ const storageItems: StorageItem[] = [
 const PrivacyPage: React.FC = () => (
     <Box className="dashboard-page settings-page legal-page">
         <AppHeader />
-        <Container className="settings-container legal-container">
+        <Container component="main" className="settings-container legal-container">
             <Box className="settings-page-heading">
                 <h1>Privacy policy</h1>
                 <p>What ValuTir collects, why, and what you can do about it. Last updated {LEGAL.privacyUpdated}.</p>
@@ -125,6 +125,12 @@ const PrivacyPage: React.FC = () => (
                     <p>
                         Please don't put sensitive information in notes, review notes or the payment method field. For example, never
                         enter full card numbers; a label like &ldquo;Visa ending 4242&rdquo; is enough.
+                    </p>
+                    <p>
+                        The <RouterLink to="/calculator">subscription cost calculator</RouterLink> works entirely in your browser: what you
+                        type there isn't sent to us or stored, and it's forgotten when you leave the page. Only if you choose to save it to an
+                        account does it become your subscriptions, as above. A shared result link carries only the totals (yearly amount,
+                        number of subscriptions, currency and the largest category), never service names or prices.
                     </p>
                     <p>We don't make automated decisions about you, and ValuTir isn't meant for children under 16.</p>
                 </section>

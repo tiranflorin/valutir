@@ -8,16 +8,19 @@ Every public page is served as finished HTML, so Google, Bing and AI crawlers (G
 
 1. `vite build`: the normal client bundle in `dist/`.
 2. `vite build --ssr src/entry-server.tsx --outDir dist-ssr`: the same app, bundled to run in Node.
-3. `node build/prerender.ts`: renders each page as a signed-out visitor sees it and writes the files below into `dist/`.
+3. `node build/prerender.ts`: renders each page as a signed-out visitor sees it, checks every indexed page against the public page contract (the build fails otherwise), and writes the files below into `dist/`.
+
+The dev server renders pages the same way, through the same `renderPage()` in `src/entry-server.tsx` (`devPageRendering` in `vite.config.ts`), so `view-source:http://localhost:5173/calculator` shows exactly what a crawler gets in production.
 
 | Output | What it is |
 |---|---|
-| `index.html`, `plans.html`, `register.html`, `login.html`, `contact.html`, `privacy.html`, `terms.html`, `refunds.html` | The page's full HTML and styles, its own title, description, canonical link and Open Graph tags; `index.html` also has JSON-LD (`SoftwareApplication` with both prices). Cloudflare Pages serves `plans.html` at `/plans`. |
+| `index.html`, `calculator.html`, `streaming-cost-calculator.html`, `ai-tools-cost-calculator.html`, `software-cost-calculator.html`, `plans.html`, `register.html`, `login.html`, `contact.html`, `privacy.html`, `terms.html`, `refunds.html` | The page's full HTML and styles, its own title, description, canonical link and Open Graph tags; `index.html` also has JSON-LD (`SoftwareApplication` with both prices). Cloudflare Pages serves `plans.html` at `/plans`. |
 | `my-subs.html`, `subscriptions/new.html`, `reset-password.html`, … | An empty page with `noindex`; the app fills it in the browser. |
 | `404.html` | The same empty page for every other path (`/subscriptions/12`, `/calendar/day/…`, typos). Pages returns it with status 404, so unknown URLs stay out of search; in the browser the app still opens normally. |
 | `robots.txt` | Allows every crawler, disallows the private and token routes, points to the sitemap. |
 | `sitemap.xml` | The indexed pages. |
 | `llms.txt` | A short Markdown overview of ValuTir and its pages for AI assistants ([llmstxt.org](https://llmstxt.org)). |
+| `_redirects` | `/plans/` → `/plans` (301) for every indexed page, so each page has one URL. |
 
 All of it comes from one list, `frontend/src/seo/pages.ts`. When the user moves between pages in the app, `src/seo/RouteMeta.tsx` updates the title, description, robots and canonical tags from the same list.
 
@@ -25,16 +28,24 @@ The app doesn't hydrate the prerendered HTML: it renders fresh over it (`src/mai
 
 ## Rules
 
-- **Every route in `App.tsx` is listed in `src/seo/pages.ts`**: public pages in `INDEXED_PAGES` (title under about 60 characters, description under about 160), private and token routes in `UNLISTED_PAGES`. A route with a parameter goes under a `PRIVATE_PREFIXES` entry. `test/seo.test.tsx` fails otherwise.
-- **Public pages must render without a browser**: no `window`, `document` or `localStorage` while rendering. Read them in `useEffect` or an event handler, or guard with `typeof window === 'undefined'` (see `AuthContext`). The build fails if a public page renders without an `<h1>`.
-- **Descriptions, `llms.txt` and the JSON-LD state facts**: keep them true when prices, limits or features change (prices come from `src/legal.ts`).
-- `VITE_SITE_URL` sets the origin used in canonical links, the sitemap, `robots.txt` and `llms.txt`. It defaults to `https://valutir.app`; set it only for another host, such as staging.
+The contract every public page follows, now and for new pages, is in [AGENTS.md, "Public pages"](../AGENTS.md#public-pages-search-engines-and-ai-tools). In short: listed in `src/seo/pages.ts`; its own title, description, canonical link and JSON-LD; one `<main>` with the only `<h1>` and at least 60 words of real text; a top-level path; renders without a browser. `publicPageProblems()` (`src/seo/documents.ts`) checks it in the build and in `test/seo.test.tsx`, and names what's wrong.
+
+`VITE_SITE_URL` sets the origin used in canonical links, the sitemap, `robots.txt`, `llms.txt` and the JSON-LD. It defaults to `https://valutir.app`; set it only for another host, such as staging.
 
 ## Testing it
 
 ### Locally
 
-Build, then serve `dist/` on port 4173:
+Quickest: with the dev server running (`docker compose up -d`), open `view-source:http://localhost:5173/calculator`, or:
+
+```bash
+curl -s http://localhost:5173/calculator | grep -E '<title>|name="description"|rel="canonical"|<h1|<h2'
+
+# The crawler files are generated in dev too
+curl -s http://localhost:5173/robots.txt
+```
+
+To check the production build itself, build, then serve `dist/` on port 4173:
 
 ```bash
 docker compose run --rm frontend-test npm run build

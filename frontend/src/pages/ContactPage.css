@@ -9,3 +9,43 @@
 .contact-turnstile {
     min-height: 65px;
 }
+
+.contact-topics {
+    margin-top: 28px;
+    color: #65736a;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.contact-topics h2 {
+    margin: 0 0 8px;
+    color: #17241d;
+    font-size: 18px;
+}
+
+.contact-topics ul {
+    margin: 0 0 10px;
+    padding-left: 20px;
+}
+
+.contact-topics strong {
+    color: #324b3b;
+}
+
+.contact-topics a {
+    color: #176b43;
+    font-weight: 700;
+}
+
+:root[data-theme='dark'] .contact-topics {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .contact-topics h2,
+:root[data-theme='dark'] .contact-topics strong {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .contact-topics a {
+    color: #8dd5a3;
+}

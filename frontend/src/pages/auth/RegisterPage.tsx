@@ -17,8 +17,9 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
-import { Navigate, useNavigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import { calculatorImportOf } from '../../utils/calculator';
 import { registerRequest } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';
@@ -29,6 +30,9 @@ type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';
 const RegisterPage: React.FC = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    // Carries a list from the calculator on to sign-in (calculatorImportOf in utils/calculator.ts).
+    const location = useLocation();
+    const calculatorImport = calculatorImportOf(location.state);
     const { isAuthenticated } = useAuth();
 
     const [name, setName] = useState('');
@@ -162,8 +166,11 @@ const RegisterPage: React.FC = () => {
                         <div className="login-intro">
                             <SuccessHeading title="Account created" />
                             <p>Check your inbox: we sent a link to confirm your email address. You can sign in and start tracking right away. If this email was already registered, we’ve sent it a message with next steps instead.</p>
+                            {calculatorImport && (
+                                <p>Sign in next, and the {calculatorImport.rows.length} subscription{calculatorImport.rows.length === 1 ? '' : 's'} from the calculator will be ready to save.</p>
+                            )}
                         </div>
-                        <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login')}>
+                        <Button fullWidth variant="contained" className="login-submit" onClick={() => navigate('/login', { state: location.state })}>
                             Go to sign in
                         </Button>
                     </section>
@@ -343,7 +350,7 @@ const RegisterPage: React.FC = () => {
 
                     <div className="login-signup">
                         Already have an account?{' '}
-                        <Link component="button" type="button" underline="hover" fontWeight={700} onClick={() => navigate('/login')}>
+                        <Link component="button" type="button" underline="hover" fontWeight={700} onClick={() => navigate('/login', { state: location.state })}>
                             Sign in
                         </Link>
                     </div>

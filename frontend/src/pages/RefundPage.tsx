@@ -14,7 +14,7 @@ import './LegalPage.css';
 const RefundPage: React.FC = () => (
     <Box className="dashboard-page settings-page legal-page">
         <AppHeader />
-        <Container className="settings-container legal-container">
+        <Container component="main" className="settings-container legal-container">
             <Box className="settings-page-heading">
                 <h1>Refund policy</h1>
                 <p>{LEGAL.refundDays}-day money-back guarantee on the one-time unlock. Last updated {LEGAL.refundsUpdated}.</p>

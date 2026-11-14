@@ -13,7 +13,8 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
+import { calculatorImportOf } from '../../utils/calculator';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
@@ -33,6 +34,8 @@ const LoginPage: React.FC = () => {
     const [passwordError, setPasswordError] = useState('');
 
     const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/my-subs';
+    // A list brought from the calculator goes on to "Pick what you pay for" to be saved.
+    const calculatorImport = calculatorImportOf(location.state);
 
     if (isAuthenticated) {
         return <Navigate to="/my-subs" replace />;
@@ -61,7 +64,11 @@ const LoginPage: React.FC = () => {
         try {
             setLoading(true);
             await login(email, password);
-            navigate(redirectTo, { replace: true });
+            if (calculatorImport) {
+                navigate('/subscriptions/pick', { replace: true, state: { calculatorImport } });
+            } else {
+                navigate(redirectTo, { replace: true });
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Login failed');
         } finally {
@@ -133,7 +140,7 @@ const LoginPage: React.FC = () => {
                             {loading ? <CircularProgress size={22} color="inherit" /> : 'Sign in'}
                         </Button>
                         <div className="login-signup">
-                            Don&apos;t have an account? <Link href="/register" underline="hover">Try it out</Link>
+                            Don&apos;t have an account? <Link component={RouterLink} to="/register" state={location.state} underline="hover">Try it out</Link>
                         </div>
                     </Box>
                 </section>

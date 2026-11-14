@@ -87,9 +87,10 @@ const AppHeader: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                {isLanding && <a href="#how-it-works">How it works</a>}
-                                {isLanding && <a href="#business">For business</a>}
+                                {isLanding && <RouterLink to="/calculator">Calculator</RouterLink>}
+                                {isLanding && <a href="#the-app">How it works</a>}
                                 {isLanding && <a href="#free">Free plan</a>}
+                                {!isLanding && <Button component={RouterLink} to="/calculator" className={pathname.endsWith('calculator') ? 'active' : ''}>Calculator</Button>}
                                 {!isLanding && <Button component={RouterLink} to="/plans" className={pathname === '/plans' ? 'active' : ''}>Plans</Button>}
                                 <ThemeModeToggle />
                                 <Button component={RouterLink} to="/login" className="signin-link">Sign in</Button>

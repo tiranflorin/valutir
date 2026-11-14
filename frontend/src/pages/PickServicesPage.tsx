@@ -11,7 +11,7 @@ import {
     TextField,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { Link as RouterLink, useNavigate } from 'react-router';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import CurrencySelect, { type Currency } from '../components/CurrencySelect';
@@ -20,6 +20,7 @@ import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import CatalogTile from '../components/CatalogTile';
 import { type CatalogService, SERVICE_CATALOG, searchCatalog } from '../data/services';
+import { type CalculatorImport, calculatorImportOf } from '../utils/calculator';
 import { isBeforeToday, todayIsoDate } from '../utils/dates';
 import './RecurringScreens.css';
 
@@ -31,6 +32,12 @@ const CADENCES: { value: BillingInterval; label: string }[] = [
     { value: 'quarterly', label: 'Quarterly' },
     { value: 'yearly', label: 'Yearly' },
 ];
+
+/** Services from the calculator that aren't in the catalog, as entries the page can show and save. */
+const customServicesOf = (imported: CalculatorImport | null): Record<string, CatalogService> =>
+    Object.fromEntries((imported?.rows ?? [])
+        .filter((row) => !SERVICE_CATALOG.some((service) => service.name === row.name))
+        .map((row) => [row.name, { name: row.name, category: row.category, cadence: row.cadence }]));
 
 const isBusinessView = () => {
     try {
@@ -47,17 +54,22 @@ const isBusinessView = () => {
 const PickServicesPage: React.FC = () => {
     const navigate = useNavigate();
     const { token, logout, user } = useAuth();
+    const location = useLocation();
+    // A list brought from the calculator (/calculator): picked and priced already, dates still to add.
+    const [imported] = useState(() => calculatorImportOf(location.state));
+    const [custom, setCustom] = useState(() => customServicesOf(imported));
     const [query, setQuery] = useState('');
-    const [picked, setPicked] = useState<string[]>([]);
-    const [rows, setRows] = useState<Record<string, Row>>({});
-    const [currency, setCurrency] = useState<Currency>((user?.defaultCurrency as Currency | undefined) ?? 'EUR');
+    const [picked, setPicked] = useState<string[]>(() => imported?.rows.map((row) => row.name) ?? []);
+    const [rows, setRows] = useState<Record<string, Row>>(() => Object.fromEntries((imported?.rows ?? [])
+        .map((row) => [row.name, { amount: row.amount, cadence: row.cadence, nextBillingDate: '' }])));
+    const [currency, setCurrency] = useState<Currency>(imported?.currency ?? (user?.defaultCurrency as Currency | undefined) ?? 'EUR');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     const matches = useMemo(() => searchCatalog(query), [query]);
     const pickedServices = useMemo(
-        () => picked.map((name) => SERVICE_CATALOG.find((service) => service.name === name)).filter((service): service is CatalogService => !!service),
-        [picked]
+        () => picked.map((name) => SERVICE_CATALOG.find((service) => service.name === name) ?? custom[name]).filter((service): service is CatalogService => !!service),
+        [picked, custom]
     );
 
     const addLabel = pickedServices.length === 0
@@ -159,6 +171,12 @@ const PickServicesPage: React.FC = () => {
                     <p>Tick the services you subscribe to, then add what each one costs you and when it’s next charged. You can change anything later.</p>
                 </Box>
 
+                {imported && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        Your {imported.rows.length} subscription{imported.rows.length === 1 ? '' : 's'} from the calculator {imported.rows.length === 1 ? 'is' : 'are'} below with {imported.rows.length === 1 ? 'its price' : 'their prices'}. Add when each is next charged, then save.
+                    </Alert>
+                )}
+
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="flex-start">
                     <Paper className="pick-services-list">
                         <TextField
@@ -203,6 +221,23 @@ const PickServicesPage: React.FC = () => {
                                 {pickedServices.map((service) => (
                                     <fieldset key={service.name} className="pick-services-row">
                                         <legend>{service.name}</legend>
+                                        {custom[service.name] && (
+                                            <Button
+                                                size="small"
+                                                className="pick-services-remove"
+                                                disabled={saving}
+                                                onClick={() => {
+                                                    setPicked((previous) => previous.filter((name) => name !== service.name));
+                                                    setCustom((previous) => {
+                                                        const next = { ...previous };
+                                                        delete next[service.name];
+                                                        return next;
+                                                    });
+                                                }}
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
                                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                                             <TextField
                                                 label="Price"

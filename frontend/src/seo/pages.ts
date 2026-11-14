@@ -19,6 +19,8 @@ export type IndexedPage = {
     description: string;
     /** One line for llms.txt. */
     summary: string;
+    /** What the page is, for its JSON-LD (every page is also a schema.org WebPage). */
+    schema?: 'SoftwareApplication' | 'WebApplication';
 };
 
 export type UnlistedPage = { path: string; title: string };
@@ -26,9 +28,38 @@ export type UnlistedPage = { path: string; title: string };
 export const INDEXED_PAGES: IndexedPage[] = [
     {
         path: '/',
-        title: 'ValuTir · Track subscriptions, free trials and renewals',
-        description: 'Keep your subscriptions, free trials and renewal dates in one place, see what they cost a month and a year, and get reminded before each charge. Free up to 50.',
-        summary: 'What ValuTir does: subscriptions, trial end dates, renewal calendar, reminders, Personal and Business views.',
+        title: 'ValuTir · Know what your subscriptions really cost',
+        description: 'Stop paying for what you don’t use. See what your subscriptions cost a month and a year, get a reminder before each charge, and try the free calculator.',
+        schema: 'SoftwareApplication',
+        summary: 'What ValuTir does: a free cost calculator, then one list of subscriptions with trial end dates, a renewal calendar, reminders and Personal and Business views.',
+    },
+    {
+        path: '/calculator',
+        schema: 'WebApplication',
+        title: 'Subscription cost calculator: your yearly total · ValuTir',
+        description: 'Free subscription calculator: tick what you pay for, type each price and see your monthly, yearly and five-year cost. No sign-up; nothing leaves your browser.',
+        summary: 'Free subscription cost calculator: monthly, yearly and five-year totals, by category. No sign-up; runs in the browser.',
+    },
+    {
+        path: '/streaming-cost-calculator',
+        schema: 'WebApplication',
+        title: 'Streaming cost calculator · ValuTir',
+        description: 'What do Netflix, Spotify, Disney+ and the rest cost you a year? Tick your streaming, music and gaming subscriptions and see the total. Free, no sign-up.',
+        summary: 'Calculator for streaming, music and gaming subscriptions.',
+    },
+    {
+        path: '/ai-tools-cost-calculator',
+        schema: 'WebApplication',
+        title: 'AI tools cost calculator · ValuTir',
+        description: 'What does your AI stack cost? Add ChatGPT, Claude, Copilot, Cursor, Midjourney and other tools you pay for and see the monthly and yearly total. Free.',
+        summary: 'Calculator for AI assistants, coding assistants and image tools.',
+    },
+    {
+        path: '/software-cost-calculator',
+        schema: 'WebApplication',
+        title: 'Software and cloud cost calculator · ValuTir',
+        description: 'Office suites, design tools, password managers, hosting and domains: add the software you pay for and see your monthly and yearly bill. Free, no sign-up.',
+        summary: 'Calculator for software, SaaS and cloud costs, for freelancers and small teams.',
     },
     {
         path: '/plans',
@@ -103,6 +134,9 @@ export type PageHead = {
     indexable: boolean;
     /** Absolute URL, only for indexable pages. */
     canonical?: string;
+    /** The normalized path. */
+    path: string;
+    schema?: IndexedPage['schema'];
 };
 
 export const NOT_FOUND_TITLE = 'Page not found · ValuTir';
@@ -120,9 +154,11 @@ export const pageHead = (path: string, siteUrl: string): PageHead => {
             description: indexed.description,
             indexable: true,
             canonical: `${siteUrl}${indexed.path === '/' ? '/' : indexed.path}`,
+            path: indexed.path,
+            schema: indexed.schema,
         };
     }
     const unlisted = UNLISTED_PAGES.find((page) => page.path === normalized);
 
-    return { title: unlisted?.title ?? SITE_NAME, description: DEFAULT_DESCRIPTION, indexable: false };
+    return { title: unlisted?.title ?? SITE_NAME, description: DEFAULT_DESCRIPTION, indexable: false, path: normalized };
 };

@@ -140,7 +140,7 @@ const PlansPage: React.FC = () => {
     return (
         <Box className="dashboard-page plans-page">
             <AppHeader />
-            <Container className="plans-container">
+            <Container component="main" className="plans-container">
                 <Box className="plans-hero">
                     <h1>A useful tracker should stay useful for free.</h1>
                     <p>

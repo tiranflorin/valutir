@@ -14,7 +14,7 @@ import './LegalPage.css';
 const TermsPage: React.FC = () => (
     <Box className="dashboard-page settings-page legal-page">
         <AppHeader />
-        <Container className="settings-container legal-container">
+        <Container component="main" className="settings-container legal-container">
             <Box className="settings-page-heading">
                 <h1>Terms of use</h1>
                 <p>The rules for using ValuTir. Last updated {LEGAL.termsUpdated}.</p>
