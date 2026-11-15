@@ -4,7 +4,7 @@ import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import HeroCalculator from '../components/calculator/HeroCalculator';
-import { LEGAL } from '../legal';
+import { LEGAL, REVENUE_COMMITMENT } from '../legal';
 
 /**
  * The front of ValuTir: what your digital life costs (the calculator), why it matters, the app that
@@ -44,8 +44,18 @@ const HomePage: React.FC = () => (
 
             <section className="landing-section pillars-section" id="why" aria-labelledby="pillars-title">
                 <div className="section-head">
-                    <h2 id="pillars-title">Small charges, big totals.</h2>
-                    <p>A few euros a month here and there turns into hundreds a year. ValuTir shows the whole picture, so each subscription has to earn its place.</p>
+                    <h2 id="pillars-title">Subscriptions are built to be forgotten.</h2>
+                    <p>
+                        They renew on their own, free trials turn into payments, prices go up quietly, and cancelling is often harder
+                        than signing up. ValuTir is built for the other side: the person paying.
+                    </p>
+                    <p className="section-source">
+                        In a 2022 US survey, people guessed they spent $86 a month on subscriptions; adding them up one by one came
+                        to $219.{' '}
+                        <a href="https://www.cnbc.com/2022/09/06/consumers-underestimate-monthly-subscription-costs-by-at-least-100.html" target="_blank" rel="noopener noreferrer">
+                            C+R Research, via CNBC
+                        </a>
+                    </p>
                 </div>
                 <div className="pillar-grid">
                     <article className="pillar-card">
@@ -81,7 +91,7 @@ const HomePage: React.FC = () => (
                     <article className="cap-card">
                         <span className="cap-num">02</span>
                         <h3>See your year</h3>
-                        <p>Monthly and yearly cost, spending by category and the next 12 months of charges, so a yearly bill never catches you out.</p>
+                        <p>Monthly and yearly cost, spending by category and the next 12 months of charges, so a yearly bill never catches you out. When a price goes up, the old one stays in its price history.</p>
                         <div className="example-box"><small>Example · €7.99 monthly</small><strong>€95.88 a year</strong><span>The yearly cost if it keeps renewing.</span></div>
                     </article>
                     <article className="cap-card">
@@ -109,13 +119,13 @@ const HomePage: React.FC = () => (
                     <p>Knowing what you pay for is personal. Here is what ValuTir does and doesn’t do with it.</p>
                 </div>
                 <ul className="trust-grid">
+                    <li><strong>How ValuTir makes money: only {REVENUE_COMMITMENT.source}.</strong> {REVENUE_COMMITMENT.never} {REVENUE_COMMITMENT.why}</li>
                     <li><strong>No bank login.</strong> You type what you pay for. ValuTir never connects to your bank or reads your transactions.</li>
                     <li><strong>Card details go to Stripe.</strong> If you buy the unlock, Stripe takes the payment. ValuTir never sees your card.</li>
-                    <li><strong>No ads, no selling.</strong> Your data isn’t shown to advertisers, sold, or shared for marketing.</li>
                     <li><strong>Take it or delete it.</strong> Download everything as JSON or CSV, or delete your account and all its subscriptions, at any time.</li>
                 </ul>
                 <p className="trust-footnote">
-                    Operated by {LEGAL.legalName}, Romania, under the EU’s GDPR. The details are in the <RouterLink to="/privacy">Privacy policy</RouterLink>.
+                    Operated by {LEGAL.legalName}, Romania, under the EU’s GDPR. The details are in the <RouterLink to="/privacy">Privacy policy</RouterLink>, and <RouterLink to="/about">why ValuTir exists</RouterLink> on its own page.
                 </p>
             </section>
 

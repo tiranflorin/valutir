@@ -631,6 +631,17 @@ body {
     line-height: 1.65;
 }
 
+/* A sourced fact under a section's text: smaller, with its source linked. */
+.section-head p.section-source {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.section-head p.section-source a {
+    color: inherit;
+    text-decoration: underline;
+}
+
 .trial-section {
     display: grid;
     grid-template-columns: .95fr 1.05fr;

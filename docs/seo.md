@@ -14,7 +14,7 @@ The dev server renders pages the same way, through the same `renderPage()` in `s
 
 | Output | What it is |
 |---|---|
-| `index.html`, `calculator.html`, `streaming-cost-calculator.html`, `ai-tools-cost-calculator.html`, `software-cost-calculator.html`, `plans.html`, `register.html`, `login.html`, `contact.html`, `privacy.html`, `terms.html`, `refunds.html` | The page's full HTML and styles, its own title, description, canonical link and Open Graph tags; `index.html` also has JSON-LD (`SoftwareApplication` with both prices). Cloudflare Pages serves `plans.html` at `/plans`. |
+| `index.html`, `calculator.html`, `streaming-cost-calculator.html`, `ai-tools-cost-calculator.html`, `software-cost-calculator.html`, `find-subscriptions.html`, `about.html`, `plans.html`, `register.html`, `login.html`, `contact.html`, `privacy.html`, `terms.html`, `refunds.html` | The page's full HTML and styles, its own title, description, canonical link and Open Graph tags; `index.html` also has JSON-LD (`SoftwareApplication` with both prices). Cloudflare Pages serves `plans.html` at `/plans`. |
 | `my-subs.html`, `subscriptions/new.html`, `reset-password.html`, … | An empty page with `noindex`; the app fills it in the browser. |
 | `404.html` | The same empty page for every other path (`/subscriptions/12`, `/calendar/day/…`, typos). Pages returns it with status 404, so unknown URLs stay out of search; in the browser the app still opens normally. |
 | `robots.txt` | Allows every crawler, disallows the private and token routes, points to the sitemap. |

@@ -28,6 +28,20 @@
     line-height: 1.6;
 }
 
+.plans-hero p.plans-revenue {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.plans-hero p.plans-revenue a {
+    color: #176b43;
+    font-weight: 700;
+}
+
+:root[data-theme='dark'] .plans-hero p.plans-revenue a {
+    color: #8dd5a3;
+}
+
 .plans-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

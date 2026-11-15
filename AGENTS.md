@@ -132,7 +132,7 @@ Every page a signed-out visitor can reach, today's and any added later, follows 
 - **Body:** exactly one `<main>` landmark (for example `<Container component="main">`) containing the page's only `<h1>`, and at least 60 words of real text in it that say what the page is for. A page that is mostly a form (contact, a tool) adds a short section explaining it.
 - **One URL per page:** top-level paths only for pages that share a topic (`/streaming-cost-calculator`, not `/calculator/streaming`): a page file next to a folder of the same name leaves it to the host which one is served, and the build refuses it. `_redirects` sends `/page/` to `/page`.
 - **Renders without a browser:** no `window`, `document` or `localStorage` while rendering; read them in `useEffect` or an event handler, or guard with `typeof window === 'undefined'`.
-- **True:** titles, descriptions, `llms.txt` and JSON-LD state facts (prices come from `src/legal.ts`); update them when the product changes.
+- **True:** titles, descriptions, `llms.txt` and JSON-LD state facts (prices come from `src/legal.ts`); update them when the product changes. How ValuTir makes money (only the one-time unlock: no commissions, affiliate links, ads or data sales) is a public promise, worded once in `REVENUE_COMMITMENT` (`src/legal.ts`) and shown on the homepage, `/about`, `/plans` and in `llms.txt`; change the business model before changing it.
 
 ## Local development
 

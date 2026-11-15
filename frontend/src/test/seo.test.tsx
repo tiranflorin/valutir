@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render, renderPage } from '../entry-server';
 import { disallowedPaths, fillTemplate, headTags, llmsTxt, publicPageProblems, redirectsFile, robotsTxt, sitemapXml } from '../seo/documents';
 import { INDEXED_PAGES, UNLISTED_PAGES, pageHead } from '../seo/pages';
+import { REVENUE_COMMITMENT } from '../legal';
 import appSource from '../App.tsx?raw';
 import { isPageRequest } from '../../build/pageRequest';
 
@@ -136,6 +137,12 @@ describe('the public page contract (AGENTS.md, "Public pages")', () => {
         expect(html).toContain('<div id="root"></div>');
         expect(html).toContain('noindex, nofollow');
         expect(render('/plans')).toMatch(/<h1[\s>]/);
+    });
+
+    it('states how ValuTir makes money wherever it promises it, to visitors and to AI tools', () => {
+        for (const path of ['/', '/about', '/plans']) expect(render(path), path).toContain(REVENUE_COMMITMENT.never);
+        expect(llmsTxt(SITE)).toContain(REVENUE_COMMITMENT.never);
+        expect(headTags(pageHead('/', SITE), SITE)).toContain('a subscription tracker on the side of the person paying');
     });
 
     it('redirects a trailing slash to the one URL of each page', () => {

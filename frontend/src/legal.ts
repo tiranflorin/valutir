@@ -24,3 +24,13 @@ export const LEGAL = {
  * number, and CUI (required on Romanian commercial websites by Law 365/2002, art. 5).
  */
 export const OPERATOR_DETAILS = [LEGAL.legalName, LEGAL.address , LEGAL.taxId].join(', ');
+
+/**
+ * ValuTir's public commitment on how it makes money, repeated on the homepage, the About and Plans
+ * pages and in llms.txt. It is a promise: change the business model before changing this text.
+ */
+export const REVENUE_COMMITMENT = {
+    source: 'the optional one-time unlock',
+    never: 'No commissions from providers, no affiliate links, no ads, no selling data.',
+    why: 'So ValuTir gains nothing from you keeping a subscription, or from cancelling one.',
+} as const;

@@ -68,6 +68,12 @@ export const INDEXED_PAGES: IndexedPage[] = [
         summary: 'Guide: where to look for every subscription you pay for, with the exact menu path for each app store and payment service.',
     },
     {
+        path: '/about',
+        title: 'Why ValuTir exists · ValuTir',
+        description: 'ValuTir is on the side of the person paying: what it is for, how it makes money (only a one-time unlock), what it won’t do, and who runs it.',
+        summary: 'Why ValuTir exists: its purpose, how it makes money (only the optional one-time unlock; no commissions, affiliate links, ads or data sales), what it won’t do, and who runs it.',
+    },
+    {
         path: '/plans',
         title: 'Plans and pricing · ValuTir',
         description: `ValuTir is free for up to 50 active subscriptions, with Personal and Business views. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit. No monthly fee.`,

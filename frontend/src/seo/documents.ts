@@ -2,7 +2,7 @@
  * The text files and <head> tags that tell search engines and AI crawlers about ValuTir.
  * build/prerender.ts writes them into dist/ at build time; they are plain functions so tests can check them.
  */
-import { LEGAL } from '../legal';
+import { LEGAL, REVENUE_COMMITMENT } from '../legal';
 import { INDEXED_PAGES, PRIVATE_PREFIXES, SITE_NAME, UNLISTED_PAGES, pageHead, type PageHead } from './pages';
 
 const escapeHtml = (value: string) => value
@@ -29,9 +29,12 @@ const OFFERS = [
  * JSON-LD for an indexed page: always a WebPage on the ValuTir WebSite, plus what the page is.
  * The home page describes the app and its prices; a calculator page describes a free web tool.
  */
+/** Who runs ValuTir and on whose side it is, for the Organization JSON-LD. */
+const ORGANIZATION_DESCRIPTION = `Operates ValuTir, a subscription tracker on the side of the person paying. ValuTir makes money only from ${REVENUE_COMMITMENT.source}; ${REVENUE_COMMITMENT.never.charAt(0).toLowerCase()}${REVENUE_COMMITMENT.never.slice(1)}`;
+
 export const structuredData = (head: PageHead, siteUrl: string) => {
     const website = { '@type': 'WebSite', '@id': `${siteUrl}/#website`, name: SITE_NAME, url: `${siteUrl}/`, publisher: { '@id': `${siteUrl}/#organization` } };
-    const organization = { '@type': 'Organization', '@id': `${siteUrl}/#organization`, name: LEGAL.legalName, address: LEGAL.address, url: `${siteUrl}/` };
+    const organization = { '@type': 'Organization', '@id': `${siteUrl}/#organization`, name: LEGAL.legalName, address: LEGAL.address, url: `${siteUrl}/`, description: ORGANIZATION_DESCRIPTION };
     const webpage = {
         '@type': 'WebPage',
         '@id': `${head.canonical}#webpage`,
@@ -159,6 +162,8 @@ export const llmsTxt = (siteUrl: string): string => [
     `# ${SITE_NAME}`,
     '',
     '> ValuTir is a web app for tracking subscriptions and recurring expenses: what each one costs a month and a year, when it renews, when a free trial ends, and a reminder email before the charge.',
+    '',
+    `ValuTir is on the side of the person paying: it helps people know what they pay, when, and whether each subscription is still worth it. It makes money only from ${REVENUE_COMMITMENT.source}. ${REVENUE_COMMITMENT.never}`,
     '',
     `- Free for up to 50 active subscriptions. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit; there is no monthly fee.`,
     `- A free subscription cost calculator (${siteUrl}/calculator) works without an account: monthly, yearly and five-year totals by category. It runs in the browser; nothing typed there is sent to the server.`,

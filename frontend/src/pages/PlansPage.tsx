@@ -5,7 +5,7 @@ import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { type BillingStatus, fetchBillingStatus, formatPrice, startCheckout } from '../services/account';
-import { LEGAL } from '../legal';
+import { LEGAL, REVENUE_COMMITMENT } from '../legal';
 import '../styles/plans.css';
 
 /** Shown before the account's status loads (and to visitors); the server's figure wins once loaded. */
@@ -146,6 +146,10 @@ const PlansPage: React.FC = () => {
                     <p>
                         Personal and Business views stay free. Pay once only if you need more than 50 active
                         subscriptions or the advanced small-business tools.
+                    </p>
+                    <p className="plans-revenue">
+                        This one-time unlock is how ValuTir makes money. {REVENUE_COMMITMENT.never}{' '}
+                        <RouterLink to="/about">Why ValuTir exists</RouterLink>
                     </p>
                 </Box>
 
