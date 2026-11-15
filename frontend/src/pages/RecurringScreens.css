@@ -5235,3 +5235,22 @@ body {
 :root[data-theme='dark'] .keep-review-decided a {
     color: #8dd5a3;
 }
+
+/* A manage-or-cancel link and its note that the provider's page can change. */
+.manage-link-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.manage-link-note {
+    max-width: 540px;
+    color: #7b877f;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+:root[data-theme='dark'] .manage-link-note {
+    color: #94a3b8;
+}

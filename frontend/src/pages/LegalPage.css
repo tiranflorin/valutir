@@ -125,3 +125,8 @@
     white-space: nowrap;
     overflow-wrap: normal;
 }
+
+/* The guide's list of places (a nav, not a section) needs the same gap before the first section. */
+.legal-card nav.legal-summary {
+    margin-bottom: 24px;
+}

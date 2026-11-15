@@ -16,6 +16,7 @@ import {
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { API_URL } from '../../config';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
+import ManageLinkNote from '../ManageLinkNote';
 import { safeManageUrl } from '../../utils/manageUrl';
 import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
 
@@ -142,7 +143,12 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                     <Typography className="subscription-review-copy">
                         ValuTir can update your record, but it cannot cancel a provider plan for you. Keep tracking this subscription until the provider confirms cancellation.
                     </Typography>
-                    {providerLink && <Typography component="p" sx={{ mt: 1 }}>{providerLink}</Typography>}
+                    {providerLink && (
+                        <div className="manage-link-block">
+                            <Typography component="p" sx={{ mt: 1 }}>{providerLink}</Typography>
+                            <ManageLinkNote />
+                        </div>
+                    )}
                 </Box>
 
                 <FormControl>

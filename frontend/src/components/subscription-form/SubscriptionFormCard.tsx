@@ -3,7 +3,7 @@ import { todayIsoDate } from '../../utils/dates';
 import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
 import { TRIAL_REMINDER_LEAD_DAYS } from '../../utils/reminders';
 import { MANAGE_URL_MAX, manageUrlError } from '../../utils/manageUrl';
-import { type CatalogService, searchCatalog } from '../../data/services';
+import { type CatalogService, findCatalogService, searchCatalog } from '../../data/services';
 import CatalogTile from '../CatalogTile';
 import {
     Accordion,
@@ -190,9 +190,10 @@ const SubscriptionFormCard: React.FC<Props> = ({
         onChange({ ...values, ...partial });
     };
 
-    const pickService = (service: CatalogService) => {
+    /** Fills what the catalog knows; `serviceName` keeps the user's own text when they typed it. */
+    const pickService = (service: CatalogService, serviceName: string = service.name) => {
         const filled: string[] = [];
-        const next: Partial<SubscriptionFormValues> = { serviceName: service.name };
+        const next: Partial<SubscriptionFormValues> = { serviceName };
         if (!categoryChosen && service.category !== values.category) {
             next.category = service.category;
             filled.push(`category ${service.category}`);
@@ -218,6 +219,13 @@ const SubscriptionFormCard: React.FC<Props> = ({
             getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
             inputValue={values.serviceName}
             onInputChange={(_, next, reason) => {
+                // Typing a catalog name exactly ("Netflix", or an alias like "office 365") counts as picking it,
+                // so the link is filled in even if the suggestion isn't clicked. Plan names don't match here.
+                const typedService = reason === 'input' ? findCatalogService(next) : undefined;
+                if (typedService) {
+                    pickService(typedService, next);
+                    return;
+                }
                 if (reason === 'input' || reason === 'clear') {
                     // A filled-in link belongs to its service: once the name is something else, drop it.
                     const stillThatService = autoLink !== null && next.toLowerCase().includes(autoLink.service.toLowerCase());
@@ -507,7 +515,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                         }}
                                         placeholder="https://"
                                         error={manageLinkError !== null}
-                                        helperText={manageLinkError ?? 'The provider’s page where you manage or cancel it. Shown as a link on the subscription.'}
+                                        helperText={manageLinkError ?? 'The provider’s page where you manage or cancel it, shown as a link on the subscription. Providers change their pages, so check it if it stops working.'}
                                         inputProps={{ maxLength: MANAGE_URL_MAX, inputMode: 'url' }}
                                         fullWidth
                                     />

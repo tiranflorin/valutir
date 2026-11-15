@@ -52,11 +52,11 @@ const HomePage: React.FC = () => (
                     <article className="pillar-card">
                         <h3>Save money</h3>
                         <p>Find the subscriptions you forgot about, the free trials about to turn paid, and the services that do the same job twice.</p>
-                        <RouterLink to="/calculator">Work out your yearly total →</RouterLink>
+                        <RouterLink to="/find-subscriptions">Where forgotten subscriptions hide →</RouterLink>
                     </article>
                     <article className="pillar-card">
                         <h3>Stay in control</h3>
-                        <p>Every renewal date on one calendar, an email before the charge, and a link to the provider’s page when you decide to cancel.</p>
+                        <p>Every renewal date on one calendar, an email before the charge, and for common services a link to the provider’s page when you decide to cancel.</p>
                         <a href="#the-app">See the app →</a>
                     </article>
                     <article className="pillar-card">
@@ -94,7 +94,7 @@ const HomePage: React.FC = () => (
                     <article className="cap-card">
                         <span className="cap-num">04</span>
                         <h3>Keep or cancel, one by one</h3>
-                        <p>Go through your subscriptions one at a time and decide. Cancelling is done with the provider; ValuTir links you to their page.</p>
+                        <p>Go through your subscriptions one at a time and decide. Cancelling is done with the provider; for common services, ValuTir links to their page.</p>
                         <div className="example-box"><small>Your call</small><strong>Keep · Cancel · Skip</strong><span>Then see what cancelling frees up.</span></div>
                     </article>
                 </div>

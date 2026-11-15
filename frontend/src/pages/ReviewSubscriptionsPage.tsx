@@ -14,6 +14,7 @@ import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import type { SubscriptionRecord } from '../types/subscription';
+import ManageLinkNote from '../components/ManageLinkNote';
 import { safeManageUrl } from '../utils/manageUrl';
 import { formatCurrency, groupedMoney } from '../utils/money';
 import { findOverlaps, overlapReasons } from '../utils/overlaps';
@@ -259,11 +260,12 @@ const ReviewSubscriptionsPage: React.FC = () => {
                                 </dl>
                                 {current.notes && <p className="keep-review-notes">{current.notes}</p>}
                                 {safeManageUrl(current.manageUrl) && (
-                                    <p className="keep-review-manage">
+                                    <div className="keep-review-manage manage-link-block">
                                         <a className="manage-link" href={safeManageUrl(current.manageUrl)!} target="_blank" rel="noopener noreferrer">
                                             Manage or cancel with {current.serviceName}<span className="visually-hidden"> (opens in a new tab)</span> ↗
                                         </a>
-                                    </p>
+                                        <ManageLinkNote />
+                                    </div>
                                 )}
 
                                 {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

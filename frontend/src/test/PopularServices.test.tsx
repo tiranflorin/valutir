@@ -146,6 +146,63 @@ describe('adding a subscription from the catalog', () => {
         await save(user);
 
         expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({ serviceName: 'Local gym', manageUrl: null });
+    }, 15_000); // Types into the form many times; slow when the whole suite runs in parallel.
+
+    it('fills the same when an exact catalog name is typed and the suggestion is never clicked', async () => {
+        const calls = addApi();
+        const user = userEvent.setup();
+        renderAdd();
+
+        await user.type(screen.getByRole('combobox', { name: /service name/i }), 'netflix');
+        await user.keyboard('{Escape}');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://www.netflix.com/account');
+        expect(screen.getByText(/the manage or cancel link for Netflix/)).toBeInTheDocument();
+        await save(user);
+
+        // The name stays as typed; only what the catalog knows is added.
+        expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({
+            serviceName: 'netflix',
+            category: 'Entertainment',
+            manageUrl: 'https://www.netflix.com/account',
+        });
+    });
+
+    it('fills from an alias without renaming what was typed', async () => {
+        addApi();
+        const user = userEvent.setup();
+        renderAdd();
+        const name = screen.getByRole('combobox', { name: /service name/i });
+
+        await user.type(name, 'office 365');
+        await user.keyboard('{Escape}');
+        expect(name).toHaveValue('office 365');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://account.microsoft.com/services');
+    });
+
+    it('keeps the link through a plan name typed after the service, and drops it for another name', async () => {
+        addApi();
+        const user = userEvent.setup();
+        renderAdd();
+        const name = screen.getByRole('combobox', { name: /service name/i });
+
+        await user.type(name, 'Netflix Standard');
+        await user.keyboard('{Escape}');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://www.netflix.com/account');
+
+        await user.clear(name);
+        await user.type(name, 'Local cinema club');
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('');
+    });
+
+    it('never replaces a link the user typed when a catalog name is typed', async () => {
+        addApi();
+        const user = userEvent.setup();
+        renderAdd();
+
+        fireEvent.change(screen.getByLabelText(/manage or cancel link/i), { target: { value: 'https://example.com/my-plan' } });
+        await user.type(screen.getByRole('combobox', { name: /service name/i }), 'Spotify');
+
+        expect(screen.getByLabelText(/manage or cancel link/i)).toHaveValue('https://example.com/my-plan');
     });
 
     it('keeps a typed link when the service changes', async () => {
@@ -320,19 +377,24 @@ describe('manage link on the detail page', () => {
         detail('https://www.netflix.com/account');
         const user = userEvent.setup();
 
-        const link = await screen.findByRole('link', { name: /Manage or cancel/ });
+        const link = await screen.findByRole('link', { name: /Manage or cancel with the provider/ });
         expect(link).toHaveAttribute('href', 'https://www.netflix.com/account');
         expect(link).toHaveAttribute('target', '_blank');
         expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        // The provider's site is outside our control, so every link says it can go out of date.
+        expect(screen.getByText(/Providers change their pages, so this link can stop working/)).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Cancel subscription' }));
-        expect(screen.getByRole('link', { name: /Cancel with Netflix/ })).toHaveAttribute('href', 'https://www.netflix.com/account');
+        const cancelLink = screen.getByRole('link', { name: /Cancel with Netflix/ });
+        expect(cancelLink).toHaveAttribute('href', 'https://www.netflix.com/account');
+        expect(cancelLink.closest('.manage-link-block')).toHaveTextContent(/this link can stop working/);
     });
 
     it('never links a stored value that isn’t https', async () => {
         detail('javascript:alert(1)');
 
         await screen.findByRole('button', { name: 'Edit subscription' });
-        expect(screen.queryByRole('link', { name: /Manage or cancel/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Manage or cancel with the provider/ })).not.toBeInTheDocument();
+        expect(screen.queryByText(/this link can stop working/)).not.toBeInTheDocument();
     });
 });

@@ -3,6 +3,7 @@ import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import ManageLinkNote from '../ManageLinkNote';
 import { safeManageUrl } from '../../utils/manageUrl';
 
 export type SubscriptionCardModel = {
@@ -104,11 +105,14 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
                         <small> / {formatBillingCadence(subscription.billingCadence)}</small>
                     </Typography>
                     {safeManageUrl(subscription.manageUrl) && (
-                        <a className="manage-link" href={safeManageUrl(subscription.manageUrl)!} target="_blank" rel="noopener noreferrer">
-                            {subscription.status === 'cancelled' ? 'Provider account' : 'Manage or cancel'}
-                            <OpenInNewRoundedIcon fontSize="inherit" aria-hidden="true" />
-                            <span className="visually-hidden"> (opens in a new tab)</span>
-                        </a>
+                        <div className="manage-link-block">
+                            <a className="manage-link" href={safeManageUrl(subscription.manageUrl)!} target="_blank" rel="noopener noreferrer">
+                                {subscription.status === 'cancelled' ? 'Your account with the provider' : 'Manage or cancel with the provider'}
+                                <OpenInNewRoundedIcon fontSize="inherit" aria-hidden="true" />
+                                <span className="visually-hidden"> (opens in a new tab)</span>
+                            </a>
+                            <ManageLinkNote />
+                        </div>
                     )}
                 </Box>
 

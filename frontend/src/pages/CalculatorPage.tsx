@@ -54,6 +54,9 @@ const CalculatorPage: React.FC<{ preset?: PresetKey }> = ({ preset = 'all' }) =>
                         <li>Everything is worked out in your browser. What you type isn’t sent to ValuTir or stored, unless you save it to an account.</li>
                     </ul>
                     <p className="calculator-more">
+                        Not sure what you pay for? <RouterLink to="/find-subscriptions">Where to look for every subscription</RouterLink>.
+                    </p>
+                    <p className="calculator-more">
                         More calculators:{' '}
                         {OTHER_CALCULATORS.filter((key) => key !== preset).map((key, index) => (
                             <React.Fragment key={key}>

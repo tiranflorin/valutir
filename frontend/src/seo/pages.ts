@@ -62,6 +62,12 @@ export const INDEXED_PAGES: IndexedPage[] = [
         summary: 'Calculator for software, SaaS and cloud costs, for freelancers and small teams.',
     },
     {
+        path: '/find-subscriptions',
+        title: 'How to find every subscription you pay for · ValuTir',
+        description: 'Where subscriptions hide and how to check each place: bank statements, the App Store, Google Play, PayPal, Amazon, your inbox, your phone bill and free trials.',
+        summary: 'Guide: where to look for every subscription you pay for, with the exact menu path for each app store and payment service.',
+    },
+    {
         path: '/plans',
         title: 'Plans and pricing · ValuTir',
         description: `ValuTir is free for up to 50 active subscriptions, with Personal and Business views. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit. No monthly fee.`,
