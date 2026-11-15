@@ -20,7 +20,16 @@ export type CatalogService = {
     icon?: string;
     /** Other names people type for it. */
     aliases?: string[];
+    /**
+     * A job where one service usually does (utils/overlaps.ts): paying for two is worth a look. Only
+     * for groups where that holds; video and AI assistants have none, since people often use several.
+     */
+    group?: OverlapGroup;
+    /** Catalog services every plan of this bundle includes, so paying for them separately is paying twice. */
+    includes?: string[];
 };
+
+export type OverlapGroup = 'cloud-storage' | 'music' | 'password-manager';
 
 /** Apple's own subscriptions are all managed from one page. */
 const APPLE_SUBSCRIPTIONS = 'https://apps.apple.com/account/subscriptions';
@@ -32,20 +41,20 @@ export const SERVICE_CATALOG: CatalogService[] = [
     { name: 'Netflix', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.netflix.com/account', icon: 'netflix' },
     { name: 'Disney+', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.disneyplus.com/account', aliases: ['disney plus'] },
     { name: 'Amazon Prime', category: 'Entertainment', cadence: 'yearly', aliases: ['prime video'] },
-    { name: 'YouTube Premium', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.youtube.com/paid_memberships' },
+    { name: 'YouTube Premium', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.youtube.com/paid_memberships', includes: ['YouTube Music'] },
     { name: 'Apple TV+', category: 'Entertainment', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS, aliases: ['apple tv plus'] },
     { name: 'HBO Max', category: 'Entertainment', cadence: 'monthly', aliases: ['max'] },
     { name: 'Paramount+', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.paramountplus.com/account/', aliases: ['paramount plus'] },
     { name: 'Crunchyroll', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.crunchyroll.com/account/membership' },
     { name: 'DAZN', category: 'Entertainment', cadence: 'monthly' },
-    { name: 'Spotify', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.spotify.com/account/overview/', icon: 'spotify' },
-    { name: 'Apple Music', category: 'Entertainment', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS },
-    { name: 'YouTube Music', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.youtube.com/paid_memberships' },
-    { name: 'Deezer', category: 'Entertainment', cadence: 'monthly' },
-    { name: 'Tidal', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://account.tidal.com/' },
+    { name: 'Spotify', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.spotify.com/account/overview/', icon: 'spotify', group: 'music' },
+    { name: 'Apple Music', category: 'Entertainment', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS, group: 'music' },
+    { name: 'YouTube Music', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.youtube.com/paid_memberships', group: 'music' },
+    { name: 'Deezer', category: 'Entertainment', cadence: 'monthly', group: 'music' },
+    { name: 'Tidal', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://account.tidal.com/', group: 'music' },
     { name: 'Audible', category: 'Entertainment', cadence: 'monthly' },
     { name: 'Kindle Unlimited', category: 'Entertainment', cadence: 'monthly' },
-    { name: 'Apple One', category: 'Entertainment', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS },
+    { name: 'Apple One', category: 'Entertainment', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS, includes: ['Apple Music', 'Apple TV+', 'Apple Arcade', 'iCloud+'] },
     { name: 'Patreon', category: 'Entertainment', cadence: 'monthly', manageUrl: 'https://www.patreon.com/settings/memberships' },
 
     // Games
@@ -80,16 +89,16 @@ export const SERVICE_CATALOG: CatalogService[] = [
     { name: 'Midjourney', category: 'Software', cadence: 'monthly', manageUrl: 'https://www.midjourney.com/account' },
 
     // Security and privacy
-    { name: '1Password', category: 'Software', cadence: 'yearly', manageUrl: 'https://my.1password.com/' },
-    { name: 'Bitwarden', category: 'Software', cadence: 'yearly', manageUrl: 'https://vault.bitwarden.com/' },
+    { name: '1Password', category: 'Software', cadence: 'yearly', manageUrl: 'https://my.1password.com/', group: 'password-manager' },
+    { name: 'Bitwarden', category: 'Software', cadence: 'yearly', manageUrl: 'https://vault.bitwarden.com/', group: 'password-manager' },
     { name: 'NordVPN', category: 'Software', cadence: 'yearly', manageUrl: 'https://my.nordaccount.com/', aliases: ['vpn'] },
     { name: 'Proton', category: 'Software', cadence: 'yearly', manageUrl: 'https://account.proton.me/', aliases: ['proton mail', 'proton vpn'] },
 
     // Cloud and storage
-    { name: 'iCloud+', category: 'Cloud', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS, icon: 'icloud-plus', aliases: ['icloud'] },
-    { name: 'Google One', category: 'Cloud', cadence: 'monthly', manageUrl: 'https://one.google.com/', icon: 'cloud-storage', aliases: ['google drive storage'] },
+    { name: 'iCloud+', category: 'Cloud', cadence: 'monthly', manageUrl: APPLE_SUBSCRIPTIONS, icon: 'icloud-plus', aliases: ['icloud'], group: 'cloud-storage' },
+    { name: 'Google One', category: 'Cloud', cadence: 'monthly', manageUrl: 'https://one.google.com/', icon: 'cloud-storage', aliases: ['google drive storage'], group: 'cloud-storage' },
     { name: 'Google Play subscription', category: 'Other', cadence: 'monthly', manageUrl: GOOGLE_PLAY_SUBSCRIPTIONS },
-    { name: 'Dropbox', category: 'Cloud', cadence: 'yearly', manageUrl: 'https://www.dropbox.com/account/plan', icon: 'cloud-storage' },
+    { name: 'Dropbox', category: 'Cloud', cadence: 'yearly', manageUrl: 'https://www.dropbox.com/account/plan', icon: 'cloud-storage', group: 'cloud-storage' },
     { name: 'AWS', category: 'Cloud', cadence: 'monthly', manageUrl: 'https://console.aws.amazon.com/billing/', icon: 'cloud-hosting', aliases: ['amazon web services'] },
     { name: 'DigitalOcean', category: 'Cloud', cadence: 'monthly', manageUrl: 'https://cloud.digitalocean.com/account/billing', icon: 'cloud-hosting' },
     { name: 'Hetzner', category: 'Cloud', cadence: 'monthly', manageUrl: 'https://accounts.hetzner.com/', icon: 'cloud-hosting' },

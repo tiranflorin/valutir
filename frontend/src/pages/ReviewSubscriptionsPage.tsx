@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Container, LinearProgress, Paper, Stack } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { Link as RouterLink, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
@@ -14,6 +16,7 @@ import { useSubscriptions } from '../hooks/useSubscriptions';
 import type { SubscriptionRecord } from '../types/subscription';
 import { safeManageUrl } from '../utils/manageUrl';
 import { formatCurrency, groupedMoney } from '../utils/money';
+import { findOverlaps, overlapReasons } from '../utils/overlaps';
 import { reviewQueue, yearlyCostOf } from '../utils/reviewQueue';
 import './RecurringScreens.css';
 
@@ -58,14 +61,19 @@ const ReviewSubscriptionsPage: React.FC = () => {
     const [cancelling, setCancelling] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    // Review flags already cleared here: keeping the same card again after going back sends nothing.
+    const [flagsCleared, setFlagsCleared] = useState<Set<number>>(() => new Set());
 
     if (queue === null && !loading && !loadError) {
         const view = readView();
         setQueue(reviewQueue(subscriptions.filter((subscription) => (view === 'business') === (subscription.b2b === true))));
     }
 
+    // Why a subscription may be paying for something twice, from the same frozen list.
+    const overlapReason = useMemo(() => overlapReasons(findOverlaps(queue ?? [])), [queue]);
     const current = queue && index < queue.length ? queue[index] : null;
     const finished = queue !== null && current === null;
+    const currentDecision = current ? decisions[current.id] : undefined;
 
     const signOut = useCallback(() => {
         logout();
@@ -79,8 +87,25 @@ const ReviewSubscriptionsPage: React.FC = () => {
         setIndex((previous) => previous + 1);
     }, []);
 
+    /** Moves between cards without deciding; the summary is one step past the last card. */
+    const goTo = useCallback((next: number) => {
+        if (!queue) return;
+        setCancelling(false);
+        setError('');
+        setIndex(Math.max(0, Math.min(next, queue.length)));
+    }, [queue]);
+
+    /** Next card: an undecided one you move past counts as skipped. */
+    const next = useCallback(() => {
+        if (current && !decisions[current.id]) {
+            decide(current, 'skipped');
+        } else {
+            goTo(index + 1);
+        }
+    }, [current, decisions, decide, goTo, index]);
+
     const keep = useCallback(async (subscription: SubscriptionRecord) => {
-        if (!subscription.reviewFlagged) {
+        if (!subscription.reviewFlagged || flagsCleared.has(subscription.id)) {
             decide(subscription, 'kept');
             return;
         }
@@ -100,35 +125,45 @@ const ReviewSubscriptionsPage: React.FC = () => {
                 const data = await response.json().catch(() => null);
                 throw new Error(data?.message || 'Could not clear the review flag.');
             }
+            setFlagsCleared((previous) => new Set(previous).add(subscription.id));
             decide(subscription, 'kept');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong.');
         } finally {
             setSaving(false);
         }
-    }, [decide, signOut, token]);
+    }, [decide, signOut, token, flagsCleared]);
 
-    // K or → keeps, C or ← cancels, S or ↓ skips. Never while typing or in the cancel step.
+    // Letters decide (K keep, C cancel, S skip), arrows move (← previous, → next). A cancelled card
+    // can't be decided again here. Never while typing or in the cancel step.
     useEffect(() => {
-        if (!current || cancelling || saving) return undefined;
+        if (queue === null || queue.length === 0 || cancelling || saving) return undefined;
         const onKey = (event: KeyboardEvent) => {
             const target = event.target as HTMLElement | null;
             if (event.metaKey || event.ctrlKey || event.altKey || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
             const key = event.key.toLowerCase();
-            if (key === 'k' || key === 'arrowright') {
+            if (key === 'arrowleft' && index > 0) {
                 event.preventDefault();
-                void keep(current);
-            } else if (key === 'c' || key === 'arrowleft') {
+                goTo(index - 1);
+            } else if (key === 'arrowright' && current) {
                 event.preventDefault();
-                setCancelling(true);
-            } else if (key === 's' || key === 'arrowdown') {
-                event.preventDefault();
-                decide(current, 'skipped');
+                next();
+            } else if (current && currentDecision !== 'cancelled') {
+                if (key === 'k') {
+                    event.preventDefault();
+                    void keep(current);
+                } else if (key === 'c') {
+                    event.preventDefault();
+                    setCancelling(true);
+                } else if (key === 's') {
+                    event.preventDefault();
+                    decide(current, 'skipped');
+                }
             }
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [current, cancelling, saving, keep, decide]);
+    }, [queue, index, current, currentDecision, cancelling, saving, keep, decide, goTo, next]);
 
     const decided = (decision: Decision) => (queue ?? []).filter((subscription) => decisions[subscription.id] === decision);
     const cancelled = decided('cancelled');
@@ -163,6 +198,16 @@ const ReviewSubscriptionsPage: React.FC = () => {
                 ) : current && queue ? (
                     <>
                         <div className="keep-review-progress">
+                            <Button
+                                variant="text"
+                                color="inherit"
+                                size="small"
+                                startIcon={<ArrowBackRoundedIcon />}
+                                disabled={index === 0 || saving}
+                                onClick={() => goTo(index - 1)}
+                            >
+                                Back
+                            </Button>
                             <span>{index + 1} of {queue.length}</span>
                             <LinearProgress
                                 variant="determinate"
@@ -185,10 +230,12 @@ const ReviewSubscriptionsPage: React.FC = () => {
                                 <div className="keep-review-tags">
                                     {current.status === 'trial' && <span className="status-tag trial">Trial ends {dayLabel(current.trialEndsAt || current.nextBillingDate)}</span>}
                                     {current.reviewFlagged && <span className="review-tag">Flagged for review</span>}
+                                    {overlapReason.has(current.id) && <span className="review-tag overlap-tag">Overlap</span>}
                                     {current.category && <span className="keep-review-category">{current.category}</span>}
                                 </div>
                                 <h2 id="keep-review-name">{current.serviceName}</h2>
                                 {current.reviewFlagged && current.reviewNote && <p className="keep-review-note">“{current.reviewNote}”</p>}
+                                {overlapReason.has(current.id) && <p className="keep-review-overlap">{overlapReason.get(current.id)}</p>}
 
                                 <dl className="keep-review-facts">
                                     <div>
@@ -221,18 +268,39 @@ const ReviewSubscriptionsPage: React.FC = () => {
 
                                 {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} className="keep-review-actions">
-                                    <Button variant="outlined" color="error" startIcon={<CancelOutlinedIcon />} disabled={saving} onClick={() => setCancelling(true)}>
-                                        Cancel it
-                                    </Button>
-                                    <Button variant="text" color="inherit" startIcon={<SkipNextRoundedIcon />} disabled={saving} onClick={() => decide(current, 'skipped')}>
-                                        Skip
-                                    </Button>
-                                    <Button variant="contained" startIcon={<CheckRoundedIcon />} disabled={saving} onClick={() => void keep(current)}>
-                                        {saving ? 'Saving...' : 'Keep'}
-                                    </Button>
-                                </Stack>
-                                <p className="keep-review-keys">Keys: <kbd>K</kbd> or <kbd>→</kbd> keep · <kbd>C</kbd> or <kbd>←</kbd> cancel · <kbd>S</kbd> or <kbd>↓</kbd> skip</p>
+                                {currentDecision && (
+                                    <p className="keep-review-decided" role="status">
+                                        {currentDecision === 'cancelled' ? (
+                                            <>
+                                                You cancelled this one. To undo it, open{' '}
+                                                <RouterLink to={`/subscriptions/${current.id}`}>the subscription</RouterLink> and turn it back on.
+                                            </>
+                                        ) : (
+                                            <>You {currentDecision === 'kept' ? 'kept' : 'skipped'} this one. You can change your mind below.</>
+                                        )}
+                                    </p>
+                                )}
+
+                                {currentDecision === 'cancelled' ? (
+                                    <Stack direction="row" className="keep-review-actions">
+                                        <Button variant="contained" endIcon={<ArrowForwardRoundedIcon />} onClick={next}>Next</Button>
+                                    </Stack>
+                                ) : (
+                                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} className="keep-review-actions">
+                                        <Button variant="outlined" color="error" startIcon={<CancelOutlinedIcon />} disabled={saving} onClick={() => setCancelling(true)}>
+                                            Cancel it
+                                        </Button>
+                                        <Button variant="text" color="inherit" startIcon={<SkipNextRoundedIcon />} disabled={saving} onClick={() => decide(current, 'skipped')}>
+                                            Skip
+                                        </Button>
+                                        <Button variant="contained" startIcon={<CheckRoundedIcon />} disabled={saving} onClick={() => void keep(current)}>
+                                            {saving ? 'Saving...' : 'Keep'}
+                                        </Button>
+                                    </Stack>
+                                )}
+                                <p className="keep-review-keys">
+                                    Keys: <kbd>K</kbd> keep · <kbd>C</kbd> cancel · <kbd>S</kbd> skip · <kbd>←</kbd> <kbd>→</kbd> previous and next
+                                </p>
                             </Paper>
                         )}
                     </>
@@ -251,7 +319,12 @@ const ReviewSubscriptionsPage: React.FC = () => {
                         ) : (
                             <p className="keep-review-saving">Everything you pay for stays. You can review again any time.</p>
                         )}
-                        <Button component={RouterLink} to="/my-subs" variant="contained">Back to dashboard</Button>
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                            <Button variant="outlined" color="inherit" startIcon={<ArrowBackRoundedIcon />} onClick={() => goTo(queue.length - 1)}>
+                                Back to the last one
+                            </Button>
+                            <Button component={RouterLink} to="/my-subs" variant="contained">Back to dashboard</Button>
+                        </Stack>
                     </Paper>
                 ) : null}
             </Container>

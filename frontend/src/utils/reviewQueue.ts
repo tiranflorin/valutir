@@ -1,13 +1,12 @@
 import type { SubscriptionRecord } from '../types/subscription';
 import { monthlyEquivalentOf } from './insights';
 import { daysFromToday } from './monthCharges';
+import { findOverlaps } from './overlaps';
 
 /** A trial ending within this many days goes to the front of the review. */
 export const TRIAL_SOON_DAYS = 7;
 
-/** What one bill costs in a year: weekly × 52, monthly × 12, quarterly × 4, yearly × 1. */
-export const yearlyCostOf = (amount: number, cadence: string): number =>
-    cadence.toLowerCase() === 'weekly' ? amount * 52 : monthlyEquivalentOf(amount, cadence) * 12;
+export { yearlyCostOf } from './insights';
 
 const trialEndsIn = (subscription: SubscriptionRecord, now: Date): number | null => {
     if (subscription.status !== 'trial') return null;
@@ -19,13 +18,17 @@ const trialEndsIn = (subscription: SubscriptionRecord, now: Date): number | null
 
 /**
  * The subscriptions to go through in a keep-or-cancel review, in order: trials ending in the next
- * 7 days (soonest first), then the ones flagged for review, then the rest by monthly cost, highest
- * first. Cancelled and paused subscriptions aren't charged, so they're left out.
+ * 7 days (soonest first), then the ones flagged for review, then the ones that overlap another
+ * subscription (utils/overlaps.ts), then the rest by monthly cost, highest first. Cancelled and
+ * paused subscriptions aren't charged, so they're left out.
  */
 export const reviewQueue = (subscriptions: SubscriptionRecord[], now: Date = new Date()): SubscriptionRecord[] => {
+    const overlapping = new Set(findOverlaps(subscriptions).flatMap((overlap) =>
+        overlap.kind === 'bundle' ? overlap.included : overlap.subscriptions).map((subscription) => subscription.id));
     const rank = (subscription: SubscriptionRecord) => {
         if (trialEndsIn(subscription, now) !== null) return 0;
-        return subscription.reviewFlagged ? 1 : 2;
+        if (subscription.reviewFlagged) return 1;
+        return overlapping.has(subscription.id) ? 2 : 3;
     };
     const monthly = (subscription: SubscriptionRecord) =>
         monthlyEquivalentOf(Number(subscription.amount) || 0, subscription.billingCadence);

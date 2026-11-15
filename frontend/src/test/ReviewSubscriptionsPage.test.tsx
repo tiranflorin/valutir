@@ -117,11 +117,70 @@ describe('keep-or-cancel review', () => {
         expect(await screen.findByText('1 of 2')).toBeInTheDocument();
         await user.keyboard('k');
         expect(await screen.findByText('2 of 2')).toBeInTheDocument();
-        await user.keyboard('{ArrowDown}');
+        await user.keyboard('s');
 
         expect(await screen.findByRole('heading', { name: 'Review done' })).toBeInTheDocument();
         expect(screen.getByText(/Everything you pay for stays/)).toBeInTheDocument();
         expect(calls.filter((call) => call.key !== 'GET /api/subs' && call.key !== 'GET /api/profile')).toHaveLength(0);
+    });
+
+    it('goes back and forth: a kept card can be changed, the flag is cleared only once', async () => {
+        const calls = reviewApi(items);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<ReviewSubscriptionsPage />, { route: '/review' });
+
+        expect(await screen.findByText('1 of 3')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
+        await user.click(screen.getByRole('button', { name: 'Keep' }));
+        expect(await screen.findByText('2 of 3')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Back' }));
+        expect(cardName()).toBe('Netflix');
+        expect(screen.getByRole('status')).toHaveTextContent('You kept this one.');
+        await user.keyboard('k');
+        expect(await screen.findByText('2 of 3')).toBeInTheDocument();
+        expect(callsTo(calls, 'DELETE /api/subs/3/review')).toHaveLength(1);
+
+        // Arrows only move: → past an undecided card counts as skipped, ← goes back to it.
+        await user.keyboard('{ArrowRight}');
+        expect(await screen.findByText('3 of 3')).toBeInTheDocument();
+        await user.keyboard('{ArrowLeft}');
+        expect(cardName()).toBe('Gym');
+        expect(screen.getByRole('status')).toHaveTextContent('You skipped this one.');
+        await user.click(screen.getByRole('button', { name: 'Keep' }));
+        await user.click(screen.getByRole('button', { name: 'Skip' }));
+
+        expect(await screen.findByRole('heading', { name: 'Review done' })).toBeInTheDocument();
+        const results = within(screen.getByRole('list', { name: 'Review results' })).getAllByRole('listitem').map((item) => item.textContent);
+        expect(results).toEqual(['2 kept', '0 cancelled', '1 skipped']);
+
+        await user.click(screen.getByRole('button', { name: 'Back to the last one' }));
+        expect(cardName()).toBe('Spotify');
+    });
+
+    it('shows a cancelled card as cancelled when you come back to it, with the way to undo it', async () => {
+        reviewApi(items);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<ReviewSubscriptionsPage />, { route: '/review' });
+
+        expect(await screen.findByText('1 of 3')).toBeInTheDocument();
+        await user.keyboard('{ArrowRight}');
+        expect(cardName()).toBe('Gym');
+        await user.click(screen.getByRole('button', { name: 'Cancel it' }));
+        await user.click(screen.getByLabelText(/yes, cancelled with provider/i));
+        fireEvent.change(screen.getByLabelText(/provider cancellation date/i), { target: { value: todayIsoDate() } });
+        await user.click(screen.getByRole('button', { name: /mark as cancelled/i }));
+        expect(await screen.findByText('3 of 3')).toBeInTheDocument();
+
+        await user.keyboard('{ArrowLeft}');
+        expect(cardName()).toBe('Gym');
+        expect(screen.getByRole('status')).toHaveTextContent('You cancelled this one.');
+        expect(screen.getByRole('link', { name: 'the subscription' })).toHaveAttribute('href', '/subscriptions/2');
+        expect(screen.queryByRole('button', { name: 'Keep' })).not.toBeInTheDocument();
+        await user.keyboard('k');
+        expect(cardName()).toBe('Gym');
+        await user.click(screen.getByRole('button', { name: 'Next' }));
+        expect(cardName()).toBe('Spotify');
     });
 
     it('reviews only the business view when that is selected', async () => {

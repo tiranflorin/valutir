@@ -11,6 +11,10 @@ export const monthlyEquivalentOf = (amount: number, cadence: string): number => 
     }
 };
 
+/** What one bill costs in a year: weekly × 52, monthly × 12, quarterly × 4, yearly × 1. */
+export const yearlyCostOf = (amount: number, cadence: string): number =>
+    cadence.toLowerCase() === 'weekly' ? amount * 52 : monthlyEquivalentOf(amount, cadence) * 12;
+
 /** The currencies in use, the preferred one first (when used), then alphabetically. */
 export const currenciesOf = (subscriptions: ChargeSource[], preferred?: string | null): string[] => {
     const codes = Array.from(new Set(subscriptions.map((subscription) => subscription.currency || 'EUR')));

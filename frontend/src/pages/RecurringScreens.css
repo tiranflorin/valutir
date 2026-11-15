@@ -5089,3 +5089,149 @@ body {
 :root[data-theme='dark'] .calculator-save {
     border-color: #344157;
 }
+
+/* Overlaps: Insights "Worth a look" and the review card (utils/overlaps.ts) */
+.overlap-list {
+    margin: 0;
+    padding: 0 18px;
+    list-style: none;
+}
+
+.overlap-list li {
+    padding: 14px 0;
+    border-bottom: 1px solid #edf1ee;
+}
+
+.overlap-list li:last-child {
+    border-bottom: 0;
+}
+
+.overlap-list strong {
+    color: #24362b;
+    font-size: 15px;
+}
+
+.overlap-list p {
+    margin: 4px 0 0;
+    color: #65736a;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.overlap-list b {
+    color: #24362b;
+}
+
+.overlap-list a,
+.overlap-review a {
+    color: var(--vt-green);
+    font-weight: 700;
+}
+
+.overlap-review {
+    margin: 0;
+    padding: 12px 18px 16px;
+    border-top: 1px solid #edf1ee;
+    color: #65736a;
+    font-size: 13px;
+}
+
+.review-tag.overlap-tag {
+    background: #e7f1fb;
+    color: #1f5f99;
+}
+
+.keep-review-overlap {
+    margin: 8px 0 0;
+    padding-left: 10px;
+    border-left: 3px solid #b9d3ec;
+    color: #485a4e;
+}
+
+:root[data-theme='dark'] .overlap-list li,
+:root[data-theme='dark'] .overlap-review {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .overlap-list strong,
+:root[data-theme='dark'] .overlap-list b {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .overlap-list p,
+:root[data-theme='dark'] .overlap-review,
+:root[data-theme='dark'] .keep-review-overlap {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .overlap-list a,
+:root[data-theme='dark'] .overlap-review a {
+    color: #8dd5a3;
+}
+
+:root[data-theme='dark'] .review-tag.overlap-tag {
+    background: #1d2f45;
+    color: #9cc7f0;
+}
+
+:root[data-theme='dark'] .keep-review-overlap {
+    border-color: #3b5878;
+}
+
+.overlaps-card--clear.MuiPaper-root {
+    padding: 14px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+}
+
+.overlaps-card--clear h2 {
+    margin: 0;
+    color: #24362b;
+    font-size: 15px;
+}
+
+.overlaps-card--clear p {
+    margin: 0;
+    color: #65736a;
+    font-size: 14px;
+}
+
+:root[data-theme='dark'] .overlaps-card--clear h2 {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .overlaps-card--clear p {
+    color: #a8b4c8;
+}
+
+/* Review: a card you came back to, and the Back button beside the progress bar */
+.keep-review-progress .MuiButton-root {
+    flex: none;
+    min-width: 0;
+    font-weight: 700;
+}
+
+.keep-review-decided {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--vt-mint);
+    color: #2b4a37;
+    font-size: 14px;
+}
+
+.keep-review-decided a {
+    color: var(--vt-green);
+    font-weight: 700;
+}
+
+:root[data-theme='dark'] .keep-review-decided {
+    background: #173326;
+    color: #cfe9d8;
+}
+
+:root[data-theme='dark'] .keep-review-decided a {
+    color: #8dd5a3;
+}
