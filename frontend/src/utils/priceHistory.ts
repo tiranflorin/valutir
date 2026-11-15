@@ -52,3 +52,14 @@ export const recentPriceChanges = (
             : [];
     }))
     .sort((a, b) => b.change.changedOn.localeCompare(a.change.changedOn) || b.change.id - a.change.id);
+
+/**
+ * For the keep-or-cancel review: the subscription's latest price change, if it was a rise made within
+ * the last year in one currency. A later cut or a currency change means there's no rise to mention.
+ */
+export const recentRise = (subscription: SubscriptionRecord, today: string): { change: PriceChange; yearly: number } | null => {
+    const latest = subscription.priceChanges?.[0];
+    if (!latest || !withinLastYear(latest, today)) return null;
+    const yearly = yearlyDifference(latest);
+    return yearly !== null && yearly >= 0.005 ? { change: latest, yearly } : null;
+};

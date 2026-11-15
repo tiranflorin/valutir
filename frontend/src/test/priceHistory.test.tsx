@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router';
 import App from '../App';
 import type { PriceChange, SubscriptionRecord } from '../types/subscription';
 import { todayIsoDate } from '../utils/dates';
-import { recentPriceChanges, withinLastYear, yearlyDifference } from '../utils/priceHistory';
+import { recentPriceChanges, recentRise, withinLastYear, yearlyDifference } from '../utils/priceHistory';
 import { callsTo, mockApi, profile, signIn } from './api';
 
 const change = (overrides: Partial<PriceChange> = {}): PriceChange => ({
@@ -55,6 +55,20 @@ describe('what a price change adds to a year', () => {
         const recent = recentPriceChanges(subscriptions, 'EUR', '2026-11-15', (subscription) => 1 / (subscription.householdSize ?? 1));
 
         expect(recent.map((item) => [item.change.id, Math.round(item.yearly)])).toEqual([[2, 24], [1, 12]]);
+    });
+});
+
+describe('the price rise shown in the keep-or-cancel review', () => {
+    it('is the latest change when it was a rise within the last year', () => {
+        expect(recentRise(record({ priceChanges: [change({ changedOn: '2026-11-01' })] }), '2026-11-15')?.yearly).toBeCloseTo(24);
+    });
+
+    it('is nothing when the latest change was a cut, a currency change, or over a year ago', () => {
+        const cutAfterRise = [change({ id: 2, previousAmount: '13.99', newAmount: '12.99', changedOn: '2026-11-01' }), change({ id: 1, changedOn: '2026-06-01' })];
+        expect(recentRise(record({ priceChanges: cutAfterRise }), '2026-11-15')).toBeNull();
+        expect(recentRise(record({ priceChanges: [change({ newCurrency: 'USD' })] }), '2026-11-15')).toBeNull();
+        expect(recentRise(record({ priceChanges: [change({ changedOn: '2025-10-01' })] }), '2026-11-15')).toBeNull();
+        expect(recentRise(record(), '2026-11-15')).toBeNull();
     });
 });
 

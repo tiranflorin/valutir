@@ -18,6 +18,8 @@ import ManageLinkNote from '../components/ManageLinkNote';
 import { safeManageUrl } from '../utils/manageUrl';
 import { formatCurrency, groupedMoney } from '../utils/money';
 import { findOverlaps, overlapReasons } from '../utils/overlaps';
+import { differenceLabel, priceLabel, recentRise } from '../utils/priceHistory';
+import { todayIsoDate } from '../utils/dates';
 import { reviewQueue, yearlyCostOf } from '../utils/reviewQueue';
 import { readDashboardView } from '../utils/dashboardView';
 
@@ -62,6 +64,8 @@ const ReviewSubscriptionsPage: React.FC = () => {
     // Why a subscription may be paying for something twice, from the same frozen list.
     const overlapReason = useMemo(() => overlapReasons(findOverlaps(queue ?? [])), [queue]);
     const current = queue && index < queue.length ? queue[index] : null;
+    // A price rise the user recorded in the last year: easy to forget by the time they decide.
+    const rise = current ? recentRise(current, todayIsoDate()) : null;
     const finished = queue !== null && current === null;
     const currentDecision = current ? decisions[current.id] : undefined;
 
@@ -226,6 +230,13 @@ const ReviewSubscriptionsPage: React.FC = () => {
                                 <h2 id="keep-review-name">{current.serviceName}</h2>
                                 {current.reviewFlagged && current.reviewNote && <p className="keep-review-note">“{current.reviewNote}”</p>}
                                 {overlapReason.has(current.id) && <p className="keep-review-overlap">{overlapReason.get(current.id)}</p>}
+                                {rise && (
+                                    <p className="keep-review-price-rise" data-testid="keep-review-price-rise">
+                                        Price up from {priceLabel(rise.change.previousAmount, rise.change.previousCurrency, rise.change.previousCadence)} to{' '}
+                                        {priceLabel(rise.change.newAmount, rise.change.newCurrency, rise.change.newCadence)} on {dayLabel(rise.change.changedOn)}:{' '}
+                                        <strong>{differenceLabel(rise.yearly, rise.change.newCurrency)}</strong>.
+                                    </p>
+                                )}
 
                                 <dl className="keep-review-facts">
                                     <div>

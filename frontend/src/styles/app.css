@@ -5267,6 +5267,18 @@ body {
     color: #485a4e;
 }
 
+.keep-review-price-rise {
+    margin: 8px 0 0;
+    padding-left: 10px;
+    border-left: 3px solid #e7b7a9;
+    color: #485a4e;
+}
+
+:root[data-theme='dark'] .keep-review-price-rise {
+    border-color: #7a4a3e;
+    color: #a8b4c8;
+}
+
 :root[data-theme='dark'] .overlap-list li,
 :root[data-theme='dark'] .overlap-review {
     border-color: #344157;

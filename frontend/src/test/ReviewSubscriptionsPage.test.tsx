@@ -191,6 +191,28 @@ describe('keep-or-cancel review', () => {
         expect(await screen.findByText('1 of 1')).toBeInTheDocument();
         expect(cardName()).toBe('Figma');
     });
+
+    it('reminds you of a price rise from the last year on the card, and says nothing for the others', async () => {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        const changedOn = todayIsoDate(monthAgo);
+        reviewApi([
+            subscription(1, 'Spotify', { amount: '12.99', priceChanges: [{
+                id: 1, previousAmount: '11.99', previousCurrency: 'EUR', previousCadence: 'monthly',
+                newAmount: '12.99', newCurrency: 'EUR', newCadence: 'monthly', changedOn,
+            }] }),
+            subscription(2, 'Netflix', { amount: '5.00', priceChanges: [] }),
+        ]);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<ReviewSubscriptionsPage />, { route: '/review' });
+
+        expect(await screen.findByTestId('keep-review-price-rise')).toHaveTextContent(
+            /^Price up from €11\.99 a month to €12\.99 a month on .+: \+€12\.00 a year\.$/
+        );
+        await user.click(screen.getByRole('button', { name: /skip/i }));
+        expect(cardName()).toBe('Netflix');
+        expect(screen.queryByTestId('keep-review-price-rise')).not.toBeInTheDocument();
+    });
 });
 
 describe('dashboard review entry', () => {
