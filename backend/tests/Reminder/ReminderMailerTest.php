@@ -66,6 +66,25 @@ final class ReminderMailerTest extends TestCase
         self::assertSame('Spotify renews today (Mon 2 Nov): €10.99', $email->getSubject());
     }
 
+    public function testAFlaggedSubscriptionAsksForTheDecisionWithTheUsersNote(): void
+    {
+        $flagged = $this->subscription('Gym', '45.00');
+        (new \ReflectionProperty(Subscription::class, 'id'))->setValue($flagged, 12);
+        // 23:30 UTC on 2 Nov is already 3 Nov in Bucharest, the user's time zone.
+        $flagged->flagForReview(new \DateTimeImmutable('2026-11-02 23:30:00 UTC'), 'Have I been since summer?');
+        $user = $this->user();
+        $user->setTimezone('Europe/Bucharest');
+
+        $email = $this->mailer()->buildDigest($user, [
+            new DueReminder($flagged, ReminderLog::KIND_RENEWAL, CalendarDay::fromString('2026-11-20'), 3),
+            new DueReminder($this->subscription('Spotify', '10.99'), ReminderLog::KIND_RENEWAL, CalendarDay::fromString('2026-11-20'), 3),
+        ]);
+        $text = (string) $email->getTextBody();
+
+        self::assertStringContainsString('You flagged it for review on 3 Nov 2026 (“Have I been since summer?”). Still keeping it? [Decide on its page](http://frontend.test/subscriptions/12)', $text);
+        self::assertSame(1, substr_count($text, 'flagged it for review'));
+    }
+
     private function mailer(): ReminderMailer
     {
         $urls = $this->createStub(UrlGeneratorInterface::class);

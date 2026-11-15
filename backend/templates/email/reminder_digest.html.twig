@@ -1,6 +1,14 @@
 {% extends 'email/layout.html.twig' %}
 {% import 'email/layout.html.twig' as ui %}
 
+{#- Under a subscription the user flagged for review: when, their note, and where to decide. -#}
+{%- macro flagged(item) -%}
+    {%- import 'email/layout.html.twig' as ui -%}
+    {%- if item.flagged_on -%}
+        <br><span class="item-detail">You flagged it for review on {{ item.flagged_on }}{% if item.review_note %} (“{{ item.review_note }}”){% endif %}. Still keeping it? {{ ui.link(item.url, 'Decide on its page') }}</span>
+    {%- endif -%}
+{%- endmacro -%}
+
 {% block preheader %}{{ subject }}{% endblock %}
 
 {% block content %}
@@ -15,6 +23,7 @@
                     <td class="item-cell">
                         <span class="item-name">{{ item.service }}</span><br>
                         <span class="item-detail">Trial ends {{ item.when }}, then the first charge</span>
+                        {{- _self.flagged(item) }}
                     </td>
                     <td class="item-cell item-amount">{{ item.amount }}</td>
                 </tr>
@@ -31,6 +40,7 @@
                     <td class="item-cell">
                         <span class="item-name">{{ item.service }}</span><br>
                         <span class="item-detail">Renews {{ item.when }}</span>
+                        {{- _self.flagged(item) }}
                     </td>
                     <td class="item-cell item-amount">{{ item.amount }}</td>
                 </tr>

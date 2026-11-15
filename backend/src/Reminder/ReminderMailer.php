@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Reminder;
 
+use App\Billing\UserTime;
 use App\Entity\ReminderLog;
 use App\Entity\User;
 use App\Mail\EmailFactory;
@@ -48,6 +49,10 @@ final readonly class ReminderMailer
                 'service' => (string) $reminder->subscription->getServiceName(),
                 'when' => $this->when($reminder),
                 'amount' => $this->amount($reminder),
+                // A subscription the user flagged to decide on: the charge is the moment to decide.
+                'flagged_on' => $this->flaggedOn($user, $reminder),
+                'review_note' => $reminder->subscription->getReviewNote(),
+                'url' => $this->emails->appUrl('/subscriptions/'.$reminder->subscription->getId()),
             ],
             array_filter($reminders, static fn (DueReminder $reminder): bool => $kind === $reminder->kind),
         ));
@@ -92,6 +97,14 @@ final readonly class ReminderMailer
             1 => sprintf('tomorrow (%s)', $date),
             default => sprintf('on %s (in %d days)', $date, $reminder->daysUntil),
         };
+    }
+
+    /** The day (in the user's time zone) they flagged it for review; null when it isn't flagged. */
+    private function flaggedOn(User $user, DueReminder $reminder): ?string
+    {
+        $flaggedAt = $reminder->subscription->getReviewFlaggedAt();
+
+        return null === $flaggedAt ? null : UserTime::localNow($user, $flaggedAt)->format('j M Y');
     }
 
     private function amount(DueReminder $reminder): string
