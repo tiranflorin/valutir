@@ -89,9 +89,42 @@ Then, once:
 - **[Rich Results Test](https://search.google.com/test/rich-results)** on `https://valutir.app/` to check the JSON-LD.
 - **Bing Webmaster Tools:** import the site from Search Console and submit the sitemap. Bing's index also feeds ChatGPT search and Copilot.
 - **Cloudflare AI crawler settings:** in the dashboard's bot and AI crawler settings, make sure AI crawlers aren't blocked and Cloudflare isn't adding its own rules to `robots.txt`. Either would override this file for AI crawlers. Bot Fight Mode should still let verified bots through.
-- **Link previews:** paste a URL into LinkedIn's Post Inspector or a WhatsApp chat to check the title and description.
+- **Link previews:** check the card a shared link shows; see [Link preview image](#link-preview-image).
+
+## Link preview image
+
+When someone shares a ValuTir link in a chat (WhatsApp, iMessage, Slack) or a social post (LinkedIn, X, Facebook), the platform fetches the page and shows a card with its title, description and this image. Every indexed page uses the same one:
+
+- **The image:** `frontend/public/og-image.png`, 1200×630.
+- **Its source:** `frontend/build/og-image.html`. Edit that file and regenerate the PNG with the command at its top. The example prices on it must keep adding up to the total shown.
+- **The tags:** `headTags()` in `src/seo/documents.ts` adds `og:image` (an absolute URL built from `SITE_URL`, as the platforms require), `og:image:width`, `og:image:height`, `og:image:alt` and `twitter:card` `summary_large_image`. Signed-in pages get none.
+
+### Checking it locally
+
+Social platforms can't reach `localhost`, so locally you can check the image and the tags, not the real card:
+
+```bash
+# The image itself (or open the URL in a browser)
+open http://localhost:5173/og-image.png
+
+# The tags a platform reads
+curl -s http://localhost:5173/calculator | grep -E 'og:|twitter:'
+```
+
+`og:image` points to `https://valutir.app/og-image.png`, not localhost, on purpose: platforms need a public URL. That link only works once production has the file.
+
+### Checking the real card
+
+This needs a public URL, so do it after a deploy:
+
+- Paste `https://valutir.app/calculator` into [LinkedIn's Post Inspector](https://www.linkedin.com/post-inspector/), or into a WhatsApp or Slack chat with yourself.
+- For a Cloudflare Pages preview deployment, set `VITE_SITE_URL` to the preview's URL for that build. Otherwise `og:image` points to `valutir.app`, and the card has no image until production has the file.
+- Previewing before a deploy through a tunnel to your machine (such as `cloudflared`) would also need `VITE_SITE_URL` and Vite's `server.allowedHosts` changed for that test; checking after a deploy is simpler.
+
+### Changing the image
+
+Platforms cache a page's card for days. After changing the image, give the file a new name (and update `SHARE_IMAGE.path` in `src/seo/documents.ts` and the path checked in `src/test/seo.test.tsx`) so shared links pick up the new one, then recheck with the Post Inspector, which also refreshes LinkedIn's copy.
 
 ## Not done yet
 
-- **No preview image.** Shared links show text only. Add a 1200×630 PNG under `public/brand/` and an `og:image` tag in `headTags()` (`src/seo/documents.ts`).
 - The client bundle is one 930 kB file. Splitting the signed-in screens out would make public pages load faster, which also helps ranking.

@@ -50,11 +50,15 @@ describe('page head', () => {
         expect(plans).toContain('<meta name="robots" content="index, follow" />');
         expect(plans).toContain(`<link rel="canonical" href="${SITE}/plans" />`);
         expect(plans).toContain('og:title');
+        // Shared links show the large preview image, from an absolute URL as the platforms require.
+        expect(plans).toContain(`<meta property="og:image" content="${SITE}/og-image.png" />`);
+        expect(plans).toContain('<meta name="twitter:card" content="summary_large_image" />');
 
         const mySubs = headTags(pageHead('/my-subs', SITE), SITE);
         expect(mySubs).toContain('noindex, nofollow');
         expect(mySubs).not.toContain('canonical');
         expect(mySubs).not.toContain('og:title');
+        expect(mySubs).not.toContain('og:image');
     });
 
     it('treats a trailing slash as the same page and an unknown path as unlisted', () => {

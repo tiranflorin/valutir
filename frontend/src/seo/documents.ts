@@ -72,6 +72,14 @@ const softwareApplication = (siteUrl: string) => ({
     publisher: { '@id': `${siteUrl}/#organization` },
 });
 
+/** The preview image shown when a page is shared (public/og-image.png, drawn from build/og-image.html). */
+const SHARE_IMAGE = {
+    path: '/og-image.png',
+    width: 1200,
+    height: 630,
+    alt: 'ValuTir: stop paying for what you don’t use. A list of subscriptions with what they cost a year.',
+};
+
 /** The tags that replace the template's <title>. */
 export const headTags = (head: PageHead, siteUrl: string): string => {
     const tags = [
@@ -87,7 +95,11 @@ export const headTags = (head: PageHead, siteUrl: string): string => {
             `<meta property="og:title" content="${escapeHtml(head.title)}" />`,
             `<meta property="og:description" content="${escapeHtml(head.description)}" />`,
             `<meta property="og:url" content="${escapeHtml(head.canonical)}" />`,
-            `<meta name="twitter:card" content="summary" />`,
+            `<meta property="og:image" content="${siteUrl}${SHARE_IMAGE.path}" />`,
+            `<meta property="og:image:width" content="${SHARE_IMAGE.width}" />`,
+            `<meta property="og:image:height" content="${SHARE_IMAGE.height}" />`,
+            `<meta property="og:image:alt" content="${escapeHtml(SHARE_IMAGE.alt)}" />`,
+            `<meta name="twitter:card" content="summary_large_image" />`,
         );
     }
     if (head.indexable && head.canonical) {
