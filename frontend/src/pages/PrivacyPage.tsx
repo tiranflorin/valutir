@@ -32,6 +32,13 @@ const storageItems: StorageItem[] = [
         lifetime: 'Until you clear your browser storage',
     },
     {
+        name: 'valutir_theme_mode',
+        kind: 'Local storage',
+        provider: 'ValuTir',
+        purpose: 'Only after you switch to the dark theme: keeps it dark when you reload or come back.',
+        lifetime: '12 hours after your last visit, or until you switch back to light',
+    },
+    {
         name: 'valutir_calculator_list',
         kind: 'Local storage',
         provider: 'ValuTir',

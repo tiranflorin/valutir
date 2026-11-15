@@ -22,7 +22,7 @@ Fixed items are removed from this list; the git history records what changed. It
       - `localStorage.valutir_dashboard_view`: the Personal/Business view the user picked themselves. A user-interface preference, also exempt.
       - `localStorage.valutir_calculator_list`: written only when a visitor clicks "Save it free" in the calculator; holds that list (names, prices, cadences) until they sign in, when it's saved to the account and removed, or for 7 days at most. Strictly necessary to deliver what they explicitly asked for, so exempt.
       - The API sets no cookies (stateless JWT; checked: no `Set-Cookie` on sign-in). Sessions are turned off (`framework.session: false`), so no future change can create a session cookie by accident.
-      - The theme mode isn't stored.
+      - `localStorage.valutir_theme_mode`: written only when the user switches to dark mode; holds when it expires, 12 hours after their last visit (renewed on each visit), and is removed when they switch back to light. A user-interface preference the user set themselves, kept for hours, so exempt.
     - **Third parties:**
       - Cloudflare Turnstile, on the contact page only, may set security cookies on Cloudflare's domain (`cf_clearance`, `__cf_bm`). Security and bot protection are generally treated as strictly necessary, but disclose them.
       - Cloudflare's proxy may set `__cf_bm` on the API hostname while Bot Fight Mode or Bot Management is on. Strictly necessary; disclose it.

@@ -1,12 +1,19 @@
 import React, {
     createContext,
+    useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useState,
 } from 'react';
 import { CssBaseline, ThemeProvider, type PaletteMode } from '@mui/material';
 import { createAppTheme } from '../theme';
+import { readThemeMode, saveThemeMode } from '../utils/themeMode';
+
+// Sets the page's data-theme before the first paint, so a reload in dark mode doesn't flash light.
+// The server render (prerendering) has no layout effects, so it uses useEffect there to avoid React's warning.
+const useBeforePaintEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 type ThemeContextValue = {
     mode: PaletteMode;
@@ -18,17 +25,17 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
                                                                               children,
                                                                           }) => {
-    const [mode, setMode] = useState<PaletteMode>('light');
+    const [mode, setMode] = useState<PaletteMode>(() => readThemeMode());
 
-    useEffect(() => {
+    useBeforePaintEffect(() => {
         document.documentElement.setAttribute('data-theme', mode);
     }, [mode]);
 
-    const toggleColorMode = () => {
-        setMode((previousMode) =>
-            previousMode === 'light' ? 'dark' : 'light'
-        );
-    };
+    const toggleColorMode = useCallback(() => {
+        const next: PaletteMode = mode === 'light' ? 'dark' : 'light';
+        saveThemeMode(next);
+        setMode(next);
+    }, [mode]);
 
     const theme = useMemo(() => createAppTheme(mode), [mode]);
 
@@ -37,7 +44,7 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
             mode,
             toggleColorMode,
         }),
-        [mode]
+        [mode, toggleColorMode]
     );
 
     return (
