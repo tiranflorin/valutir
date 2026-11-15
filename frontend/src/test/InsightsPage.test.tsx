@@ -75,7 +75,11 @@ describe('InsightsPage', () => {
         await user.click(await screen.findByRole('button', { name: /^Streaming/ }));
 
         const members = screen.getByRole('list', { name: 'Streaming subscriptions' });
-        expect(within(members).getAllByRole('link').map((link) => link.textContent)).toEqual(['Netflix', 'Disney']);
+        // Each link is named by the service alone: its icon is hidden from screen readers.
+        const links = within(members).getAllByRole('link');
+        expect(links).toHaveLength(2);
+        expect(links[0]).toHaveAccessibleName('Netflix');
+        expect(links[1]).toHaveAccessibleName('Disney');
     });
 
     it('shows the business view on its own, tagging yearly renewals among the biggest charges', async () => {

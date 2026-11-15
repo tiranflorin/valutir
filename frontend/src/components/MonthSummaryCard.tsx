@@ -3,6 +3,7 @@ import { Box, CircularProgress, Paper } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { Link as RouterLink } from 'react-router';
 import { type ChargeSource, daysFromToday, monthCharges } from '../utils/monthCharges';
+import ServiceIcon from './ServiceIcon';
 import { formatCurrency, groupedMoney } from '../utils/money';
 
 /** Charges listed before "Show all" (weekly subscriptions can add four or five each). */
@@ -77,7 +78,7 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amou
                         {shown.map((charge) => (
                             <li key={`${charge.subscriptionId}-${charge.date}`} className={charge.paid ? 'paid' : ''}>
                                 <span className="charge-date">{dayFormat.format(new Date(`${charge.date}T00:00:00`))}</span>
-                                <RouterLink className="charge-name" to={`/subscriptions/${charge.subscriptionId}`}>{charge.serviceName}</RouterLink>
+                                <RouterLink className="charge-name" to={`/subscriptions/${charge.subscriptionId}`}><ServiceIcon serviceName={charge.serviceName} size="sm" /><span>{charge.serviceName}</span></RouterLink>
                                 <span className="charge-amount">{formatCurrency(charge.amount, charge.currency)}</span>
                                 <span className="charge-state">
                                     {charge.paid

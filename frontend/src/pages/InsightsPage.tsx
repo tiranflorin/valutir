@@ -20,6 +20,7 @@ import { todayIsoDate } from '../utils/dates';
 import { formatCurrency } from '../utils/money';
 import { findOverlaps } from '../utils/overlaps';
 import type { ChargeSource } from '../utils/monthCharges';
+import ServiceIcon from '../components/ServiceIcon';
 import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
 
 type AmountMode = 'full' | 'share';
@@ -175,7 +176,7 @@ const InsightsPage: React.FC = () => {
                                 <div className="metric-value">{mostExpensive ? money(monthlyOf(mostExpensive)) : '—'} <small>/ month</small></div>
                                 <div className="metric-hint">
                                     {mostExpensive
-                                        ? <RouterLink to={`/subscriptions/${mostExpensive.id}`}>{mostExpensive.serviceName}</RouterLink>
+                                        ? <RouterLink className="service-with-icon" to={`/subscriptions/${mostExpensive.id}`}><ServiceIcon serviceName={mostExpensive.serviceName} size="sm" />{mostExpensive.serviceName}</RouterLink>
                                         : 'No subscriptions'}
                                 </div>
                             </Paper>
@@ -214,7 +215,7 @@ const InsightsPage: React.FC = () => {
                                                 <ul className="category-members" aria-label={`${row.category} subscriptions`}>
                                                     {row.subscriptions.map((subscription) => (
                                                         <li key={subscription.id}>
-                                                            <RouterLink to={`/subscriptions/${subscription.id}`}>{subscription.serviceName}</RouterLink>
+                                                            <RouterLink className="service-with-icon" to={`/subscriptions/${subscription.id}`}><ServiceIcon serviceName={subscription.serviceName} size="sm" />{subscription.serviceName}</RouterLink>
                                                             <span>{money(amountFor(subscription))} / {subscription.billingCadence}</span>
                                                             <span>{money(monthlyOf(subscription))} / month</span>
                                                         </li>
@@ -264,7 +265,7 @@ const InsightsPage: React.FC = () => {
                                     {upcoming.map((charge) => (
                                         <li key={`${charge.subscriptionId}-${charge.date}`}>
                                             <span className="charge-date">{dayLabel(charge.date)}</span>
-                                            <RouterLink className="charge-name" to={`/subscriptions/${charge.subscriptionId}`}>{charge.serviceName}</RouterLink>
+                                            <RouterLink className="charge-name" to={`/subscriptions/${charge.subscriptionId}`}><ServiceIcon serviceName={charge.serviceName} size="sm" /><span>{charge.serviceName}</span></RouterLink>
                                             <span className="charge-amount">{money(charge.amount)}</span>
                                             <span className="charge-cadence">
                                                 {charge.billingCadence === 'yearly' || charge.billingCadence === 'quarterly'

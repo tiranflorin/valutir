@@ -11,7 +11,7 @@
  * that name followed by a plan ("Spotify Family"); other typed names only match each other exactly.
  * Pass active and trial subscriptions in one currency; amounts are never added across currencies.
  */
-import { type CatalogService, type OverlapGroup, SERVICE_CATALOG, findCatalogService } from '../data/services';
+import { type CatalogService, type OverlapGroup, catalogServiceOf } from '../data/services';
 import { yearlyCostOf } from './insights';
 import type { ChargeSource } from './monthCharges';
 
@@ -43,25 +43,6 @@ export const GROUP_LABELS: Record<OverlapGroup, { plural: string; job: string }>
     'password-manager': { plural: 'password managers', job: 'a password manager' },
 };
 
-/**
- * The catalog service a subscription is, also when a plan name follows it: "Google One Basic",
- * "Spotify Family", "iCloud+ 200GB". The typed name must start with the whole catalog name (or an
- * alias) and a space, and the longest match wins ("Apple One Premier" is Apple One), so nothing is
- * guessed from a partial word. Only used here: the add form's suggestions stay exact.
- */
-export const catalogServiceOf = (serviceName: string): CatalogService | undefined => {
-    const exact = findCatalogService(serviceName);
-    if (exact) return exact;
-    const typed = serviceName.trim().toLowerCase().replace(/\s+/g, ' ');
-    let best: { service: CatalogService; length: number } | undefined;
-    SERVICE_CATALOG.forEach((service) => {
-        [service.name, ...(service.aliases ?? [])].forEach((name) => {
-            const prefix = `${name.toLowerCase()} `;
-            if (typed.startsWith(prefix) && prefix.length > (best?.length ?? 0)) best = { service, length: prefix.length };
-        });
-    });
-    return best?.service;
-};
 
 const keyOf = (subscription: ChargeSource, catalog: CatalogService | undefined) =>
     catalog ? `catalog:${catalog.name}` : `typed:${subscription.serviceName.trim().toLowerCase()}`;

@@ -5,6 +5,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ManageLinkNote from '../ManageLinkNote';
 import type { SubscriptionCardModel } from '../../types/subscription';
+import ServiceIcon from '../ServiceIcon';
 import { safeManageUrl } from '../../utils/manageUrl';
 
 
@@ -48,9 +49,12 @@ const SubscriptionHeaderCard: React.FC<Props> = ({
             >
                 <Box className="subscription-detail-hero-copy">
                     {/*<span className="subscription-detail-kicker">SUBSCRIPTION</span>*/}
-                    <Typography component="h1" variant="h4" sx={{ fontWeight: 800 }}>
-                        {subscription.serviceName}
-                    </Typography>
+                    <Box className="service-heading">
+                        <ServiceIcon serviceName={subscription.serviceName} size="lg" />
+                        <Typography component="h1" variant="h4" sx={{ fontWeight: 800 }}>
+                            {subscription.serviceName}
+                        </Typography>
+                    </Box>
 
                     <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1.25 }}>
                         <Chip

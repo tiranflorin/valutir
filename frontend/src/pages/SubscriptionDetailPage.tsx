@@ -4,6 +4,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
+import ServiceIcon from '../components/ServiceIcon';
 import SubscriptionDeleteCard from '../components/subscription-detail/SubscriptionDeleteCard';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
 import SubscriptionEditCard from '../components/subscription-detail/SubscriptionEditCard';
@@ -132,7 +133,10 @@ const SubscriptionDetailPage: React.FC = () => {
                     {isEditMode ? (
                         <Box className="subscription-editor-heading">
                             {/*<span className="section-kicker">SUBSCRIPTION DETAILS</span>*/}
-                            <h1>Edit subscription</h1>
+                            <div className="service-heading">
+                                <ServiceIcon serviceName={subscription.serviceName} size="lg" />
+                                <h1>Edit subscription</h1>
+                            </div>
                             <p>Update the details for {subscription.serviceName}. Changes will be saved to your account.</p>
                         </Box>
                     ) : (

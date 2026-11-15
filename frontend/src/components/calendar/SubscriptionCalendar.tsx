@@ -3,6 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { CalendarEvent } from '../../types/calendar';
+import ServiceIcon from '../ServiceIcon';
 import CalendarToolbar from './CalendarToolbar';
 
 interface SubscriptionCalendarProps {
@@ -59,6 +60,13 @@ const SubscriptionCalendar: React.FC<SubscriptionCalendarProps> = ({
                 showNonCurrentDates={false}
                 dayMaxEventRows={3}
                 events={events}
+                // Each charge with its service's icon, as everywhere else in the app.
+                eventContent={(arg) => (
+                    <span className="calendar-event-label">
+                        <ServiceIcon serviceName={arg.event.title} size="sm" />
+                        <span>{arg.event.title}</span>
+                    </span>
+                )}
                 dateClick={(arg) => onDateClick?.(arg.dateStr)}
                 eventClick={(arg) => onEventClick?.(arg.event.id)}
                 datesSet={(arg) => {

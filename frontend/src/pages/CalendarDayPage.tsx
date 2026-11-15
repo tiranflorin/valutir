@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
 import { API_URL } from '../config';
 import type { SubscriptionRecord } from '../types/subscription';
+import ServiceIcon from '../components/ServiceIcon';
 import '../styles/calendar.css';
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -141,7 +142,7 @@ const CalendarDayPage: React.FC = () => {
                                         const props = event.extendedProps;
                                         return (
                                             <Box key={event.id} className="calendar-day-page__item">
-                                                <Box className="calendar-day-page__service-icon" aria-hidden="true">{event.title.slice(0, 1).toUpperCase()}</Box>
+                                                <ServiceIcon serviceName={event.title} />
                                                 <Box className="calendar-day-page__service-copy">
                                                     <Typography fontWeight={800}>{event.title}</Typography>
                                                     <Typography variant="body2" color="text.secondary">

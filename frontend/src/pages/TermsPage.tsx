@@ -51,6 +51,10 @@ const TermsPage: React.FC = () => (
                         information only. Always check the actual terms and charges with your provider. ValuTir isn&apos;t
                         financial, tax, or legal advice.
                     </p>
+                    <p>
+                        The names and logos of other services belong to their owners. ValuTir shows them only so you can
+                        recognise the subscriptions you track; it isn&apos;t affiliated with, or endorsed by, those services.
+                    </p>
                 </section>
 
                 <section id="account">

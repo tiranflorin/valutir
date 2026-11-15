@@ -2422,8 +2422,66 @@ body {
 .service-icon {
     width: 34px;
     height: 34px;
+    flex-shrink: 0;
     border-radius: 9px;
     object-fit: contain;
+}
+
+/* A faint edge, so a near-white brand tile (DAZN) doesn't melt into a white card. */
+img.service-icon,
+img.catalog-tile {
+    box-shadow: 0 0 0 1px rgba(23, 36, 29, .08);
+}
+
+/* A subscription without a catalog logo: its first letter, as on the add page's tiles. */
+.service-icon.letter {
+    display: inline-grid;
+    place-items: center;
+    background: #e8f4eb;
+    color: #256844;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.subscriptions-table .service-icon.letter {
+    font-size: 12px;
+}
+
+/* Beside a name in a list (charges, Insights, the calendar's day). */
+.service-icon--sm {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    vertical-align: middle;
+}
+
+.service-icon--sm.letter {
+    font-size: 10px;
+}
+
+/* With a heading: the subscription page and the review card. */
+.service-icon--lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+}
+
+.service-icon--lg.letter {
+    font-size: 20px;
+}
+
+/* A name with its icon in front, kept on one line. */
+.service-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.service-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
 .attention-name,
@@ -3606,12 +3664,21 @@ body {
 }
 
 .month-charges .charge-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
     overflow: hidden;
     color: #17241d;
     font-weight: 700;
     text-decoration: none;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.month-charges .charge-name > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .month-charges .charge-name:hover {
@@ -4485,6 +4552,7 @@ body {
     font-size: 14px;
 }
 
+:root[data-theme='dark'] .service-icon.letter,
 :root[data-theme='dark'] .catalog-tile.letter {
     background: #1f3a2b;
     color: #9fd8b5;

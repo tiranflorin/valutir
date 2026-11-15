@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
+import ServiceIcon from '../ServiceIcon';
 import type { CalendarEvent } from '../../types/calendar';
 
 interface CalendarDayDetailsProps {
@@ -68,11 +69,14 @@ const CalendarDayDetails: React.FC<CalendarDayDetailsProps> = ({
                                         alignItems="center"
                                         gap={1.5}
                                     >
-                                        <Box minWidth={0}>
+                                        <Box minWidth={0} className="service-with-icon">
+                                            <ServiceIcon serviceName={event.title} size="sm" />
+                                            <Box minWidth={0}>
                                             <Typography variant="body2" fontWeight={750} noWrap>{event.title}</Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 {props.billingCadence || 'Recurring'}{props.category ? ` · ${props.category}` : ''}
                                             </Typography>
+                                            </Box>
                                         </Box>
                                         <Stack alignItems="flex-end" spacing={0.5} flexShrink={0}>
                                             <Typography variant="body2" fontWeight={700}>{props.amount} {props.currency}</Typography>

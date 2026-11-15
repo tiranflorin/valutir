@@ -12,7 +12,7 @@ export const LEGAL = {
     /** The law the Terms are governed by. */
     governingLaw: 'Romania',
     privacyUpdated: '15 November 2026',
-    termsUpdated: '3 November 2026',
+    termsUpdated: '15 November 2026',
     refundsUpdated: '3 November 2026',
     /** Days after purchase in which the one-time unlock is refunded on request, no questions asked. */
     refundDays: 14,

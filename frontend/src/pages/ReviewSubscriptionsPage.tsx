@@ -21,6 +21,7 @@ import { findOverlaps, overlapReasons } from '../utils/overlaps';
 import { differenceLabel, priceLabel, recentRise } from '../utils/priceHistory';
 import { todayIsoDate } from '../utils/dates';
 import { reviewQueue, yearlyCostOf } from '../utils/reviewQueue';
+import ServiceIcon from '../components/ServiceIcon';
 import { readDashboardView } from '../utils/dashboardView';
 
 type Decision = 'kept' | 'cancelled' | 'skipped';
@@ -227,7 +228,10 @@ const ReviewSubscriptionsPage: React.FC = () => {
                                     {overlapReason.has(current.id) && <span className="review-tag overlap-tag">Overlap</span>}
                                     {current.category && <span className="keep-review-category">{current.category}</span>}
                                 </div>
-                                <h2 id="keep-review-name">{current.serviceName}</h2>
+                                <div className="service-heading">
+                                    <ServiceIcon serviceName={current.serviceName} size="lg" />
+                                    <h2 id="keep-review-name">{current.serviceName}</h2>
+                                </div>
                                 {current.reviewFlagged && current.reviewNote && <p className="keep-review-note">“{current.reviewNote}”</p>}
                                 {overlapReason.has(current.id) && <p className="keep-review-overlap">{overlapReason.get(current.id)}</p>}
                                 {rise && (

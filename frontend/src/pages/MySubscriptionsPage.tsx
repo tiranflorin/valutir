@@ -19,6 +19,7 @@ import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
+import ServiceIcon from '../components/ServiceIcon';
 import AppHeader from '../components/AppHeader';
 import MonthSummaryCard from '../components/MonthSummaryCard';
 import CalculatorSavedNotice from '../components/calculator/CalculatorSavedNotice';
@@ -98,20 +99,6 @@ const formatDate = (value: string | null) => {
 
 /** The keep-or-cancel review is offered once there are this many charged subscriptions in the view. */
 const REVIEW_MIN_SUBSCRIPTIONS = 3;
-
-const serviceIcon = (name: string) => {
-    const normalized = name.toLowerCase();
-    const icons: [string, string][] = [
-        ['netflix', 'netflix'], ['spotify', 'spotify'], ['icloud', 'icloud-plus'],
-        ['game pass', 'game-pass'], ['xbox', 'game-pass'], ['adobe', 'adobe'],
-        ['github', 'github'], ['chatgpt', 'chatgpt'], ['hosting', 'cloud-hosting'],
-        ['domain', 'domain'], ['figma', 'figma'], ['design', 'design-app'],
-        ['storage', 'cloud-storage'], ['newsletter', 'newsletter'], ['news', 'news-app'],
-        ['email', 'email-suite'], ['crm', 'crm'], ['project', 'project-tool'],
-    ];
-    const match = icons.find(([key]) => normalized.includes(key));
-    return `/service-icons/${match?.[1] || 'api-tool'}.svg`;
-};
 
 const statusLabel = (status: string) => {
     switch (normalizeStatus(status)) {
@@ -282,7 +269,7 @@ type AttentionRowProps = {
 
 const AttentionRow: React.FC<AttentionRowProps> = ({ subscription, meta, action, amountMode }) => (
     <div className="attention-row">
-        <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
+        <ServiceIcon serviceName={subscription.serviceName} />
         <div>
             <div className="attention-name">{subscription.serviceName}</div>
             <div className="attention-meta">{meta}</div>
@@ -323,7 +310,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                             <td>
                                 <RouterLink className="subscription-row-link" to={`/subscriptions/${subscription.id}`}>
                                     <span className="service-cell">
-                                        <img className="service-icon" src={serviceIcon(subscription.serviceName)} alt="" />
+                                        <ServiceIcon serviceName={subscription.serviceName} />
                                         <span className="service-name">{subscription.serviceName}</span>
                                         {isShared(subscription) && <span className="shared-tag" title={`Split between ${splitCount(subscription)} people`}>Shared</span>}
                                         {isFlagged(subscription) && <span className="review-tag" title={subscription.reviewNote ?? 'Flagged for review'}>Review</span>}

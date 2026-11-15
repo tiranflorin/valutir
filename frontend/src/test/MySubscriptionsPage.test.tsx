@@ -38,7 +38,8 @@ const dashboardApi = (items: unknown[]) => mockApi({
 const rowsUnder = (label: RegExp) => {
     const heading = screen.getByText(label);
     const table = heading.closest('.list-labels')!.nextElementSibling as HTMLElement;
-    return within(table).getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].textContent);
+    // The service name, without the icon's letter tile (hidden from screen readers too).
+    return within(table).getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0].querySelector('.service-name')?.textContent);
 };
 
 describe('MySubscriptionsPage sections', () => {
@@ -211,7 +212,8 @@ describe('MySubscriptionsPage needs attention', () => {
 
         await user.click(await screen.findByRole('button', { name: 'Needs review 1' }));
         expect(screen.queryByRole('button', { name: /^Shared/ })).not.toBeInTheDocument();
-        expect(rowsUnder(/^My subscriptions/)).toEqual(['MysteryReview']);
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Mystery']);
+        expect(screen.getByRole('row', { name: /Mystery/ })).toHaveTextContent('Review');
     });
 });
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
+import ServiceIcon from '../ServiceIcon';
 import { type RecentPriceChange, differenceLabel, priceLabel } from '../../utils/priceHistory';
 
 type Props = {
@@ -30,7 +31,7 @@ const PriceChangesCard: React.FC<Props> = ({ changes, currency }) => {
                 {changes.map(({ subscription, change, yearly }) => (
                     <li key={change.id}>
                         <div>
-                            <strong><RouterLink to={`/subscriptions/${subscription.id}`}>{subscription.serviceName}</RouterLink></strong>
+                            <strong><RouterLink className="service-with-icon" to={`/subscriptions/${subscription.id}`}><ServiceIcon serviceName={subscription.serviceName} size="sm" />{subscription.serviceName}</RouterLink></strong>
                             <small>
                                 {priceLabel(change.previousAmount, change.previousCurrency, change.previousCadence)}
                                 {' → '}
