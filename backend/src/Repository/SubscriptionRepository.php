@@ -33,6 +33,9 @@ class SubscriptionRepository extends ServiceEntityRepository
     public function findByUser(User $user): array
     {
         return $this->createVisibleForUserQueryBuilder($user)
+            // Each subscription's price history comes with it (toArray), in the same query.
+            ->leftJoin('s.priceChanges', 'pc')
+            ->addSelect('pc')
             ->orderBy('s.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
@@ -41,6 +44,8 @@ class SubscriptionRepository extends ServiceEntityRepository
     public function findOneByIdAndUser(int $id, User $user): ?Subscription
     {
         return $this->createVisibleForUserQueryBuilder($user)
+            ->leftJoin('s.priceChanges', 'pc')
+            ->addSelect('pc')
             ->andWhere('s.id = :id')
             ->setParameter('id', $id)
             ->getQuery()

@@ -104,6 +104,16 @@ final class SubsController extends AbstractController
         return $this->json($this->subscriptionService->clearReviewFlag($subscription)->toArray());
     }
 
+    /** Removes a recorded price change the owner says was a correction, not a real change. */
+    #[Route('/{id}/price-changes/{priceChangeId}', name: 'api_subs_price_change_delete', methods: ['DELETE'], requirements: ['id' => '\d+', 'priceChangeId' => '\d+'])]
+    public function removePriceChange(int $id, int $priceChangeId): JsonResponse
+    {
+        $user = $this->requireUser();
+        $subscription = $this->subscriptionService->getForUser($id, $user);
+
+        return $this->json($this->subscriptionService->removePriceChange($subscription, $priceChangeId)->toArray());
+    }
+
     #[Route('/{id}', name: 'api_subs_delete', methods: ['DELETE'])]
     public function delete(int $id, Request $request): JsonResponse
     {

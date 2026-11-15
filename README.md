@@ -26,7 +26,7 @@ It's a web app (React) with a JSON API (Symfony). Status: an MVP, built and test
 - **Free:** everything above, for up to 50 active subscriptions (active or in trial).
 - **One-time unlock: €19.99, VAT included, no renewal.** It lifts the 50-subscription limit. Payment runs on Stripe's hosted checkout, so ValuTir never sees card details. Everyone is charged in EUR.
 - **14-day money-back guarantee:** a full refund on request, no questions asked.
-- Some advanced business tools listed on the Plans page (project and cost-center allocation, a bookkeeping export, custom reminder timing, price history) aren't built yet and aren't part of the purchase until they ship.
+- Some advanced business tools listed on the Plans page (project and cost-center allocation, a bookkeeping export, custom reminder timing) aren't built yet and aren't part of the purchase until they ship.
 
 The app includes a Privacy policy, Terms of use, and Refund policy, operated by TechDivision (TECHDIVISION SRL, Oradea, Romania). No ads, tracking, or analytics, and no cookie banner, because everything stored is strictly necessary.
 

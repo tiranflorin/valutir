@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Billing\UserTime;
+use App\Clock\Clock;
 use App\Dto\SubscriptionUpsertRequest;
+use App\Entity\PriceTerms;
 use App\Entity\Subscription;
 use App\Entity\User;
 use App\Exception\ApiValidationException;
@@ -23,6 +26,7 @@ final class SubscriptionService
         private readonly SubscriptionRepository $subscriptionRepository,
         private readonly ValidatorInterface $validator,
         private readonly FreePlanLimit $freePlanLimit,
+        private readonly Clock $clock,
     ) {
     }
 
@@ -71,6 +75,12 @@ final class SubscriptionService
             $user = $subscription->getUser();
             if (null !== $user) {
                 $this->freePlanLimit->assertCanSave($user, $subscription, $dto->status);
+                $now = $this->clock->now();
+                $subscription->recordPriceChange(
+                    $this->priceTermsOf($dto),
+                    UserTime::today($user, $now),
+                    UserTime::today($user, $subscription->getCreatedAt() ?? $now),
+                );
             }
 
             $this->mapDto($subscription, $dto);
@@ -78,6 +88,17 @@ final class SubscriptionService
 
             return $subscription;
         });
+    }
+
+    /** Removes a price change the owner says was a correction. */
+    public function removePriceChange(Subscription $subscription, int $priceChangeId): Subscription
+    {
+        if (!$subscription->removePriceChange($priceChangeId)) {
+            throw new NotFoundHttpException('Price change not found.');
+        }
+        $this->entityManager->flush();
+
+        return $subscription;
     }
 
     /**
@@ -124,9 +145,10 @@ final class SubscriptionService
     private function mapDto(Subscription $subscription, SubscriptionUpsertRequest $dto): void
     {
         $subscription->setServiceName(trim((string) $dto->serviceName));
-        $subscription->setAmount(number_format((float) $dto->amount, 2, '.', ''));
-        $subscription->setCurrency((string) $dto->currency);
-        $subscription->setBillingCadence((string) $dto->billingCadence);
+        $terms = $this->priceTermsOf($dto);
+        $subscription->setAmount($terms->amount);
+        $subscription->setCurrency($terms->currency);
+        $subscription->setBillingCadence($terms->cadence);
         $subscription->setCategory(null !== $dto->category ? trim($dto->category) : null);
         $subscription->setStartedAt($this->parseDate($dto->startedAt));
         $subscription->setNextBillingDate($this->parseDate($dto->nextBillingDate));
@@ -152,6 +174,15 @@ final class SubscriptionService
             $subscription->setTrialReminderSentAt(null);
         }
         $subscription->setTrialEndsAt($trialEndsAt);
+    }
+
+    private function priceTermsOf(SubscriptionUpsertRequest $dto): PriceTerms
+    {
+        return new PriceTerms(
+            number_format((float) $dto->amount, 2, '.', ''),
+            strtoupper((string) $dto->currency),
+            (string) $dto->billingCadence,
+        );
     }
 
     private function parseDate(?string $value): ?\DateTimeImmutable

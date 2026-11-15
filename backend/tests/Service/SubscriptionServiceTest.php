@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service;
 
+use App\Clock\Clock;
 use App\Dto\SubscriptionUpsertRequest;
 use App\Entity\Subscription;
 use App\Entity\User;
@@ -86,7 +87,7 @@ final class SubscriptionServiceTest extends TestCase
         $user = new User();
         $repository = $this->createMock(SubscriptionRepository::class);
         $repository->expects(self::once())->method('findOneByIdAndUser')->with(7, $user)->willReturn(null);
-        $service = new SubscriptionService($this->createStub(EntityManager::class), $repository, $this->createStub(ValidatorInterface::class), new FreePlanLimit($this->createStub(EntityManager::class), $repository));
+        $service = new SubscriptionService($this->createStub(EntityManager::class), $repository, $this->createStub(ValidatorInterface::class), new FreePlanLimit($this->createStub(EntityManager::class), $repository), $this->clock('2026-11-15 12:00:00'));
 
         $this->expectException(NotFoundHttpException::class);
 
@@ -237,7 +238,45 @@ final class SubscriptionServiceTest extends TestCase
         self::assertNull($subscription->getReviewNote());
     }
 
-    private function service(EntityManager $entityManager, int $activeCount = 0, ?ValidatorInterface $validator = null): SubscriptionService
+    public function testAPriceChangeIsDatedOnTheOwnersLocalDay(): void
+    {
+        $user = (new User())->setEmail('a@example.test');
+        $user->setTimezone('Pacific/Auckland');
+        $subscription = new Subscription();
+        $subscription->setUser($user);
+        $subscription->setAmount('11.99');
+        $subscription->setCurrency('EUR');
+        $subscription->setBillingCadence('monthly');
+        $subscription->onPrePersist();
+        // Added well before: created "now" would make this its first day, when edits are still set-up.
+        (new \ReflectionProperty(Subscription::class, 'createdAt'))->setValue($subscription, new \DateTimeImmutable('2026-10-01 10:00:00 UTC'));
+
+        // 12:00 UTC on 15 November is already 16 November in Auckland.
+        $this->service($this->transactionalEntityManager(), clock: $this->clock('2026-11-15 12:00:00'))->update($subscription, $this->request());
+
+        $changes = $subscription->toArray()['priceChanges'];
+        self::assertCount(1, $changes);
+        self::assertSame(['11.99', '13.99', '2026-11-16'], [$changes[0]['previousAmount'], $changes[0]['newAmount'], $changes[0]['changedOn']]);
+    }
+
+    public function testRemovingAPriceChangeThatIsntThereIsNotFound(): void
+    {
+        $entityManager = $this->createMock(EntityManager::class);
+        $entityManager->expects(self::never())->method('flush');
+
+        $this->expectException(NotFoundHttpException::class);
+        $this->service($entityManager)->removePriceChange(new Subscription(), 3);
+    }
+
+    private function clock(string $now): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new \DateTimeImmutable($now, new \DateTimeZone('UTC')));
+
+        return $clock;
+    }
+
+    private function service(EntityManager $entityManager, int $activeCount = 0, ?ValidatorInterface $validator = null, ?Clock $clock = null): SubscriptionService
     {
         if (null === $validator) {
             $validator = $this->createStub(ValidatorInterface::class);
@@ -246,7 +285,7 @@ final class SubscriptionServiceTest extends TestCase
         $repository = $this->createStub(SubscriptionRepository::class);
         $repository->method('countWithStatuses')->willReturn($activeCount);
 
-        return new SubscriptionService($entityManager, $repository, $validator, new FreePlanLimit($entityManager, $repository));
+        return new SubscriptionService($entityManager, $repository, $validator, new FreePlanLimit($entityManager, $repository), $clock ?? $this->clock('2026-11-15 12:00:00'));
     }
 
     private function transactionalEntityManager(int $times = 1): EntityManager&MockObject

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\SubscriptionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -133,6 +135,15 @@ class Subscription
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $deletedAt = null;
+
+    /** @var Collection<int, PriceChange> */
+    #[ORM\OneToMany(targetEntity: PriceChange::class, mappedBy: 'subscription', cascade: ['persist'], orphanRemoval: true)]
+    private Collection $priceChanges;
+
+    public function __construct()
+    {
+        $this->priceChanges = new ArrayCollection();
+    }
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
@@ -458,6 +469,72 @@ class Subscription
         $this->trialReminderSentAt = $trialReminderSentAt;
     }
 
+    public function priceTerms(): PriceTerms
+    {
+        return new PriceTerms((string) $this->amount, (string) $this->currency, (string) $this->billingCadence);
+    }
+
+    /**
+     * Keeps the old price when an edit changes the amount, currency or cadence, so the owner can see
+     * what it cost before. Call before applying the edit. Typo fixes don't pile up: edits on the day the
+     * subscription was added aren't changes (it's still being set up), and a later edit on the same day
+     * replaces that day's change, which disappears if the price is back where it started.
+     *
+     * @param \DateTimeImmutable $today     the owner's local calendar day
+     * @param \DateTimeImmutable $createdOn the owner's local calendar day the subscription was added
+     */
+    public function recordPriceChange(PriceTerms $new, \DateTimeImmutable $today, \DateTimeImmutable $createdOn): void
+    {
+        $current = $this->priceTerms();
+        if (null === $this->amount || $current->equals($new)) {
+            return;
+        }
+
+        $day = $today->format('Y-m-d');
+        foreach ($this->priceChanges as $change) {
+            if ($change->getChangedOn()->format('Y-m-d') === $day) {
+                if ($change->previous()->equals($new)) {
+                    $this->priceChanges->removeElement($change);
+                } else {
+                    $change->changeTo($new);
+                }
+
+                return;
+            }
+        }
+
+        if ($createdOn->format('Y-m-d') === $day) {
+            return;
+        }
+
+        $this->priceChanges->add(new PriceChange($this, $current, $new, $today));
+    }
+
+    /** Removes a change the owner says was a correction, not a real price change. */
+    public function removePriceChange(int $id): bool
+    {
+        foreach ($this->priceChanges as $change) {
+            if ($change->getId() === $id) {
+                return $this->priceChanges->removeElement($change);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Newest first.
+     *
+     * @return list<PriceChange>
+     */
+    public function getPriceChanges(): array
+    {
+        $changes = $this->priceChanges->toArray();
+        usort($changes, static fn (PriceChange $a, PriceChange $b): int => [$b->getChangedOn(), $b->getId() ?? PHP_INT_MAX] <=> [$a->getChangedOn(), $a->getId() ?? PHP_INT_MAX]);
+
+        return $changes;
+    }
+
     public function toArray(): array
     {
         return [
@@ -487,6 +564,7 @@ class Subscription
             'reviewFlagged' => $this->isReviewFlagged(),
             'reviewFlaggedAt' => $this->getReviewFlaggedAt()?->format(\DateTimeInterface::ATOM),
             'reviewNote' => $this->getReviewNote(),
+            'priceChanges' => array_map(static fn (PriceChange $change): array => $change->toArray(), $this->getPriceChanges()),
         ];
     }
 }

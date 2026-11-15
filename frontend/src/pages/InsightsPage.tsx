@@ -14,6 +14,9 @@ import {
     monthlyForecast,
 } from '../utils/insights';
 import OverlapsCard from '../components/insights/OverlapsCard';
+import PriceChangesCard from '../components/insights/PriceChangesCard';
+import { recentPriceChanges } from '../utils/priceHistory';
+import { todayIsoDate } from '../utils/dates';
 import { formatCurrency } from '../utils/money';
 import { findOverlaps } from '../utils/overlaps';
 import type { ChargeSource } from '../utils/monthCharges';
@@ -70,6 +73,10 @@ const InsightsPage: React.FC = () => {
     const forecast = useMemo(() => monthlyForecast(inCurrency, amountFor, now), [inCurrency, amountFor, now]);
     const upcoming = useMemo(() => biggestUpcoming(inCurrency, amountFor, now), [inCurrency, amountFor, now]);
     const overlaps = useMemo(() => findOverlaps(inCurrency, amountFor), [inCurrency, amountFor]);
+    const priceChanges = useMemo(
+        () => recentPriceChanges(inCurrency, currency, todayIsoDate(now), (subscription) => (mode === 'share' ? 1 / splitCount(subscription) : 1)),
+        [inCurrency, currency, now, mode]
+    );
     const monthlyTotal = categories.reduce((sum, row) => sum + row.monthly, 0);
     // Moved here from the dashboard: what the user's own part of shared bills comes to.
     const sharedMonthlyShare = useMemo(
@@ -176,6 +183,8 @@ const InsightsPage: React.FC = () => {
 
                         {/* With one subscription there is nothing to compare, so no card at all. */}
                         {inCurrency.length > 1 && <OverlapsCard overlaps={overlaps} money={money} />}
+
+                        {priceChanges.length > 0 && <PriceChangesCard changes={priceChanges} currency={currency} />}
 
                         <Paper className="dashboard-list insights-section" component="section" aria-labelledby="insights-categories">
                             <div className="list-head">

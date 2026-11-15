@@ -6,7 +6,7 @@ const subscription = (billingCadence: SubscriptionRecord['billingCadence'], next
     id: 1, serviceName: 'Test', amount: '10.00', currency: 'EUR', status: 'active', billingCadence, category: null,
     startedAt: null, nextBillingDate, notes: null, paymentMethod: null, manageUrl: null, isActive: true, autoRenew: true, b2b: false,
     householdShared: false, householdSize: null, cancelledAt: null, createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
-    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
+    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null, priceChanges: [],
 });
 
 const dates = (cadence: SubscriptionRecord['billingCadence'], anchor: string, rangeStart: string, rangeEnd: string) =>

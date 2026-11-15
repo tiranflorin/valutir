@@ -68,6 +68,8 @@ type Props = {
     statusOptions?: SubscriptionStatus[];
     /** Suggest common services while typing the name; picking one fills the fields still untouched. */
     serviceSuggestions?: boolean;
+    /** Shown under the price, e.g. that editing keeps the old price in the history. */
+    priceHelperText?: string;
 };
 
 
@@ -121,6 +123,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                    showHouseholdShared = true,
                                                    statusOptions = DEFAULT_STATUS_OPTIONS,
                                                    serviceSuggestions = false,
+                                                   priceHelperText,
                                                }) => {
     const theme = useTheme();
     // A catalog pick never overrides a choice the user made themselves.
@@ -325,6 +328,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 value={values.amount}
                                 onChange={(e) => patch({ amount: e.target.value })}
                                 inputProps={{ min: 0, step: '0.01' }}
+                                helperText={priceHelperText}
                                 sx={requiredFieldSx}
                                 fullWidth
                                 required

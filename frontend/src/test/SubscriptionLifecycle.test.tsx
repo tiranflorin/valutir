@@ -20,7 +20,7 @@ const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord
     status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null, manageUrl: null,
     isActive: true, autoRenew: true, b2b: false, householdShared: false, householdSize: null, cancelledAt: null,
     createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
-    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
+    resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null, priceChanges: [],
     ...overrides,
 });
 

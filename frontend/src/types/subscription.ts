@@ -10,6 +10,19 @@ export type SubscriptionBillingFrequency =
     | 'quarterly'
     | 'yearly';
 
+/** One change the owner made to what a subscription costs; recorded by the server when an edit changes it. */
+export interface PriceChange {
+    id: number;
+    previousAmount: string;
+    previousCurrency: string;
+    previousCadence: string;
+    newAmount: string;
+    newCurrency: string;
+    newCadence: string;
+    /** YYYY-MM-DD, the owner's local day. */
+    changedOn: string;
+}
+
 export interface SubscriptionRecord {
     id: number;
     serviceName: string;
@@ -41,6 +54,8 @@ export interface SubscriptionRecord {
     reviewFlagged: boolean;
     reviewFlaggedAt: string | null;
     reviewNote: string | null;
+    /** Newest first. */
+    priceChanges: PriceChange[];
 }
 
 /** A subscription as the detail page and its cards use it: the amount as a number. */
@@ -68,4 +83,5 @@ export type SubscriptionCardModel = {
     reviewFlagged?: boolean;
     reviewFlaggedAt?: string | null;
     reviewNote?: string | null;
+    priceChanges?: PriceChange[];
 };

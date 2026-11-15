@@ -22,6 +22,7 @@ const freeFeatures = [
     'Renewal calendar and basic reminders',
     'Monthly and yearly cost summaries',
     'Trial tracking and review decisions',
+    'Price history: each change you make, and what it adds a year',
     'Download all your data (JSON) and subscriptions (CSV)',
     'One account; each subscription belongs to one view',
 ];
@@ -31,7 +32,6 @@ const unlockFeatures = [
     'Project and cost-center allocation for Business',
     'Bookkeeping-ready business export',
     'Custom reminder timing and renewal reports',
-    'Price and renewal history',
     'Keep both dashboards and the same shared account',
 ];
 

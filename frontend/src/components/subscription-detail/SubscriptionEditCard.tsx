@@ -177,6 +177,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
             error={error}
             submitting={saving}
             submitLabel="Save changes"
+            priceHelperText="A new price, currency or billing cadence keeps the old one in the price history."
             onSubmit={() => {
                 void handleSave();
             }}
