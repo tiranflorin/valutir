@@ -18,7 +18,6 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useNavigate, useSearchParams } from 'react-router';
 import { submitNewPassword } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
-import '../RecurringScreens.css';
 import SuccessHeading from '../../components/SuccessHeading';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';

@@ -17,21 +17,9 @@ import OverlapsCard from '../components/insights/OverlapsCard';
 import { formatCurrency } from '../utils/money';
 import { findOverlaps } from '../utils/overlaps';
 import type { ChargeSource } from '../utils/monthCharges';
-import './RecurringScreens.css';
+import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
 
-type View = 'personal' | 'business';
 type AmountMode = 'full' | 'share';
-
-/** Shared with the dashboard: the Personal/Business view the user picked (see TODO #4's inventory). */
-const VIEW_KEY = 'valutir_dashboard_view';
-
-const readView = (): View => {
-    try {
-        return window.localStorage.getItem(VIEW_KEY) === 'business' ? 'business' : 'personal';
-    } catch {
-        return 'personal';
-    }
-};
 
 const monthLabel = (yearMonth: string, style: 'short' | 'long' = 'short') => {
     const [year, month] = yearMonth.split('-').map(Number);
@@ -45,21 +33,17 @@ const dayLabel = (iso: string) =>
 const InsightsPage: React.FC = () => {
     const { user } = useAuth();
     const { subscriptions, loading, error } = useSubscriptions();
-    const [view, setView] = useState<View>(readView);
+    const [view, setView] = useState<DashboardView>(readDashboardView);
     const [amountMode, setAmountMode] = useState<AmountMode>('full');
     const [pickedCurrency, setPickedCurrency] = useState<string | null>(null);
     const [openCategory, setOpenCategory] = useState<string | null>(null);
     // Fixed for the page's lifetime so the projections aren't recomputed on every render.
     const [now] = useState(() => new Date());
 
-    const selectView = (next: View) => {
+    const selectView = (next: DashboardView) => {
         setView(next);
         setOpenCategory(null);
-        try {
-            window.localStorage.setItem(VIEW_KEY, next);
-        } catch {
-            // Storage blocked: the choice lasts for this page only.
-        }
+        saveDashboardView(next);
     };
 
     const inView = useMemo(

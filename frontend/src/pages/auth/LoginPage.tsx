@@ -17,7 +17,6 @@ import { Link as RouterLink, Navigate, useLocation } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
-import '../RecurringScreens.css';
 
 const LoginPage: React.FC = () => {
     const location = useLocation();

@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import useCalendarEvents from '../hooks/useCalendarEvents';
 import { API_URL } from '../config';
 import type { SubscriptionRecord } from '../types/subscription';
-import './CalendarPage.css';
+import '../styles/calendar.css';
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const nextDate = (value: string) => {

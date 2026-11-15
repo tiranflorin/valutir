@@ -28,7 +28,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
     │   ├── context/         # Authentication and MUI theme providers
     │   ├── hooks/           # Calendar-event logic
     │   ├── pages/           # Route-level screens
-    │   ├── services/        # Authentication API calls
+    │   ├── services/        # API calls (authentication, account, contact, calculator list)
+    │   ├── styles/          # app.css (global, imported once in main.tsx) and page stylesheets
     │   ├── test/            # Vitest/React Testing Library tests
     │   ├── types/           # Domain/API TypeScript types
     │   └── utils/           # Recurrence and calendar helpers
@@ -205,6 +206,18 @@ Apply these rules to all new or materially changed backend code. They are intent
 - Record security-sensitive events (authentication failures, access denials, password resets, privilege changes) without sensitive payloads, and test that unauthorized, cross-user, malformed, and rate-limited requests fail safely.
 
 Reference material: Symfony's [coding conventions](https://symfony.com/doc/current/contributing/code/conventions.html) and [security documentation](https://symfony.com/doc/current/security.html), the PHP-CS-Fixer [`@Symfony` ruleset](https://cs.symfony.com/doc/ruleSets/Symfony.html), PHP-FIG [PER-CS](https://www.php-fig.org/per/coding-style/meta/migration-2.0/), and OWASP guidance for [secure review](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Code_Review_Cheat_Sheet.html), [SQL injection prevention](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html), and [REST APIs](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
+
+## Quality bar: no slop
+
+Applies to every feature, page, text, test, and doc change. Something that doesn't earn its place is left out, even if it was asked for in a spec; say so and why instead.
+
+- **Value before building.** Name who uses it, the problem it solves, and how often. If that answer is weak or speculative (a marketing idea, a setting nobody asked for), propose a smaller version or say no, before writing code.
+- **Precise or silent.** Warnings, nudges, and suggestions must be right nearly every time: prefer missing a case to a false alarm (see the overlap rules above). State a limit rather than guess.
+- **Only true statements.** No invented statistics ("most people save…"), promised savings, unverified menu paths, prices, or legal claims. Every fact comes from the code, the user, `src/legal.ts`, or a source you checked; otherwise leave it out.
+- **Plain, specific copy.** Say what it does in the user's terms. No filler, hype, emoji, or decorative labels (no eyebrow or kicker text above headings); one clear heading beats a tagline plus a heading.
+- **Smallest change that works.** No speculative options, abstractions, or "for later" code; no dead or commented-out code (delete what's replaced, git keeps history); no duplicated logic when a helper exists.
+- **Tests and docs that matter.** Tests check behavior a user or caller relies on, including the cases that must not trigger. Docs change where behavior changed; no recaps or summaries of the obvious.
+- **Check your own work before handoff.** Look at the result the way the user will (run it, read the page, try the flow end to end), then reread the diff and cut anything that doesn't pull its weight.
 
 ## Working conventions
 

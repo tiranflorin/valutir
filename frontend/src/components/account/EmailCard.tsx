@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Paper, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { fetchProfile, requestEmailChange } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

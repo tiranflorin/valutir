@@ -18,7 +18,7 @@ import { API_URL } from '../../config';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import ManageLinkNote from '../ManageLinkNote';
 import { safeManageUrl } from '../../utils/manageUrl';
-import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../../types/subscription';
 
 type Props = {
     subscription: SubscriptionCardModel;

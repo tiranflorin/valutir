@@ -14,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
 import ThemeModeToggle from './ThemeModeToggle';
 import EmailVerificationBanner from './EmailVerificationBanner';
-import '../pages/RecurringScreens.css';
 
 const AppHeader: React.FC = () => {
     const { isAuthenticated, user, logout } = useAuth();

@@ -203,7 +203,12 @@ describe('saving the calculator list', () => {
         const calls = mockApi({
             'POST /api/login_check': () => ({ status: 200, body: { token: fakeJwt() } }),
             'GET /api/profile': () => ({ status: 200, body: profile() }),
-            'GET /api/subs': () => ({ status: 200, body: [{ id: 1, serviceName: 'spotify', status: 'active' }] }),
+            // A complete record, as the API sends it: the dashboard renders it after saving.
+            'GET /api/subs': () => ({ status: 200, body: [{
+                id: 1, serviceName: 'spotify', status: 'active', amount: '11.99', currency: 'USD', billingCadence: 'monthly',
+                category: 'Entertainment', startedAt: '2026-01-01', nextBillingDate: '2030-01-15', cancelledAt: null, trialEndsAt: null,
+                b2b: false, autoRenew: true, householdShared: false, householdSize: null, reviewFlagged: false, manageUrl: null,
+            }] }),
             'POST /api/subs': () => ({ status: 201, body: {} }),
         });
         const user = userEvent.setup();

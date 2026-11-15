@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import { unsubscribeFromReminders } from '../../services/account';
-import '../RecurringScreens.css';
 import SuccessHeading from '../../components/SuccessHeading';
 
 type Status = 'working' | 'done' | 'failed';

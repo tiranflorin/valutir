@@ -4,33 +4,9 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ManageLinkNote from '../ManageLinkNote';
+import type { SubscriptionCardModel } from '../../types/subscription';
 import { safeManageUrl } from '../../utils/manageUrl';
 
-export type SubscriptionCardModel = {
-    id: number;
-    serviceName: string;
-    category: string | null;
-    amount: number;
-    currency: string;
-    billingCadence: string;
-    nextBillingDate: string | null;
-    notes: string | null;
-    status: string;
-    autoRenew: boolean;
-    b2b: boolean;
-    householdShared?: boolean;
-    householdSize?: number | null;
-    cancelledAt: string | null;
-    startedAt?: string | null;
-    paymentMethod?: string | null;
-    manageUrl?: string | null;
-    trialEndsAt?: string | null;
-    trialReminderSentAt?: string | null;
-    resumesOn?: string | null;
-    reviewFlagged?: boolean;
-    reviewFlaggedAt?: string | null;
-    reviewNote?: string | null;
-};
 
 type Props = {
     subscription: SubscriptionCardModel;

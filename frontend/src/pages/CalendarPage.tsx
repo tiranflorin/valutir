@@ -12,7 +12,7 @@ import useCalendarEvents from '../hooks/useCalendarEvents';
 import { API_URL } from '../config';
 import type { SubscriptionRecord } from '../types/subscription';
 import { useSearchParams } from 'react-router';
-import './CalendarPage.css';
+import '../styles/calendar.css';
 
 const CalendarPage: React.FC = () => {
     const { token, logout } = useAuth();

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Paper, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { updateProfile } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 const ProfileDetailsCard: React.FC = () => {
     const { user, token, applyProfile } = useAuth();

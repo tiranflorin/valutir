@@ -42,3 +42,30 @@ export interface SubscriptionRecord {
     reviewFlaggedAt: string | null;
     reviewNote: string | null;
 }
+
+/** A subscription as the detail page and its cards use it: the amount as a number. */
+export type SubscriptionCardModel = {
+    id: number;
+    serviceName: string;
+    category: string | null;
+    amount: number;
+    currency: string;
+    billingCadence: string;
+    nextBillingDate: string | null;
+    notes: string | null;
+    status: string;
+    autoRenew: boolean;
+    b2b: boolean;
+    householdShared?: boolean;
+    householdSize?: number | null;
+    cancelledAt: string | null;
+    startedAt?: string | null;
+    paymentMethod?: string | null;
+    manageUrl?: string | null;
+    trialEndsAt?: string | null;
+    trialReminderSentAt?: string | null;
+    resumesOn?: string | null;
+    reviewFlagged?: boolean;
+    reviewFlaggedAt?: string | null;
+    reviewNote?: string | null;
+};

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Box, Button, Paper, Stack, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { changePassword } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 const PasswordCard: React.FC = () => {
     const { token, replaceToken } = useAuth();

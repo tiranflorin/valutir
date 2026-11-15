@@ -4,8 +4,7 @@ import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { LEGAL, OPERATOR_DETAILS } from '../legal';
-import './RecurringScreens.css';
-import './LegalPage.css';
+import '../styles/legal.css';
 
 /**
  * Refund policy for the one-time unlock. A full refund in Stripe revokes the unlock automatically

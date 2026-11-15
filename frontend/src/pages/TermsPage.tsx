@@ -4,8 +4,7 @@ import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { LEGAL, OPERATOR_DETAILS } from '../legal';
-import './RecurringScreens.css';
-import './LegalPage.css';
+import '../styles/legal.css';
 
 /**
  * Terms of use. Keep the plan and payment sections in sync with the Plans page, FreePlanLimit, and

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
-import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../../types/subscription';
 import { shareOf, splitCount } from '../../utils/householdShare';
 
 type Props = {

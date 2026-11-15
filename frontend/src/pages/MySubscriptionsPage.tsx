@@ -30,7 +30,7 @@ import { shareOf, splitCount } from '../utils/householdShare';
 import { formatCurrency, groupedMoney } from '../utils/money';
 import { monthlyEquivalentOf } from '../utils/insights';
 import type { ChargeSource } from '../utils/monthCharges';
-import './RecurringScreens.css';
+import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
 
 type Subscription = {
     id: number;
@@ -364,14 +364,12 @@ const MySubscriptionsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<Filter>('all');
     const { download: downloadExport, working: exporting, error: exportError } = useAccountExport();
-    const [view, setView] = useState<'personal' | 'business'>(() =>
-        window.localStorage.getItem('valutir_dashboard_view') === 'business' ? 'business' : 'personal'
-    );
+    const [view, setView] = useState<DashboardView>(readDashboardView);
 
-    const selectView = (nextView: 'personal' | 'business') => {
+    const selectView = (nextView: DashboardView) => {
         setView(nextView);
         setFilter('all');
-        window.localStorage.setItem('valutir_dashboard_view', nextView);
+        saveDashboardView(nextView);
     };
 
     const deletedSubscriptionMessage =

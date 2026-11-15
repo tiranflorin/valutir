@@ -13,7 +13,7 @@ import AppSurfaceCard from '../AppSurfaceCard';
 import { API_URL } from '../../config';
 import { nextChargeOnOrAfter } from '../../utils/buildRecurringOccurrences';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
-import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../../types/subscription';
 
 type Props = {
     subscription: SubscriptionCardModel;

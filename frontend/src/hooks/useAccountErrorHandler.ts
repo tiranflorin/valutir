@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../../context/AuthContext';
-import { ApiError } from '../../services/account';
+import { useAuth } from '../context/AuthContext';
+import { ApiError } from '../services/account';
 
 /**
  * Turns an API failure into a message to show. A 401 means the token was revoked or expired,

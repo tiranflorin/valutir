@@ -22,7 +22,6 @@ import { useAuth } from '../../context/AuthContext';
 import { pendingCalculatorList } from '../../services/calculatorList';
 import { registerRequest } from '../../services/auth';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
-import '../RecurringScreens.css';
 import SuccessHeading from '../../components/SuccessHeading';
 
 type StrengthLevel = 'Weak' | 'Fair' | 'Good' | 'Strong';

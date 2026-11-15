@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Alert, Button, Paper } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { logoutEverywhereRequest } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 const SessionsCard: React.FC = () => {
     const { token, clearSession } = useAuth();

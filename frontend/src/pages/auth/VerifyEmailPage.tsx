@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import { fetchProfile, verifyEmail } from '../../services/account';
-import '../RecurringScreens.css';
 import SuccessHeading from '../../components/SuccessHeading';
 
 type Status = 'verifying' | 'verified' | 'failed';

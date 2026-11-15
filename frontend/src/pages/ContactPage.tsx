@@ -6,8 +6,7 @@ import AppHeader from '../components/AppHeader';
 import TurnstileWidget from '../components/TurnstileWidget';
 import { LEGAL } from '../legal';
 import { submitContactForm } from '../services/contact';
-import './RecurringScreens.css';
-import './ContactPage.css';
+import '../styles/contact.css';
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
 

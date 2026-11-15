@@ -4,8 +4,7 @@ import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import { LEGAL, OPERATOR_DETAILS } from '../legal';
-import './RecurringScreens.css';
-import './LegalPage.css';
+import '../styles/legal.css';
 
 /** Keep this page in sync with what the app collects and stores (AGENTS.md); legal details live in src/legal.ts. */
 type StorageItem = {

@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router';
 import { requestPasswordReset } from '../../services/auth';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
-import '../RecurringScreens.css';
 import SuccessHeading from '../../components/SuccessHeading';
 
 const RequestPasswordResetPage: React.FC = () => {

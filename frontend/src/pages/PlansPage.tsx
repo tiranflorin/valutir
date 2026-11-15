@@ -6,7 +6,7 @@ import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import { type BillingStatus, fetchBillingStatus, formatPrice, startCheckout } from '../services/account';
 import { LEGAL } from '../legal';
-import './PlansPage.css';
+import '../styles/plans.css';
 
 /** Shown before the account's status loads (and to visitors); the server's figure wins once loaded. */
 const DEFAULT_PRICE: BillingStatus['price'] = { amountInCents: 1999, currency: 'EUR', taxInclusive: true };

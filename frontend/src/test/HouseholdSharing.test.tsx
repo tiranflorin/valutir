@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import AddSubscriptionPage from '../pages/AddSubscriptionPage';
 import MySubscriptionsPage from '../pages/MySubscriptionsPage';
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
-import type { SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../types/subscription';
 import { householdPayload, shareOf, splitCount } from '../utils/householdShare';
 import { todayIsoDate } from '../utils/dates';
 import { bodyOf, callsTo, mockApi, profile, signIn } from './api';

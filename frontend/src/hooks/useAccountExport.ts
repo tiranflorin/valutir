@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useAccountErrorHandler } from '../components/account/useAccountErrorHandler';
+import { useAccountErrorHandler } from './useAccountErrorHandler';
 import { type AccountExportKind, fetchAccountExport } from '../services/account';
 import { saveFile } from '../utils/download';
 

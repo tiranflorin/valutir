@@ -3,8 +3,7 @@ import { Box, Container, Paper } from '@mui/material';
 import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
-import './RecurringScreens.css';
-import './LegalPage.css';
+import '../styles/legal.css';
 
 type Place = { id: string; title: string; steps: React.ReactNode[] };
 

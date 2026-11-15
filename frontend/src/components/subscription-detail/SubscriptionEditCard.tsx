@@ -9,7 +9,8 @@ import SubscriptionFormCard, {
     type SubscriptionStatus,
 } from '../subscription-form/SubscriptionFormCard';
 import type { Currency } from '../CurrencySelect';
-import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../../types/subscription';
+import { readDashboardView } from '../../utils/dashboardView';
 
 type Props = {
     subscription: SubscriptionCardModel;
@@ -55,7 +56,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
         householdShared: subscription.householdShared ?? false,
         householdSize: subscription.householdSize ?? 2,
         autoRenew: subscription.autoRenew,
-        b2b: subscription.b2b || window.localStorage.getItem('valutir_dashboard_view') === 'business',
+        b2b: subscription.b2b || readDashboardView() === 'business',
     });
 
     const [saving, setSaving] = useState(false);

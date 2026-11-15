@@ -7,10 +7,11 @@ import AppHeader from '../components/AppHeader';
 import SubscriptionDeleteCard from '../components/subscription-detail/SubscriptionDeleteCard';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
 import SubscriptionEditCard from '../components/subscription-detail/SubscriptionEditCard';
-import SubscriptionHeaderCard, { type SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
+import SubscriptionHeaderCard from '../components/subscription-detail/SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../types/subscription';
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
 import SubscriptionReenableCard from '../components/subscription-detail/SubscriptionReenableCard';
-import SubscriptionReviewCard from '../components/subscription-detail/SubscriptionReviewCard';
+import SubscriptionReviewFlagCard from '../components/subscription-detail/SubscriptionReviewFlagCard';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
 
@@ -156,7 +157,7 @@ const SubscriptionDetailPage: React.FC = () => {
                     {!isEditMode && <SubscriptionInfoCard subscription={subscription} />}
 
                     {!isEditMode && !isCancelMode && subscription.status !== 'cancelled' && (
-                        <SubscriptionReviewCard
+                        <SubscriptionReviewFlagCard
                             subscription={subscription}
                             token={token ?? ''}
                             onUnauthorized={handleUnauthorized}

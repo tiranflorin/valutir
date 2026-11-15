@@ -3,7 +3,7 @@ import { Alert, Box, Button, Container, MenuItem, Paper, TextField } from '@mui/
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import RemindersCard from '../components/account/RemindersCard';
-import { useAccountErrorHandler } from '../components/account/useAccountErrorHandler';
+import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
 import { useAuth } from '../context/AuthContext';
 import { currencyOptions, updateProfile, type DefaultCurrency } from '../services/account';
 

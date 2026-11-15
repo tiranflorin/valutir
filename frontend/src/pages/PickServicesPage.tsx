@@ -21,7 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import CatalogTile from '../components/CatalogTile';
 import { type CatalogService, SERVICE_CATALOG, searchCatalog } from '../data/services';
 import { isBeforeToday, todayIsoDate } from '../utils/dates';
-import './RecurringScreens.css';
+import { readDashboardView } from '../utils/dashboardView';
 
 type Row = { amount: string; cadence: BillingInterval; nextBillingDate: string };
 
@@ -31,14 +31,6 @@ const CADENCES: { value: BillingInterval; label: string }[] = [
     { value: 'quarterly', label: 'Quarterly' },
     { value: 'yearly', label: 'Yearly' },
 ];
-
-const isBusinessView = () => {
-    try {
-        return window.localStorage.getItem('valutir_dashboard_view') === 'business';
-    } catch {
-        return false;
-    }
-};
 
 /**
  * "Pick what you pay for": tick common services, type what each costs and when it's next charged,
@@ -93,7 +85,7 @@ const PickServicesPage: React.FC = () => {
 
         setSaving(true);
         setError('');
-        const b2b = isBusinessView();
+        const b2b = readDashboardView() === 'business';
         // The services this run saved, by name: the selection can't change while saving, but
         // reconciling by name (not position) keeps it right even if it did.
         const saved: string[] = [];

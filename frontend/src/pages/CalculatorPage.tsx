@@ -8,7 +8,6 @@ import type { Currency } from '../components/CurrencySelect';
 import { CALCULATOR_PRESETS } from '../data/calculatorPresets';
 import { type CalculatorRow, readSharedResult } from '../utils/calculator';
 import { formatCurrency } from '../utils/money';
-import './RecurringScreens.css';
 
 type PresetKey = keyof typeof CALCULATOR_PRESETS;
 

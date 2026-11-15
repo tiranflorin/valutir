@@ -9,7 +9,7 @@ import { Link as RouterLink, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
-import type { SubscriptionCardModel } from '../components/subscription-detail/SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../types/subscription';
 import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { useSubscriptions } from '../hooks/useSubscriptions';
@@ -19,20 +19,9 @@ import { safeManageUrl } from '../utils/manageUrl';
 import { formatCurrency, groupedMoney } from '../utils/money';
 import { findOverlaps, overlapReasons } from '../utils/overlaps';
 import { reviewQueue, yearlyCostOf } from '../utils/reviewQueue';
-import './RecurringScreens.css';
+import { readDashboardView } from '../utils/dashboardView';
 
 type Decision = 'kept' | 'cancelled' | 'skipped';
-
-/** Shared with the dashboard and Insights: the Personal/Business view the user picked. */
-const VIEW_KEY = 'valutir_dashboard_view';
-
-const readView = (): 'personal' | 'business' => {
-    try {
-        return window.localStorage.getItem(VIEW_KEY) === 'business' ? 'business' : 'personal';
-    } catch {
-        return 'personal';
-    }
-};
 
 const dayLabel = (iso: string | null) =>
     iso ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${iso.slice(0, 10)}T00:00:00`)) : '—';
@@ -66,7 +55,7 @@ const ReviewSubscriptionsPage: React.FC = () => {
     const [flagsCleared, setFlagsCleared] = useState<Set<number>>(() => new Set());
 
     if (queue === null && !loading && !loadError) {
-        const view = readView();
+        const view = readDashboardView();
         setQueue(reviewQueue(subscriptions.filter((subscription) => (view === 'business') === (subscription.b2b === true))));
     }
 

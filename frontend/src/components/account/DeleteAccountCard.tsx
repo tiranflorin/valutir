@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Alert, Box, Button, Checkbox, FormControlLabel, Paper, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { deleteAccount } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 const DeleteAccountCard: React.FC = () => {
     const { token, clearSession } = useAuth();

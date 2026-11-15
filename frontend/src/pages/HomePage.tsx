@@ -5,7 +5,6 @@ import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import HeroCalculator from '../components/calculator/HeroCalculator';
 import { LEGAL } from '../legal';
-import './RecurringScreens.css';
 
 /**
  * The front of ValuTir: what your digital life costs (the calculator), why it matters, the app that

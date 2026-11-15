@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { API_URL } from '../../config';
-import type { SubscriptionCardModel } from './SubscriptionHeaderCard';
+import type { SubscriptionCardModel } from '../../types/subscription';
 
 type Props = {
     subscription: SubscriptionCardModel;
@@ -20,7 +20,7 @@ const flaggedOn = (iso: string | null | undefined) =>
  * "Flag for review": a reminder to yourself to decide whether to keep it. A flag, not a status:
  * the subscription stays as it is (still charged and reminded) until you keep, pause or cancel it.
  */
-const SubscriptionReviewCard: React.FC<Props> = ({ subscription, token, onUnauthorized, onUpdated }) => {
+const SubscriptionReviewFlagCard: React.FC<Props> = ({ subscription, token, onUnauthorized, onUpdated }) => {
     const flagged = subscription.reviewFlagged === true;
     const [editing, setEditing] = useState(false);
     const [note, setNote] = useState(subscription.reviewNote ?? '');
@@ -120,4 +120,4 @@ const SubscriptionReviewCard: React.FC<Props> = ({ subscription, token, onUnauth
     );
 };
 
-export default SubscriptionReviewCard;
+export default SubscriptionReviewFlagCard;

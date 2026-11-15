@@ -14,6 +14,7 @@ import { isBeforeToday, todayIsoDate } from '../utils/dates';
 import { householdPayload } from '../utils/householdShare';
 import { manageUrlError } from '../utils/manageUrl';
 import { useAuth } from '../context/AuthContext';
+import { readDashboardView } from '../utils/dashboardView';
 
 
 const AddSubscriptionPage: React.FC = () => {
@@ -35,7 +36,7 @@ const AddSubscriptionPage: React.FC = () => {
         householdShared: false,
         householdSize: 2,
         autoRenew: true,
-        b2b: window.localStorage.getItem('valutir_dashboard_view') === 'business',
+        b2b: readDashboardView() === 'business',
     });
 
     const [submitting, setSubmitting] = useState(false);

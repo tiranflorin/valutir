@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Autocomplete, Box, Button, FormControlLabel, Paper, Switch, TextField } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { updateProfile } from '../../services/account';
-import { useAccountErrorHandler } from './useAccountErrorHandler';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 /** Default for accounts that never picked one: Frankfurt, where the app is hosted (matches the backend). */
 const DEFAULT_TIMEZONE = 'Europe/Berlin';
