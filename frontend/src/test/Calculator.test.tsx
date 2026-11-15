@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import App from '../App';
@@ -9,12 +9,19 @@ import { INDEXED_PAGES } from '../seo/pages';
 import {
     type CalculatorImport,
     type CalculatorRow,
-    calculatorImportOf,
     calculatorTotals,
     importFromRows,
     readSharedResult,
     shareFragment,
+    validCalculatorImport,
 } from '../utils/calculator';
+import {
+    CALCULATOR_LIST_KEY,
+    CALCULATOR_LIST_MAX_AGE_MS,
+    keepCalculatorList,
+    monthAfter,
+    pendingCalculatorList,
+} from '../services/calculatorList';
 import { todayIsoDate } from '../utils/dates';
 import { bodyOf, callsTo, fakeJwt, mockApi, profile, signIn } from './api';
 
@@ -24,13 +31,10 @@ const renderApp = (entry: Entry) => render(<MemoryRouter initialEntries={[entry]
 const row = (overrides: Partial<CalculatorRow>): CalculatorRow =>
     ({ name: 'Netflix', category: 'Entertainment', amount: '10', cadence: 'monthly', included: true, ...overrides });
 
-const inDays = (days: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return todayIsoDate(date);
-};
-
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+    vi.unstubAllGlobals();
+    window.localStorage.clear();
+});
 
 describe('calculator totals', () => {
     it('counts each cadence over a year, and a month as the yearly total / 12', () => {
@@ -81,16 +85,40 @@ describe('shared result links', () => {
     });
 });
 
-describe('the hand-off to an account', () => {
+describe('the list kept for an account', () => {
     it('takes only ticked rows with a price, with the price cleaned up', () => {
         const imported = importFromRows([row({ amount: '9.990' }), row({ name: 'B', amount: '' }), row({ name: 'C', included: false })], 'USD');
         expect(imported).toEqual({ currency: 'USD', rows: [{ name: 'Netflix', category: 'Entertainment', amount: '9.99', cadence: 'monthly' }] });
     });
 
-    it('accepts only well-formed router state', () => {
-        expect(calculatorImportOf(null)).toBeNull();
-        expect(calculatorImportOf({ calculatorImport: { currency: 'GBP', rows: [{}] } })).toBeNull();
-        expect(calculatorImportOf({ calculatorImport: { currency: 'EUR', rows: [] } })).toBeNull();
+    it('accepts only a well-formed list', () => {
+        const good = { name: 'Netflix', category: 'Entertainment', amount: '9.99', cadence: 'monthly' };
+        expect(validCalculatorImport({ currency: 'EUR', rows: [good] })).toEqual({ currency: 'EUR', rows: [good] });
+        expect(validCalculatorImport(null)).toBeNull();
+        expect(validCalculatorImport({ currency: 'GBP', rows: [good] })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: [] })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, amount: '-1' }] })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, cadence: 'daily' }] })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, category: '<b>' }] })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: Array.from({ length: 51 }, (_, i) => ({ ...good, name: `S${i}` })) })).toBeNull();
+    });
+
+    it('sets the next charge a month on, clamped to the end of a shorter month', () => {
+        expect(monthAfter('2026-11-14')).toBe('2026-12-14');
+        expect(monthAfter('2026-12-31')).toBe('2027-01-31');
+        expect(monthAfter('2027-01-31')).toBe('2027-02-28');
+        expect(monthAfter('2028-01-30')).toBe('2028-02-29');
+    });
+
+    it('forgets a list after 7 days, or one that is damaged', () => {
+        keepCalculatorList({ currency: 'EUR', rows: [{ name: 'Netflix', category: 'Entertainment', amount: '9.99', cadence: 'monthly' }] }, 1000);
+        expect(pendingCalculatorList(1000 + CALCULATOR_LIST_MAX_AGE_MS)).not.toBeNull();
+        expect(pendingCalculatorList(1001 + CALCULATOR_LIST_MAX_AGE_MS)).toBeNull();
+        expect(window.localStorage.getItem(CALCULATOR_LIST_KEY)).toBeNull();
+
+        window.localStorage.setItem(CALCULATOR_LIST_KEY, '{not json');
+        expect(pendingCalculatorList()).toBeNull();
+        expect(window.localStorage.getItem(CALCULATOR_LIST_KEY)).toBeNull();
     });
 });
 
@@ -153,58 +181,106 @@ describe('calculator pages', () => {
         await user.click(screen.getByRole('button', { name: 'Save it free' }));
 
         expect(await screen.findByRole('heading', { name: 'Create account' })).toBeInTheDocument();
+        expect(pendingCalculatorList()).toEqual({ currency: 'EUR', rows: [{ name: 'Spotify', category: 'Entertainment', amount: '11', cadence: 'monthly' }] });
     });
 });
 
 describe('saving the calculator list', () => {
-    const imported: CalculatorImport = {
+    const list: CalculatorImport = {
         currency: 'USD',
         rows: [
             { name: 'Netflix', category: 'Entertainment', amount: '9.99', cadence: 'monthly' },
+            { name: 'Spotify', category: 'Entertainment', amount: '11.99', cadence: 'monthly' },
             { name: 'Local gym', category: 'Fitness', amount: '30', cadence: 'monthly' },
         ],
     };
+    const nextMonth = () => monthAfter(todayIsoDate());
 
-    it('signs in, then opens the picker with the list priced, including services not in the catalog', async () => {
+    // The case that lost the list before: sign-up in one tab, confirmation email and sign-in in
+    // another. Only the browser storage is shared, so the sign-in starts with no router state at all.
+    it('adds the kept list on the first sign-in, in any tab, a month from today, skipping what is already there', async () => {
+        keepCalculatorList(list);
         const calls = mockApi({
             'POST /api/login_check': () => ({ status: 200, body: { token: fakeJwt() } }),
             'GET /api/profile': () => ({ status: 200, body: profile() }),
+            'GET /api/subs': () => ({ status: 200, body: [{ id: 1, serviceName: 'spotify', status: 'active' }] }),
             'POST /api/subs': () => ({ status: 201, body: {} }),
-            'GET /api/subs': () => ({ status: 200, body: [] }),
         });
         const user = userEvent.setup();
-        renderApp({ pathname: '/login', state: { calculatorImport: imported } });
+        renderApp('/login');
 
         await user.type(screen.getByLabelText(/email address/i), 'ada@example.test');
         await user.type(screen.getByLabelText(/^password/i), 'Str0ng-pass');
         await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-        expect(await screen.findByRole('heading', { name: 'Pick what you pay for' })).toBeInTheDocument();
-        expect(screen.getByText(/your 2 subscriptions from the calculator/i)).toBeInTheDocument();
-        expect(screen.getByLabelText('Netflix price')).toHaveValue(9.99);
-        expect(screen.getByLabelText('Local gym price')).toHaveValue(30);
-
-        await user.type(screen.getByLabelText('Netflix next charge'), inDays(3));
-        await user.type(screen.getByLabelText('Local gym next charge'), inDays(5));
-        await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
-
-        await vi.waitFor(() => expect(callsTo(calls, 'POST /api/subs')).toHaveLength(2));
+        const notice = await screen.findByTestId('calculator-saved');
+        expect(notice).toHaveTextContent('Added 2 subscriptions from the calculator: Netflix and Local gym.');
+        expect(notice).toHaveTextContent('Already in your list, so not added again: Spotify.');
         const [netflix, gym] = callsTo(calls, 'POST /api/subs').map(bodyOf);
-        expect(netflix).toMatchObject({ serviceName: 'Netflix', amount: 9.99, currency: 'USD', manageUrl: 'https://www.netflix.com/account' });
-        expect(gym).toMatchObject({ serviceName: 'Local gym', amount: 30, currency: 'USD', category: 'Fitness', manageUrl: null });
+        expect(callsTo(calls, 'POST /api/subs')).toHaveLength(2);
+        expect(netflix).toMatchObject({ serviceName: 'Netflix', amount: 9.99, currency: 'USD', status: 'active', nextBillingDate: nextMonth(), manageUrl: 'https://www.netflix.com/account', b2b: false });
+        expect(gym).toMatchObject({ serviceName: 'Local gym', amount: 30, category: 'Fitness', nextBillingDate: nextMonth(), manageUrl: null });
+        expect(window.localStorage.getItem(CALCULATOR_LIST_KEY)).toBeNull();
     });
 
-    it('lets a service from outside the catalog be removed before saving', async () => {
+    it('saves straight away for someone already signed in', async () => {
         signIn();
-        mockApi({ 'GET /api/profile': () => ({ status: 200, body: profile() }) });
+        const calls = mockApi({
+            'GET /api/profile': () => ({ status: 200, body: profile() }),
+            'GET /api/subs': () => ({ status: 200, body: [] }),
+            'POST /api/subs': () => ({ status: 201, body: {} }),
+        });
         const user = userEvent.setup();
-        renderApp({ pathname: '/subscriptions/pick', state: { calculatorImport: imported } });
+        renderApp('/calculator');
 
-        const gym = screen.getByRole('group', { name: 'Local gym' });
-        await user.click(within(gym).getByRole('button', { name: 'Remove' }));
+        await user.click(screen.getByRole('checkbox', { name: 'Netflix' }));
+        await user.type(screen.getByLabelText('Netflix price'), '10');
+        await user.click(screen.getByRole('button', { name: 'Add these 1 to my subscriptions' }));
 
-        expect(screen.queryByRole('group', { name: 'Local gym' })).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Add 1 subscription' })).toBeInTheDocument();
+        expect(await screen.findByTestId('calculator-saved')).toHaveTextContent('Added 1 subscription from the calculator: Netflix.');
+        expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({ serviceName: 'Netflix', amount: 10, currency: 'EUR' });
+    });
+
+    it('stops at the free-plan limit and says which were not added', async () => {
+        signIn();
+        let posts = 0;
+        mockApi({
+            'GET /api/profile': () => ({ status: 200, body: profile() }),
+            'GET /api/subs': () => ({ status: 200, body: [] }),
+            'POST /api/subs': () => (++posts === 1 ? { status: 201, body: {} } : { status: 402, body: { message: 'The free plan includes up to 50 active subscriptions.' } }),
+        });
+        keepCalculatorList(list);
+        renderApp('/my-subs');
+
+        expect(await screen.findByTestId('calculator-saved')).toHaveTextContent('Added 1 subscription from the calculator: Netflix.');
+        expect(await screen.findByText(/couldn’t add Spotify and Local gym from the calculator: the free plan includes up to 50/i)).toBeInTheDocument();
+        expect(posts).toBe(2);
+    });
+
+    it('tells a new account on the sign-up page that the list is added when they sign in', async () => {
+        keepCalculatorList(list);
+        mockApi({ 'POST /api/register': () => ({ status: 202, body: { message: 'Registration received.' } }) });
+        const user = userEvent.setup();
+        renderApp('/register');
+
+        await user.type(screen.getByLabelText('Full name'), 'Ada');
+        await user.type(screen.getByLabelText(/email address/i), 'ada@example.test');
+        await user.type(screen.getByLabelText(/^password/i), 'Str0ng-pass!x');
+        await user.type(screen.getByLabelText(/confirm password/i), 'Str0ng-pass!x');
+        await user.click(screen.getByRole('button', { name: /create account/i }));
+
+        expect(await screen.findByText(/when you sign in, in this browser, the 3 subscriptions from the calculator are added/i)).toBeInTheDocument();
+        expect(window.localStorage.getItem(CALCULATOR_LIST_KEY)).not.toBeNull();
+    });
+
+    // Regression: the /login route used to send any signed-in visitor to /my-subs, which in a browser
+    // won the race against the sign-in page's own redirect.
+    it('sends a signed-in visitor on the sign-in page back to the page they asked for', async () => {
+        signIn();
+        mockApi({ 'GET /api/profile': () => ({ status: 200, body: profile() }), 'GET /api/subs': () => ({ status: 200, body: [] }) });
+        renderApp({ pathname: '/login', state: { from: { pathname: '/insights' } } });
+
+        expect(await screen.findByRole('heading', { level: 1, name: 'Insights' })).toBeInTheDocument();
     });
 });
 

@@ -231,7 +231,7 @@ body {
 }
 
 .landing-hero {
-    padding: 58px max(5.5vw, 32px) 50px;
+    padding: 44px max(5.5vw, 32px) 48px;
     display: grid;
     grid-template-columns: .92fr 1.08fr;
     align-items: center;
@@ -265,7 +265,7 @@ body {
 }
 
 .landing-hero h1 {
-    margin: 16px 0 18px;
+    margin: 0 0 18px;
     color: #17241d;
     font-size: clamp(46px, 5.2vw, 72px);
     font-weight: 760;
@@ -603,19 +603,19 @@ body {
 }
 
 .landing-section {
-    padding: 76px 7%;
+    padding: 48px 7% 56px;
 }
 
 .section-head {
     max-width: 680px;
-    margin: 0 auto 34px;
+    margin: 0 auto 28px;
     text-align: center;
 }
 
 .section-head h2,
 .business-section h2,
 .last-cta h2 {
-    margin: 10px 0 11px;
+    margin: 0 0 11px;
     color: #17241d;
     font-size: clamp(30px, 3.7vw, 44px);
     font-weight: 760;
@@ -876,8 +876,9 @@ body {
     text-align: right;
 }
 
+/* Sections alternate white and tint, so neighbouring gaps never add up into one large space. */
 .pricing-section {
-    background: #fff;
+    background: #f5f8f5;
 }
 
 .price-band {
@@ -949,7 +950,7 @@ body {
 }
 
 .last-cta {
-    padding: 62px 7%;
+    padding: 48px 7% 52px;
     background: #e8f1e9;
     text-align: center;
 }
@@ -2525,7 +2526,7 @@ body {
     .landing-hero {
         grid-template-columns: 1fr;
         gap: 24px;
-        padding: 42px 28px 34px;
+        padding: 32px 28px 34px;
     }
 
     .hero-copy-block {
@@ -4616,12 +4617,13 @@ body {
 }
 
 .calculator-heading {
-    max-width: 760px;
+    max-width: 920px;
     margin: 8px 0 22px;
 }
 
 .calculator-heading h1 {
-    margin: 10px 0 8px;
+    margin: 0 0 8px;
+    text-wrap: balance;
     color: var(--vt-ink);
     font-size: clamp(30px, 4vw, 44px);
     font-weight: 800;
@@ -4630,6 +4632,7 @@ body {
 }
 
 .calculator-heading p {
+    max-width: 760px;
     margin: 0;
     color: var(--vt-muted);
     font-size: 16px;
@@ -4913,13 +4916,6 @@ body {
     font-weight: 700;
 }
 
-.pick-services-remove.MuiButton-root {
-    margin: -4px 0 6px;
-    padding: 0 6px;
-    min-width: 0;
-    font-size: 12px;
-}
-
 @media (max-width: 1100px) {
     .cap-grid--four {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4954,11 +4950,11 @@ body {
 
 @media (max-width: 600px) {
     .landing-section {
-        padding: 52px 16px;
+        padding: 36px 16px 40px;
     }
 
     .landing-hero {
-        padding: 32px 16px 28px;
+        padding: 24px 16px 28px;
     }
 
     .hero-calculator {

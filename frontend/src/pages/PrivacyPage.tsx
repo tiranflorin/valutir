@@ -33,6 +33,13 @@ const storageItems: StorageItem[] = [
         lifetime: 'Until you clear your browser storage',
     },
     {
+        name: 'valutir_calculator_list',
+        kind: 'Local storage',
+        provider: 'ValuTir',
+        purpose: 'Only after you choose “Save it free” in the calculator: holds that list until you sign in, so it can be added to your account.',
+        lifetime: 'Removed when you sign in and it’s saved, or after 7 days',
+    },
+    {
         name: 'cf_clearance, __cf_bm',
         kind: 'Cookies',
         provider: 'Cloudflare',
@@ -128,9 +135,11 @@ const PrivacyPage: React.FC = () => (
                     </p>
                     <p>
                         The <RouterLink to="/calculator">subscription cost calculator</RouterLink> works entirely in your browser: what you
-                        type there isn't sent to us or stored, and it's forgotten when you leave the page. Only if you choose to save it to an
-                        account does it become your subscriptions, as above. A shared result link carries only the totals (yearly amount,
-                        number of subscriptions, currency and the largest category), never service names or prices.
+                        type there isn't sent to us, and it's forgotten when you leave the page. If you choose &ldquo;Save it free&rdquo;, the list
+                        (service names, prices and how often they're billed) is kept in your browser until you sign in, then added to your
+                        account as subscriptions, as above, and removed from the browser. If you don't sign in within 7 days, it's deleted.
+                        A shared result link carries only the totals (yearly amount, number of subscriptions, currency and the largest
+                        category), never service names or prices.
                     </p>
                     <p>We don't make automated decisions about you, and ValuTir isn't meant for children under 16.</p>
                 </section>

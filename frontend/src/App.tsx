@@ -28,6 +28,7 @@ import RefundPage from './pages/RefundPage';
 import CalculatorPage from './pages/CalculatorPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import RouteMeta from './seo/RouteMeta';
+import CalculatorListSaver from './components/calculator/CalculatorListSaver';
 
 const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -46,12 +47,8 @@ const AppRoutes: React.FC = () => {
             <Route path="/ai-tools-cost-calculator" element={<CalculatorPage preset="ai-tools" />} />
             <Route path="/software-cost-calculator" element={<CalculatorPage preset="software" />} />
 
-            <Route
-                path="/login"
-                element={
-                    isAuthenticated ? <Navigate to="/my-subs" replace /> : <LoginPage />
-                }
-            />
+            {/* LoginPage redirects a signed-in visitor itself, to where they were going. */}
+            <Route path="/login" element={<LoginPage />} />
 
             <Route
                 path="/register"
@@ -195,6 +192,7 @@ const App: React.FC = () => {
     return (
         <AppProviders>
             <RouteMeta />
+            <CalculatorListSaver />
             <AppRoutes />
         </AppProviders>
     );

@@ -20,6 +20,7 @@ Fixed items are removed from this list; the git history records what changed. It
     - **What's stored:**
       - `localStorage.valutir_auth_token`: the sign-in token. Strictly necessary.
       - `localStorage.valutir_dashboard_view`: the Personal/Business view the user picked themselves. A user-interface preference, also exempt.
+      - `localStorage.valutir_calculator_list`: written only when a visitor clicks "Save it free" in the calculator; holds that list (names, prices, cadences) until they sign in, when it's saved to the account and removed, or for 7 days at most. Strictly necessary to deliver what they explicitly asked for, so exempt.
       - The API sets no cookies (stateless JWT; checked: no `Set-Cookie` on sign-in). Sessions are turned off (`framework.session: false`), so no future change can create a session cookie by accident.
       - The theme mode isn't stored.
     - **Third parties:**

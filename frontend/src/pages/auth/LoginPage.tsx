@@ -13,15 +13,13 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
-import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
-import { calculatorImportOf } from '../../utils/calculator';
+import { Link as RouterLink, Navigate, useLocation } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { useAppTheme } from '../../context/ThemeContext';
 import ThemeModeToggle from '../../components/ThemeModeToggle';
 import '../RecurringScreens.css';
 
 const LoginPage: React.FC = () => {
-    const navigate = useNavigate();
     const location = useLocation();
     const { login, isAuthenticated } = useAuth();
     const { mode } = useAppTheme();
@@ -34,11 +32,12 @@ const LoginPage: React.FC = () => {
     const [passwordError, setPasswordError] = useState('');
 
     const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/my-subs';
-    // A list brought from the calculator goes on to "Pick what you pay for" to be saved.
-    const calculatorImport = calculatorImportOf(location.state);
 
+    // The one redirect after signing in (or for a visitor already signed in): back to the page they
+    // asked for. It is rendered, not called from the submit handler: React Router runs navigate() as a
+    // transition, so a second redirect rendered from the auth change would win the race.
     if (isAuthenticated) {
-        return <Navigate to="/my-subs" replace />;
+        return <Navigate to={redirectTo} replace />;
     }
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -63,12 +62,8 @@ const LoginPage: React.FC = () => {
 
         try {
             setLoading(true);
+            // Signing in re-renders this page as signed in, which redirects (above).
             await login(email, password);
-            if (calculatorImport) {
-                navigate('/subscriptions/pick', { replace: true, state: { calculatorImport } });
-            } else {
-                navigate(redirectTo, { replace: true });
-            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Login failed');
         } finally {

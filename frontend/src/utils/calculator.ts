@@ -106,19 +106,33 @@ export const readSharedResult = (hash: string): SharedResult | null => {
 };
 
 /**
- * Router state that carries the calculator's list to "Pick what you pay for" after sign-up or sign-in.
- * Router state lives in the browser's history entry only: no storage, nothing sent to the server.
+ * The calculator's list on its way into an account (services/calculatorList.ts): kept in this
+ * browser until someone signs in, then saved and removed.
  */
 export type CalculatorImport = {
     currency: Currency;
     rows: Pick<CalculatorRow, 'name' | 'category' | 'amount' | 'cadence'>[];
 };
 
-export const calculatorImportOf = (state: unknown): CalculatorImport | null => {
-    const value = (state as { calculatorImport?: CalculatorImport } | null)?.calculatorImport;
-    if (!value || !CURRENCIES.includes(value.currency) || !Array.isArray(value.rows) || value.rows.length === 0) return null;
+/** At most this many rows: the free plan's limit. */
+export const CALCULATOR_IMPORT_MAX_ROWS = 50;
 
-    return value;
+const isImportRow = (row: unknown): row is CalculatorImport['rows'][number] => {
+    const value = row as Partial<CalculatorImport['rows'][number]> | null;
+    return !!value
+        && typeof value.name === 'string' && value.name.trim().length > 0 && value.name.length <= 80
+        && CALCULATOR_CATEGORIES.includes(value.category as CalculatorRow['category'])
+        && CALCULATOR_CADENCES.some((option) => option.value === value.cadence)
+        && typeof value.amount === 'string' && priceOf({ name: '', category: 'Other', amount: value.amount, cadence: 'monthly', included: true }) > 0;
+};
+
+/** The list if it is well formed (it comes back from browser storage, so it's checked again), or null. */
+export const validCalculatorImport = (value: unknown): CalculatorImport | null => {
+    const list = value as Partial<CalculatorImport> | null;
+    if (!list || !CURRENCIES.includes(list.currency as Currency) || !Array.isArray(list.rows)) return null;
+    if (list.rows.length === 0 || list.rows.length > CALCULATOR_IMPORT_MAX_ROWS || !list.rows.every(isImportRow)) return null;
+
+    return { currency: list.currency as Currency, rows: list.rows.map(({ name, category, amount, cadence }) => ({ name, category, amount, cadence })) };
 };
 
 /** The ticked rows with a price, ready to save. */

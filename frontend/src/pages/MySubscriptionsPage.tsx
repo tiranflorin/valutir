@@ -21,6 +21,8 @@ import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import MonthSummaryCard from '../components/MonthSummaryCard';
+import CalculatorSavedNotice from '../components/calculator/CalculatorSavedNotice';
+import type { CalculatorSaveResult } from '../services/calculatorList';
 import { useAuth } from '../context/AuthContext';
 import { useAccountExport } from '../hooks/useAccountExport';
 import { API_URL } from '../config';
@@ -374,6 +376,8 @@ const MySubscriptionsPage: React.FC = () => {
 
     const deletedSubscriptionMessage =
         (location.state as { deletedSubscriptionMessage?: string } | null)?.deletedSubscriptionMessage ?? '';
+    // Set by CalculatorListSaver after adding the calculator's list; the list below reloads for it.
+    const calculatorSaved = (location.state as { calculatorSaved?: CalculatorSaveResult } | null)?.calculatorSaved;
 
     useEffect(() => {
         const loadSubscriptions = async () => {
@@ -406,7 +410,7 @@ const MySubscriptionsPage: React.FC = () => {
             }
         };
         loadSubscriptions();
-    }, [token, logout, navigate]);
+    }, [token, logout, navigate, calculatorSaved]);
 
     const contextSubscriptions = useMemo(
         () => subscriptions.filter((subscription) => view === 'business' ? subscription.b2b === true : subscription.b2b !== true),
@@ -512,6 +516,7 @@ const MySubscriptionsPage: React.FC = () => {
                 </Box>
 
                 {deletedSubscriptionMessage && <Alert severity="success" sx={{ mb: 2 }}>{deletedSubscriptionMessage}</Alert>}
+                {calculatorSaved && <CalculatorSavedNotice result={calculatorSaved} />}
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
                 {!error && !loading && contextSubscriptions.length === 0 ? (

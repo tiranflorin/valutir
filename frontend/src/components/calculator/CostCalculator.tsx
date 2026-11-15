@@ -19,6 +19,7 @@ import {
     shareFragment,
     type SharedResult,
 } from '../../utils/calculator';
+import { keepCalculatorList } from '../../services/calculatorList';
 import { formatCurrency } from '../../utils/money';
 import { shareOrDownloadCard } from '../../utils/shareCard';
 
@@ -93,9 +94,10 @@ const CostCalculator: React.FC<Props> = ({ preset, initialRows = [], initialCurr
         if (outcome === 'unavailable') setNotice('This browser can’t make the image. Copy the link instead.');
     };
 
+    // The list waits in this browser until someone is signed in; CalculatorListSaver then adds it.
     const save = () => {
-        const state = { calculatorImport: importFromRows(rows, currency) };
-        navigate(isAuthenticated ? '/subscriptions/pick' : '/register', { state });
+        keepCalculatorList(importFromRows(rows, currency));
+        navigate(isAuthenticated ? '/my-subs' : '/register');
     };
 
     return (
@@ -241,7 +243,7 @@ const CostCalculator: React.FC<Props> = ({ preset, initialRows = [], initialCurr
                             <Button variant="contained" onClick={save}>
                                 {isAuthenticated ? `Add these ${totals.count} to my subscriptions` : 'Save it free'}
                             </Button>
-                            {!isAuthenticated && <small>Free for up to 50 subscriptions. Your list comes with you when you sign up.</small>}
+                            {!isAuthenticated && <small>Free for up to 50 subscriptions. When you sign in after signing up, in this browser, the list is added to your account with the next charge a month from today.</small>}
                         </div>
                     </>
                 )}

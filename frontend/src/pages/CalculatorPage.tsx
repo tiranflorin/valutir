@@ -28,7 +28,6 @@ const CalculatorPage: React.FC<{ preset?: PresetKey }> = ({ preset = 'all' }) =>
             <AppHeader />
             <Container component="main" className="dashboard-container calculator-container">
                 <Box className="calculator-heading">
-                    <div className="eyebrow">{config.eyebrow}</div>
                     <h1>{config.heading}</h1>
                     <p>{config.intro}</p>
                 </Box>

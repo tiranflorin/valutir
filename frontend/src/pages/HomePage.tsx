@@ -19,7 +19,6 @@ const HomePage: React.FC = () => (
         <main>
             <section className="landing-hero" id="top">
                 <div className="hero-copy-block">
-                    <div className="eyebrow">Track. Control. More value.</div>
                     <h1>Stop paying for what you <em>don’t use.</em></h1>
                     <p>
                         Know what you’re paying, when you’re paying it, and whether it’s still worth it.
@@ -46,7 +45,6 @@ const HomePage: React.FC = () => (
 
             <section className="landing-section pillars-section" id="why" aria-labelledby="pillars-title">
                 <div className="section-head">
-                    <div className="section-kicker">The cost of a digital life</div>
                     <h2 id="pillars-title">Small charges, big totals.</h2>
                     <p>A few euros a month here and there turns into hundreds a year. ValuTir shows the whole picture, so each subscription has to earn its place.</p>
                 </div>
@@ -71,7 +69,6 @@ const HomePage: React.FC = () => (
 
             <section className="landing-section capabilities-section" id="the-app" aria-labelledby="the-app-title">
                 <div className="section-head">
-                    <div className="section-kicker">The app</div>
                     <h2 id="the-app-title">From a list to a decision.</h2>
                     <p>Add what you pay for, see where the money goes, get a heads-up before each charge, and decide what stays.</p>
                 </div>
@@ -109,7 +106,6 @@ const HomePage: React.FC = () => (
 
             <section className="landing-section trust-section" id="trust" aria-labelledby="trust-title">
                 <div className="section-head">
-                    <div className="section-kicker">Trust</div>
                     <h2 id="trust-title">Your list stays yours.</h2>
                     <p>Knowing what you pay for is personal. Here is what ValuTir does and doesn’t do with it.</p>
                 </div>
@@ -126,7 +122,6 @@ const HomePage: React.FC = () => (
 
             <section className="landing-section pricing-section" id="free">
                 <div className="section-head">
-                    <div className="section-kicker">Free for the everyday list</div>
                     <h2>Start free. Keep using it free.</h2>
                     <p>
                         Personal and Business views are part of the free tracker. If your list grows beyond 50 active
