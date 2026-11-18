@@ -3,6 +3,7 @@ import { todayIsoDate } from '../../utils/dates';
 import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
 import { TRIAL_REMINDER_LEAD_DAYS } from '../../utils/reminders';
 import { MANAGE_URL_MAX, manageUrlError } from '../../utils/manageUrl';
+import { stepPrice } from '../../utils/stepPrice';
 import { type CatalogService, findCatalogService, searchCatalog } from '../../data/services';
 import CatalogTile from '../CatalogTile';
 import {
@@ -15,6 +16,9 @@ import {
     Button,
     Chip,
     Divider,
+    FormHelperText,
+    IconButton,
+    InputAdornment,
     MenuItem,
     Stack,
     Switch,
@@ -23,6 +27,8 @@ import {
     useTheme,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import CurrencySelect, { type Currency } from '../CurrencySelect';
 import AppSurfaceCard from '../AppSurfaceCard';
 
@@ -98,6 +104,17 @@ const DEFAULT_STATUS_OPTIONS: SubscriptionStatus[] = ['Active', 'Trial'];
 const requiredFieldSx = {
     '& .MuiFormLabel-asterisk': {
         color: 'error.main',
+    },
+};
+
+/** Hides the browser's own number arrows; the field's buttons step by whole units instead. */
+const priceFieldSx = {
+    ...requiredFieldSx,
+    maxWidth: { sm: 200 },
+    '& input[type=number]': { MozAppearance: 'textfield' },
+    '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+        WebkitAppearance: 'none',
+        margin: 0,
     },
 };
 
@@ -321,15 +338,35 @@ const SubscriptionFormCard: React.FC<Props> = ({
 
                         {serviceNameField}
 
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between">
+                            {/* Narrow, so the arrows sit next to the digits; the currency stays on the right. */}
                             <TextField
                                 label="Price"
                                 type="number"
                                 value={values.amount}
                                 onChange={(e) => patch({ amount: e.target.value })}
-                                inputProps={{ min: 0, step: '0.01' }}
-                                helperText={priceHelperText}
-                                sx={requiredFieldSx}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                                        event.preventDefault();
+                                        patch({ amount: stepPrice(values.amount, event.key === 'ArrowUp' ? 1 : -1) });
+                                    }
+                                }}
+                                inputProps={{ min: 0, step: '0.01', 'aria-describedby': priceHelperText ? 'price-helper-text' : undefined }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end" sx={{ flexDirection: 'column', justifyContent: 'center', height: 'auto', maxHeight: 'none', ml: 0 }}>
+                                            <IconButton size="small" tabIndex={-1} aria-label="Up by 1" sx={{ p: 0 }}
+                                                onClick={() => patch({ amount: stepPrice(values.amount, 1) })}>
+                                                <KeyboardArrowUpRoundedIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton size="small" tabIndex={-1} aria-label="Down by 1" sx={{ p: 0 }}
+                                                onClick={() => patch({ amount: stepPrice(values.amount, -1) })}>
+                                                <KeyboardArrowDownRoundedIcon fontSize="small" />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={priceFieldSx}
                                 fullWidth
                                 required
                             />
@@ -343,6 +380,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 </Box>
                             )}
                         </Stack>
+                        {priceHelperText && (
+                            <FormHelperText id="price-helper-text" sx={{ mt: '4px !important', mx: '14px' }}>{priceHelperText}</FormHelperText>
+                        )}
 
                         <Stack spacing={1}>
                             <FormFieldLabel label="Billing cadence" required />
@@ -427,7 +467,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             <Box>
                                 <Typography variant="subtitle2" fontWeight={800}>Business subscription</Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Track this subscription as a business expense.
+                                    Paid by your company or for your freelance work. Shown in the Business view.
                                 </Typography>
                             </Box>
                             <Switch

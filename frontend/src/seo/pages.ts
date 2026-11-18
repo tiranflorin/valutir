@@ -31,7 +31,7 @@ export const INDEXED_PAGES: IndexedPage[] = [
         title: 'ValuTir · Know what your subscriptions really cost',
         description: 'Stop paying for what you don’t use. See what your subscriptions cost a month and a year, get a reminder before each charge, and try the free calculator.',
         schema: 'SoftwareApplication',
-        summary: 'What ValuTir does: a free cost calculator, then one list of subscriptions with trial end dates, a renewal calendar, reminders and Personal and Business views.',
+        summary: 'What ValuTir does: a free cost calculator, then one list of subscriptions with trial end dates, a renewal calendar, reminders, and a Business view for freelancers and one-person companies.',
     },
     {
         path: '/calculator',

@@ -9,8 +9,8 @@ const AppFooter: React.FC = () => {
         <footer className="site-footer">
             <div className="site-footer-inner">
                 <nav aria-label="Footer navigation">
-                    <a href="/#the-app">How it works</a>
                     <RouterLink to="/about">About</RouterLink>
+                    <a href="/#the-app">How it works</a>
                     <RouterLink to="/calculator">Calculator</RouterLink>
                     <RouterLink to="/privacy">Privacy</RouterLink>
                     <RouterLink to="/terms">Terms</RouterLink>

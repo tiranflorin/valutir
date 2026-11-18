@@ -4,7 +4,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { Link as RouterLink } from 'react-router';
 import { type ChargeSource, daysFromToday, monthCharges } from '../utils/monthCharges';
 import ServiceIcon from './ServiceIcon';
-import { formatCurrency, groupedMoney } from '../utils/money';
+import { formatCurrency, moneyByCurrency } from '../utils/money';
 
 /** Charges listed before "Show all" (weekly subscriptions can add four or five each). */
 const COLLAPSED_COUNT = 6;
@@ -19,7 +19,16 @@ type MonthSummaryCardProps = {
     now?: Date;
 };
 
-const dueLabel = (date: string, now: Date) => {
+/** One line per currency (they can't be added up); "€0.00" when there's nothing. */
+const CurrencyTotals: React.FC<{ totals: string[] }> = ({ totals }) => (
+    <>
+        {(totals.length ? totals : [formatCurrency(0, 'EUR')]).map((total) => (
+            <span key={total} className="metric-line">{total} </span>
+        ))}
+    </>
+);
+
+const dueLabel =(date: string, now: Date) => {
     const days = daysFromToday(date, now);
     if (days === 0) return 'Today';
     if (days === 1) return 'Tomorrow';
@@ -52,7 +61,7 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amou
                 <div className="month-summary-totals">
                     <div>
                         <span className="metric-label">Left to pay</span>
-                        <div className="metric-value" data-testid="month-left">{groupedMoney(left, (charge) => charge.amount)}</div>
+                        <div className="metric-value" data-testid="month-left"><CurrencyTotals totals={moneyByCurrency(left, (charge) => charge.amount)} /></div>
                         <div className="metric-hint">{left.length} charge{left.length === 1 ? '' : 's'} to come</div>
                     </div>
                     <Box
@@ -66,7 +75,7 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({ subscriptions, amou
                     </Box>
                     <div>
                         <span className="metric-label">Paid so far</span>
-                        <div className="metric-value" data-testid="month-paid">{groupedMoney(paid, (charge) => charge.amount)}</div>
+                        <div className="metric-value" data-testid="month-paid"><CurrencyTotals totals={moneyByCurrency(paid, (charge) => charge.amount)} /></div>
                         <div className="metric-hint">{paid.length} charge{paid.length === 1 ? '' : 's'} gone out</div>
                     </div>
                 </div>

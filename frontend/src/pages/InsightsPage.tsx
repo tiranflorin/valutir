@@ -118,7 +118,7 @@ const InsightsPage: React.FC = () => {
                         <div className="empty-state">
                             <h2>Nothing to show yet</h2>
                             <p>{view === 'business'
-                                ? 'Mark a subscription as Business to see business insights.'
+                                ? 'Mark the subscriptions your freelance work or company pays for as Business to see their costs here.'
                                 : 'Add the subscriptions you pay for to see where the money goes.'}</p>
                         </div>
                     </Paper>

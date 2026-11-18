@@ -26,7 +26,7 @@ export const drawShareCard = (result: SharedResult, siteHost: string): Promise<B
 
     context.fillStyle = '#17241d';
     context.font = `800 132px ${font}`;
-    context.fillText(formatCurrency(Math.round(result.yearly), result.currency).replace(/\.00$/, ''), 72, 300);
+    context.fillText(formatCurrency(Math.round(result.yearly), result.currency).replace(/\.00(?=$| [A-Z]{3}$)/, ''), 72, 300);
     context.font = `700 44px ${font}`;
     context.fillText('a year', 80, 370);
 

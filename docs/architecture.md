@@ -15,7 +15,7 @@ Related: [go-live checklist](go-live-checklist.md) (what must be true before rea
 | Backend hosting | One small EC2 instance running the PHP app in Docker. No load balancer, NAT gateway, Kubernetes, ECS, or Lambda | Decided |
 | Server size | EC2 `t4g.small` (2 vCPU, 2 GB RAM, ARM/Graviton), 20 GB gp3 storage | Decided |
 | Origin connectivity | Cloudflare Tunnel: connections go out from AWS only, and the instance accepts no inbound traffic | Decided |
-| Region | AWS `eu-central-1` (Frankfurt), matching the Privacy policy | Decided |
+| Region | AWS `eu-central-1` (Frankfurt), matching the Privacy policy, for visitors everywhere; no second region for US visitors (see [Visitors outside Europe](#visitors-outside-europe)) | Decided (2026-11-18) |
 | Database | Amazon RDS for PostgreSQL, `db.t4g.micro`, Single-AZ, 20 GB **gp2** storage while on the free tier (gp3 afterwards), automated backups and point-in-time recovery. No code changes, configuration only (see [Database](#database)) | Decided |
 | Deploys | GitHub Actions on merge to `release`, after all checks pass. AWS access through OIDC, images in ECR, rollout through SSM | Decided |
 | Repositories | Keep the monorepo: one pipeline deploys the backend, then the frontend | Decided |
@@ -151,6 +151,16 @@ Public for now. Making it private later changes no access between the systems: t
   Bot Fight Mode stays off (see above).
 - **WAF custom rule:** on `api.valutir.app`, allow only `/api/*` and `/health`.
 - **Pages:** production deploys come from the pipeline (`wrangler pages deploy`), not from Cloudflare's own Git integration, so nothing reaches production without passing the checks.
+
+## Visitors outside Europe
+
+The API runs only in Frankfurt. A visitor in the US gets the same service, with these costs:
+
+- **Static content has no penalty.** The app, the public pages and the calculator are served by Cloudflare Pages from a data center near the visitor, and the calculator never calls the API.
+- **Each API call crosses the Atlantic once.** TLS ends at the Cloudflare data center nearest the visitor, which forwards the request over the already-open Tunnel to Frankfurt. That adds roughly one transatlantic round trip per call, typically about 90–110 ms from the US East Coast and 150–180 ms from the West Coast (typical internet round-trip times, not measured on this setup). Screens that fire their API calls in parallel pay it about once. For an app opened a few times a month that's barely noticeable; it would matter only if a screen made many calls one after another.
+- **A second AWS region wouldn't fix it alone.** There's one PostgreSQL database in Frankfurt, so writes from a US instance would still cross the Atlantic. Splitting the data by region is a large change and isn't justified without many US users.
+
+Measure before revisiting: after launch, time `GET /health` from a US location (for example `curl -w "%{time_total}"` from a free US-based uptime checker). The business questions about US customers are TODO #13.
 
 ## AWS components
 

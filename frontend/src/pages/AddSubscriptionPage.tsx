@@ -23,7 +23,7 @@ const AddSubscriptionPage: React.FC = () => {
 
     const [values, setValues] = useState<SubscriptionFormValues>({
         serviceName: '',
-        amount: '15.99',
+        amount: '',
         currency: user?.defaultCurrency ?? 'EUR',
         billingInterval: 'monthly' as BillingInterval,
         renewalDate: '',

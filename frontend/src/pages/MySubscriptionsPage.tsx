@@ -28,7 +28,8 @@ import { useAuth } from '../context/AuthContext';
 import { useAccountExport } from '../hooks/useAccountExport';
 import { API_URL } from '../config';
 import { shareOf, splitCount } from '../utils/householdShare';
-import { formatCurrency, groupedMoney } from '../utils/money';
+import { formatAmount, groupedMoney } from '../utils/money';
+import { priceLabel } from '../utils/priceHistory';
 import { monthlyEquivalentOf } from '../utils/insights';
 import type { ChargeSource } from '../utils/monthCharges';
 import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
@@ -129,14 +130,22 @@ type SubscriptionSort = {
 };
 
 const useSubscriptionSort = (): SubscriptionSort => {
+    const { user } = useAuth();
+    const defaultCurrency = user?.defaultCurrency ?? 'EUR';
     const [sortKey, setSortKey] = useState<SortKey>('nextBillingDate');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const sortSubscriptions = useCallback((items: Subscription[]) =>
         [...items].sort((left, right) => {
             let comparison = 0;
-            if (sortKey === 'amount') comparison = Number(left.amount) - Number(right.amount);
-            else if (sortKey === 'nextBillingDate') {
+            if (sortKey === 'amount') {
+                // Amounts in different currencies aren't comparable: keep each currency together, the
+                // account's default first, and sort by amount within it.
+                const rank = (currency: string) => (currency === defaultCurrency ? '' : currency);
+                const byCurrency = rank(left.currency).localeCompare(rank(right.currency));
+                if (byCurrency !== 0) return byCurrency;
+                comparison = Number(left.amount) - Number(right.amount);
+            } else if (sortKey === 'nextBillingDate') {
                 const leftDate = displayedDate(left);
                 const rightDate = displayedDate(right);
                 const a = leftDate ? new Date(leftDate).getTime() : Number.MAX_SAFE_INTEGER;
@@ -148,7 +157,7 @@ const useSubscriptionSort = (): SubscriptionSort => {
                 comparison = a.localeCompare(b);
             }
             return sortDirection === 'asc' ? comparison : -comparison;
-        }), [sortKey, sortDirection]);
+        }), [sortKey, sortDirection, defaultCurrency]);
 
     const toggleSort = (nextKey: SortKey) => {
         if (sortKey === nextKey) {
@@ -170,13 +179,14 @@ type SubscriptionSectionsProps = {
     activeSubscriptions: Subscription[];
     cancelledSubscriptions: Subscription[];
     loading: boolean;
-    sort: SubscriptionSort;
+    /** Each section sorts on its own: sorting one table never reorders the other. */
+    activeSort: SubscriptionSort;
+    cancelledSort: SubscriptionSort;
     amountMode?: AmountMode;
 };
 
 /** "My subscriptions" followed by a separate "Cancelled" section; shared by the personal and business views. */
-const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, sort, amountMode = 'full' }) => {
-    const { sortSubscriptions, toggleSort, sortMarker } = sort;
+const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, activeSubscriptions, cancelledSubscriptions, loading, activeSort, cancelledSort, amountMode = 'full' }) => {
     const [query, setQuery] = useState('');
     const [category, setCategory] = useState<string>(ALL_CATEGORIES);
     const categories = useMemo(
@@ -194,8 +204,10 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
             .some((value) => value?.toLowerCase().includes(needle));
     }, [query, selectedCategory]);
     const visibleCancelled = useMemo(() => cancelledSubscriptions.filter(matches), [cancelledSubscriptions, matches]);
-    const mySubscriptions = useMemo(() => sortSubscriptions(activeSubscriptions.filter(matches)), [activeSubscriptions, matches, sortSubscriptions]);
-    const sortedCancelled = useMemo(() => sortSubscriptions(visibleCancelled), [visibleCancelled, sortSubscriptions]);
+    const sortActive = activeSort.sortSubscriptions;
+    const sortCancelled = cancelledSort.sortSubscriptions;
+    const mySubscriptions = useMemo(() => sortActive(activeSubscriptions.filter(matches)), [activeSubscriptions, matches, sortActive]);
+    const sortedCancelled = useMemo(() => sortCancelled(visibleCancelled), [visibleCancelled, sortCancelled]);
     const showMySubscriptions = filter !== 'cancelled';
     const showCancelledSection = (filter === 'all' || filter === 'cancelled') && visibleCancelled.length > 0;
 
@@ -237,7 +249,7 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                             {filter === 'all' && !narrowed ? 'No active subscriptions.' : 'No subscriptions match this filter.'}
                         </Box>
                     ) : (
-                        <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
+                        <SubscriptionsTable subscriptions={mySubscriptions} dateColumnLabel="Next renewal" amountMode={amountMode} onSort={activeSort.toggleSort} sortMarker={activeSort.sortMarker} />
                     )}
                 </>
             )}
@@ -248,7 +260,7 @@ const SubscriptionSections: React.FC<SubscriptionSectionsProps> = ({ filter, act
                         <strong>Cancelled · {cancelledSubscriptions.length}</strong>
                         <span>Kept for your records; no further charges expected</span>
                     </div>
-                    <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" amountMode={amountMode} onSort={toggleSort} sortMarker={sortMarker} />
+                    <SubscriptionsTable subscriptions={sortedCancelled} dateColumnLabel="Cancelled on" amountMode={amountMode} onSort={cancelledSort.toggleSort} sortMarker={cancelledSort.sortMarker} />
                 </>
             )}
             {!loading && filter === 'cancelled' && visibleCancelled.length === 0 && (
@@ -274,7 +286,7 @@ const AttentionRow: React.FC<AttentionRowProps> = ({ subscription, meta, action,
             <div className="attention-name">{subscription.serviceName}</div>
             <div className="attention-meta">{meta}</div>
         </div>
-        <div className="attention-price">{formatCurrency(billAmount(subscription, amountMode), subscription.currency)} / {subscription.billingCadence}</div>
+        <div className="attention-price">{priceLabel(billAmount(subscription, amountMode), subscription.currency, subscription.billingCadence)}</div>
         <RouterLink className="attention-action" to={`/subscriptions/${subscription.id}`}>{action}</RouterLink>
     </div>
 );
@@ -294,7 +306,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                 <tr>
                     <th>Service</th>
                     <th><button onClick={() => onSort('category')}>Category{sortMarker('category')}</button></th>
-                    <th><button onClick={() => onSort('amount')}>Cost{sortMarker('amount')}</button></th>
+                    <th className="cost-cell"><button onClick={() => onSort('amount')}>Cost{sortMarker('amount')}</button></th>
                     <th><button onClick={() => onSort('billingCadence')}>Cadence{sortMarker('billingCadence')}</button></th>
                     <th><button onClick={() => onSort('nextBillingDate')}>{dateColumnLabel}{sortMarker('nextBillingDate')}</button></th>
                     <th><button onClick={() => onSort('status')}>Status{sortMarker('status')}</button></th>
@@ -318,10 +330,11 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
                                 </RouterLink>
                             </td>
                             <td>{subscription.category || 'Uncategorized'}</td>
-                            <td>
-                                {formatCurrency(billAmount(subscription, amountMode), subscription.currency)}
+                            <td className="cost-cell">
+                                {formatAmount(billAmount(subscription, amountMode))}{' '}
+                                <span className="cost-currency">{subscription.currency}</span>
                                 {amountMode === 'share' && isShared(subscription) && (
-                                    <small className="full-bill-note">of {formatCurrency(billAmount(subscription), subscription.currency)}</small>
+                                    <small className="full-bill-note">of {formatAmount(billAmount(subscription))} {subscription.currency}</small>
                                 )}
                             </td>
                             <td>{subscription.billingCadence.charAt(0).toUpperCase() + subscription.billingCadence.slice(1)}</td>
@@ -451,7 +464,8 @@ const MySubscriptionsPage: React.FC = () => {
     const reviewSubscriptions = useMemo(() => activeSubscriptions.filter(isFlagged), [activeSubscriptions]);
     const attentionCount = trialsEndingSoon.length + renewalsSoon.length + reviewSubscriptions.length;
 
-    const sort = useSubscriptionSort();
+    const activeSort = useSubscriptionSort();
+    const cancelledSort = useSubscriptionSort();
     // "My subscriptions" never includes cancelled ones; they have their own section at the end.
     const filteredActiveSubscriptions = useMemo(() => {
         if (filter === 'cancelled') return [];
@@ -481,7 +495,7 @@ const MySubscriptionsPage: React.FC = () => {
                     <div>
                         <h1>{view === 'business' ? 'Business subscriptions' : 'Your recurring expenses'}</h1>
                         <p>{view === 'business'
-                            ? 'Track business tools, annual commitments, and upcoming renewals.'
+                            ? 'The tools your freelance work or company pays for, apart from your household bills.'
                             : 'See what you pay, what renews next, and what may need a review.'}</p>
                         <nav className="view-switch" aria-label="Subscription view">
                             <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
@@ -511,7 +525,7 @@ const MySubscriptionsPage: React.FC = () => {
                             {view === 'business' ? (
                                 <>
                                     <h2>No business subscriptions yet</h2>
-                                    <p>Add a work subscription and mark it as Business to see it in this view.</p>
+                                    <p>If you freelance or run a one-person company, add the tools it pays for and mark them as Business. They appear here, apart from your household bills.</p>
                                 </>
                             ) : (
                                 <>
@@ -621,7 +635,8 @@ const MySubscriptionsPage: React.FC = () => {
                                 activeSubscriptions={filteredActiveSubscriptions}
                                 cancelledSubscriptions={cancelledSubscriptions}
                                 loading={loading}
-                                sort={sort}
+                                activeSort={activeSort}
+                                cancelledSort={cancelledSort}
                                 amountMode={personalAmountMode}
                             />
                             <div className="list-labels"><span>Costs are shown using each subscription’s stored currency. Currency preferences can be added without changing these records.</span></div>

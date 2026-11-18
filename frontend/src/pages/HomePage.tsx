@@ -108,8 +108,8 @@ const HomePage: React.FC = () => (
                     </article>
                 </div>
                 <p className="the-app-note">
-                    <strong>Home and work in one account.</strong> Switch between Personal and Business: household services on one side,
-                    hosting, domains and design tools on the other. Both are free.
+                    <strong>Freelance, or run a one-person company?</strong> Mark the tools your business pays for, such as hosting,
+                    domains and design software, as Business: they get their own view, apart from your household bills. Both views are free.
                 </p>
             </section>
 

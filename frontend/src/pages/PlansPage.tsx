@@ -29,8 +29,7 @@ const freeFeatures = [
 
 const unlockFeatures = [
     'Add and track more than 50 active subscriptions',
-    'Project and cost-center allocation for Business',
-    'Bookkeeping-ready business export',
+    'Business charges for a month or quarter, exported for your accountant',
     'Custom reminder timing and renewal reports',
     'Keep both dashboards and the same shared account',
 ];
@@ -157,7 +156,7 @@ const PlansPage: React.FC = () => {
                     <Paper className="plan-card" elevation={0}>
                         <div className="plan-label">Free forever</div>
                         <h2>Core tracking</h2>
-                        <p className="plan-description">For personal bills and the everyday business list.</p>
+                        <p className="plan-description">For household bills, and the tools your freelance work or one-person company pays for.</p>
                         <div className="plan-price">€0 <span>forever</span></div>
                         <div className="plan-rule" />
                         <ul className="plan-features">
@@ -192,8 +191,8 @@ const PlansPage: React.FC = () => {
                 </Box>
 
                 <Box className="plans-business-note">
-                    <strong>Business tracking itself stays free.</strong> Marking a subscription Business and switching
-                    dashboards never requires payment. The one-time unlock is for going beyond 50 active subscriptions
+                    <strong>Business tracking itself stays free.</strong> If you freelance or run a one-person company,
+                    marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond 50 active subscriptions
                     or using advanced business tools.
                 </Box>
                 {status && !status.unlocked && (

@@ -117,15 +117,15 @@ describe('household sharing on the dashboard', () => {
         await screen.findByText('My subscriptions · 2');
 
         expect(monthAverage()).toHaveTextContent('€23.99 / month on average');
-        expect(screen.getByRole('row', { name: /netflix/i })).toHaveTextContent('€13.99');
+        expect(screen.getByRole('row', { name: /netflix/i })).toHaveTextContent('13.99 EUR');
 
         await user.click(screen.getByRole('button', { name: 'My share' }));
 
         expect(monthAverage()).toHaveTextContent('€13.50 / month on average');
         const netflixRow = screen.getByRole('row', { name: /netflix/i });
-        expect(netflixRow).toHaveTextContent('€3.50');
-        expect(netflixRow).toHaveTextContent('of €13.99');
-        expect(screen.getByRole('row', { name: /spotify/i })).toHaveTextContent('€10.00');
+        expect(netflixRow).toHaveTextContent('3.50 EUR');
+        expect(netflixRow).toHaveTextContent('of 13.99 EUR');
+        expect(screen.getByRole('row', { name: /spotify/i })).toHaveTextContent('10.00 EUR');
     });
 
     it('hides the switch when nothing is shared', async () => {

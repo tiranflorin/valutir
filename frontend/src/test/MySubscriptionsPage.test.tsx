@@ -71,6 +71,46 @@ describe('MySubscriptionsPage sections', () => {
         expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Hosting']);
     });
 
+    it('sorts each section on its own', async () => {
+        dashboardApi([
+            // By date Netflix comes first; by cost, descending, Spotify would.
+            subscription(1, 'Netflix', 'active', { amount: '9.99' }),
+            subscription(2, 'Spotify', 'active', { amount: '15.99', nextBillingDate: '2027-01-20' }),
+            subscription(3, 'Old Hosting', 'cancelled', { amount: '4.00', cancelledAt: '2026-10-01', autoRenew: false }),
+            subscription(4, 'Old Gym', 'cancelled', { amount: '30.00', cancelledAt: '2026-10-05', autoRenew: false }),
+        ]);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+        await screen.findByText('My subscriptions · 2');
+        const cancelledTable = screen.getByText(/^Cancelled ·/).closest('.list-labels')!.nextElementSibling as HTMLElement;
+
+        await user.click(within(cancelledTable).getByRole('button', { name: /^Cost/ }));
+        await user.click(within(cancelledTable).getByRole('button', { name: /^Cost/ }));
+
+        expect(rowsUnder(/^Cancelled ·/)).toEqual(['Old Gym', 'Old Hosting']);
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Netflix', 'Spotify']);
+    });
+
+    it('sorts costs within each currency, the default currency first', async () => {
+        dashboardApi([
+            subscription(1, 'Netflix', 'active', { amount: '15.99' }),
+            subscription(2, 'Voyo', 'active', { amount: '17.99', currency: 'RON' }),
+            subscription(3, 'Yoxo', 'active', { amount: '5.99' }),
+            subscription(4, 'Cloudflare', 'active', { amount: '14.20', currency: 'USD' }),
+            subscription(5, 'Revolut', 'active', { amount: '399.00', currency: 'RON' }),
+        ]);
+        const user = userEvent.setup();
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+        await screen.findByText('My subscriptions · 5');
+
+        await user.click(screen.getByRole('button', { name: /^Cost/ }));
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Yoxo', 'Netflix', 'Voyo', 'Revolut', 'Cloudflare']);
+
+        await user.click(screen.getByRole('button', { name: /^Cost/ }));
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Netflix', 'Yoxo', 'Revolut', 'Voyo', 'Cloudflare']);
+        expect(screen.getByRole('row', { name: /revolut/i })).toHaveTextContent('399.00 RON');
+    });
+
     it('splits the business view the same way', async () => {
         window.localStorage.setItem('valutir_dashboard_view', 'business');
         dashboardApi(subscriptions.map((item) => ({ ...item, b2b: true })));

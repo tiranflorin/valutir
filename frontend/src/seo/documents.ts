@@ -168,7 +168,7 @@ export const llmsTxt = (siteUrl: string): string => [
     `- Free for up to 50 active subscriptions. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit; there is no monthly fee.`,
     `- A free subscription cost calculator (${siteUrl}/calculator) works without an account: monthly, yearly and five-year totals by category. It runs in the browser; nothing typed there is sent to the server.`,
     '- Subscriptions are entered by hand or picked from a list of common services. No bank connection.',
-    '- Personal and Business views, a renewal calendar, cost by category, a keep-or-cancel review, and household sharing that splits a bill.',
+    '- Personal and Business views (Business is for freelancers and one-person companies: the tools their business pays for), a renewal calendar, cost by category, a keep-or-cancel review, and household sharing that splits a bill.',
     '- ValuTir reminds and organizes; cancelling is done with the provider.',
     '- Users can download all their data (JSON, CSV) and delete their account at any time.',
     `- Operated by ${LEGAL.legalName}, ${LEGAL.address}.`,

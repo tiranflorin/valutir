@@ -16,6 +16,16 @@ body {
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Links without their own style: brand green, visited or not (the browser's violet is unreadable on dark).
+   Kept at element specificity so any component's link colour still wins. */
+a {
+    color: var(--vt-green);
+}
+
+:where(:root[data-theme='dark']) a {
+    color: #8dd5a3;
+}
+
 .site-header {
     position: sticky;
     top: 0;
@@ -2305,6 +2315,10 @@ body {
     line-height: 1.1;
 }
 
+.metric-line {
+    display: block;
+}
+
 .metric-value small {
     color: #758078;
     font-size: 13px;
@@ -2599,6 +2613,22 @@ img.catalog-tile {
     display: block;
     color: #78847d;
     font-size: 11px;
+}
+
+/* Cost: right-aligned digits that line up across rows, the currency code after them in a quieter tone. */
+.subscriptions-table .cost-cell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.cost-currency {
+    display: inline-block;
+    min-width: 3ch;
+    margin-left: 1px;
+    color: #78847d;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-align: left;
 }
 
 .amount-mode-switch {
@@ -3298,6 +3328,7 @@ img.catalog-tile {
 }
 
 :root[data-theme='dark'] .full-bill-note,
+:root[data-theme='dark'] .cost-currency,
 :root[data-theme='dark'] .amount-mode-switch > span {
     color: #9aa79f;
 }

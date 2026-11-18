@@ -63,7 +63,7 @@ describe('InsightsPage', () => {
 
         await user.click(await screen.findByRole('button', { name: 'USD' }));
 
-        expect(screen.getByTestId('insights-monthly')).toHaveTextContent('US$4.00');
+        expect(screen.getByTestId('insights-monthly')).toHaveTextContent('$4.00');
         expect(screen.getByText(/Showing USD subscriptions only/)).toBeInTheDocument();
     });
 
