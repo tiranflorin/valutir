@@ -37,6 +37,7 @@ const AddSubscriptionPage: React.FC = () => {
         householdSize: 2,
         autoRenew: true,
         b2b: readDashboardView() === 'business',
+        paidPersonally: false,
     });
 
     const [submitting, setSubmitting] = useState(false);
@@ -102,6 +103,7 @@ const AddSubscriptionPage: React.FC = () => {
                 ...householdPayload(values),
                 autoRenew: values.autoRenew,
                 b2b: values.b2b,
+                paidPersonally: values.b2b && values.paidPersonally,
                 cancelledAt: null,
                 resumesOn: null,
             };

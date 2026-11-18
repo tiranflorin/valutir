@@ -23,6 +23,7 @@ const charge = (overrides: Partial<BusinessCharge>): BusinessCharge => ({
     date: `${thisMonth}-01`,
     amount: '12.00',
     currency: 'EUR',
+    paidPersonally: false,
     upcoming: false,
     invoiceFiled: false,
     ...overrides,
@@ -79,6 +80,28 @@ describe('business invoices', () => {
         expect(callsTo(calls, `PUT /api/business/charges/1/${thisMonth}-01/invoice`)).toHaveLength(1);
         expect(callsTo(calls, `DELETE /api/business/charges/2/${thisMonth}-01/invoice`)).toHaveLength(1);
         expect(screen.getByRole('checkbox', { name: /Invoice filed: Notion/ })).not.toBeChecked();
+    });
+
+    it("adds up what the company owes for charges paid with the owner's card", async () => {
+        invoicesApi([
+            charge({ paidPersonally: true }),
+            charge({ subscriptionId: 2, serviceName: 'Notion', amount: '50.00', currency: 'RON', paidPersonally: true }),
+            charge({ subscriptionId: 3, serviceName: 'Slack', amount: '7.00', paidPersonally: false }),
+            // Still to come: not owed yet.
+            charge({ subscriptionId: 4, serviceName: 'Zoom', amount: '15.00', date: inDays(3), upcoming: true, paidPersonally: true }),
+        ]);
+        renderWithMemoryRoute(<InvoicesPage />, { route: '/invoices' });
+
+        expect(await screen.findByTestId('invoices-owed')).toHaveTextContent(`The company owes you €12.00 and 50.00 RON for ${yearMonthLabel(thisMonth)}`);
+        expect(screen.getAllByText('Paid with your own card')).toHaveLength(3);
+    });
+
+    it('says nothing is owed when the company paid for everything', async () => {
+        invoicesApi([charge({})]);
+        renderWithMemoryRoute(<InvoicesPage />, { route: '/invoices' });
+
+        expect(await screen.findByTestId('invoices-progress')).toBeInTheDocument();
+        expect(screen.queryByTestId('invoices-owed')).not.toBeInTheDocument();
     });
 
     it('puts the tick back when it could not be saved', async () => {

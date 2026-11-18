@@ -40,6 +40,8 @@ export interface SubscriptionRecord {
     isActive: boolean;
     autoRenew: boolean;
     b2b: boolean;
+    /** Business only: paid with the owner's own card, so the company owes it back. */
+    paidPersonally: boolean;
     householdShared: boolean;
     /** People splitting the bill equally, the owner included; null when not shared. */
     householdSize: number | null;
@@ -71,6 +73,7 @@ export type SubscriptionCardModel = {
     status: string;
     autoRenew: boolean;
     b2b: boolean;
+    paidPersonally?: boolean;
     householdShared?: boolean;
     householdSize?: number | null;
     cancelledAt: string | null;

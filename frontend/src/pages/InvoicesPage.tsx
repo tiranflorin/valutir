@@ -14,7 +14,7 @@ import { type BusinessCharge, fetchAccountantExport, fetchBusinessMonth, setInvo
 import { daysFromToday } from '../utils/monthCharges';
 import { saveFile } from '../utils/download';
 import { safeManageUrl } from '../utils/manageUrl';
-import { formatCurrency } from '../utils/money';
+import { formatCurrency, groupedMoney } from '../utils/money';
 import { addMonths, quarterOf, yearMonthLabel, yearMonthOf } from '../utils/yearMonth';
 
 /** How far back the server keeps the checklist (BusinessCharges::MAX_MONTHS_BACK). */
@@ -109,6 +109,8 @@ const InvoicesPage: React.FC = () => {
     const gone = charges?.filter((charge) => !charge.upcoming) ?? [];
     const filed = gone.filter((charge) => charge.invoiceFiled).length;
     const upcoming = (charges?.length ?? 0) - gone.length;
+    // Only what has gone out: a charge still to come isn't owed yet.
+    const paidPersonally = gone.filter((charge) => charge.paidPersonally);
     const label = yearMonthLabel(month);
 
     return (
@@ -162,6 +164,7 @@ const InvoicesPage: React.FC = () => {
                                             <RouterLink className="charge-name" to={`/subscriptions/${charge.subscriptionId}`}>
                                                 <ServiceIcon serviceName={charge.serviceName} size="sm" /><span>{charge.serviceName}</span>
                                             </RouterLink>
+                                            {charge.paidPersonally && <span className="invoices-paid-personally">Paid with your own card</span>}
                                             {billingPage && (
                                                 <a className="invoices-billing-link" href={billingPage} target="_blank" rel="noopener noreferrer">
                                                     Billing page<span className="visually-hidden"> of {charge.serviceName} (opens in a new tab)</span> ↗
@@ -187,10 +190,15 @@ const InvoicesPage: React.FC = () => {
                             })}
                         </ol>
                     )}
+                    {paidPersonally.length > 0 && (
+                        <p className="invoices-owed" data-testid="invoices-owed">
+                            The company owes you <strong>{groupedMoney(paidPersonally, (item) => Number(item.amount))}</strong> for {label}, paid with your own card.
+                        </p>
+                    )}
                     <div className="month-summary-foot">
                         <span>
                             {upcoming > 0 && `${upcoming} still to come. `}
-                            Estimated from each subscription’s billing date and price history. Personal subscriptions aren’t listed.
+                            Estimated from each subscription’s billing date, price history and the card it was paid with. Personal subscriptions aren’t listed.
                         </span>
                     </div>
                 </Paper>
@@ -199,7 +207,7 @@ const InvoicesPage: React.FC = () => {
                     <h2 id="invoices-export-title">Export for your accountant</h2>
                     <p>
                         A spreadsheet (CSV) of the business charges that have gone out: date, service, category, amount
-                        in its own currency, payment method, and whether the invoice is filed.
+                        in its own currency, paid by the company or personally, and whether the invoice is filed.
                     </p>
                     {paidFeatures === false ? (
                         <p className="invoices-locked">

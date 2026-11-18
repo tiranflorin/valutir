@@ -91,6 +91,7 @@ describe('keep-or-cancel review', () => {
             status: 'cancelled',
             autoRenew: false,
             b2b: false,
+            paidPersonally: false,
             householdShared: true,
             householdSize: 2,
             cancelledAt: todayIsoDate(),

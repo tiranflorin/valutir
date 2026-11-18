@@ -108,6 +108,7 @@ const PickServicesPage: React.FC = () => {
                         notes: null,
                         paymentMethod: null,
                         manageUrl: service.manageUrl ?? null,
+                        paidPersonally: false,
                         householdShared: false,
                         householdSize: null,
                         autoRenew: true,

@@ -49,6 +49,9 @@ final class SubscriptionUpsertRequest
 
     public bool $b2b = false;
 
+    /** Business only: paid with the owner's own card. Ignored for a personal subscription. */
+    public bool $paidPersonally = false;
+
     /** Whether the bill is split equally within the household. Personal subscriptions only. */
     public bool $householdShared = false;
 

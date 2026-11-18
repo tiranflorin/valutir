@@ -57,6 +57,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
         householdSize: subscription.householdSize ?? 2,
         autoRenew: subscription.autoRenew,
         b2b: subscription.b2b || readDashboardView() === 'business',
+        paidPersonally: subscription.paidPersonally ?? false,
     });
 
     const [saving, setSaving] = useState(false);
@@ -125,6 +126,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     status: statusPayload,
                     autoRenew,
                     b2b: values.b2b,
+                    paidPersonally: values.b2b && values.paidPersonally,
                     ...householdPayload(values),
                     cancelledAt,
                     resumesOn,

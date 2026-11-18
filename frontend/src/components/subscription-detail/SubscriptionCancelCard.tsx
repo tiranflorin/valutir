@@ -87,6 +87,7 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                 status: 'cancelled',
                 autoRenew: false,
                 b2b: subscription.b2b,
+                paidPersonally: subscription.paidPersonally ?? false,
                 householdShared: subscription.householdShared ?? false,
                 householdSize: subscription.householdSize ?? null,
                 cancelledAt: cancellationDate,

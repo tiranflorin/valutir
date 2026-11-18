@@ -113,6 +113,10 @@ class Subscription
     private bool $b2b = false;
 
     /** Whether the bill is split equally within the household (personal subscriptions only). */
+    /** Business only: paid with the owner's own card, so the company owes it back. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $paidPersonally = false;
+
     #[ORM\Column(options: ['default' => false])]
     private bool $householdShared = false;
 
@@ -140,9 +144,14 @@ class Subscription
     #[ORM\OneToMany(targetEntity: PriceChange::class, mappedBy: 'subscription', cascade: ['persist'], orphanRemoval: true)]
     private Collection $priceChanges;
 
+    /** @var Collection<int, PayerChange> */
+    #[ORM\OneToMany(targetEntity: PayerChange::class, mappedBy: 'subscription', cascade: ['persist'], orphanRemoval: true)]
+    private Collection $payerChanges;
+
     public function __construct()
     {
         $this->priceChanges = new ArrayCollection();
+        $this->payerChanges = new ArrayCollection();
     }
 
     #[ORM\PrePersist]
@@ -309,8 +318,79 @@ class Subscription
     public function setB2b(bool $b2b): static
     {
         $this->b2b = $b2b;
+        // Only a business subscription can be paid with the owner's own card.
+        $this->paidPersonally = $b2b && $this->paidPersonally;
 
         return $this;
+    }
+
+    public function isPaidPersonally(): bool
+    {
+        return $this->paidPersonally;
+    }
+
+    /** Only a business subscription can be paid personally; for a personal one it's always false. */
+    public function setPaidPersonally(bool $paidPersonally): static
+    {
+        $this->paidPersonally = $this->b2b && $paidPersonally;
+
+        return $this;
+    }
+
+    /** Who paid on $day: the card before the first switch made after that day, else today's. */
+    public function paidPersonallyOn(\DateTimeImmutable $day): bool
+    {
+        $day = $day->format('Y-m-d');
+        $firstLater = null;
+        foreach ($this->payerChanges as $change) {
+            $changedOn = $change->getChangedOn()->format('Y-m-d');
+            if ($changedOn > $day && (null === $firstLater || $changedOn < $firstLater->getChangedOn()->format('Y-m-d'))) {
+                $firstLater = $change;
+            }
+        }
+
+        return $firstLater?->wasPaidPersonally() ?? $this->paidPersonally;
+    }
+
+    /**
+     * Keeps who paid before when an edit switches the card, like recordPriceChange(): call before
+     * applying the edit. Not on the day it was added, and switching back on the same day removes it.
+     *
+     * @param \DateTimeImmutable $today     the owner's local calendar day
+     * @param \DateTimeImmutable $createdOn the owner's local calendar day the subscription was added
+     */
+    public function recordPayerChange(bool $paidPersonally, \DateTimeImmutable $today, \DateTimeImmutable $createdOn): void
+    {
+        if ($paidPersonally === $this->paidPersonally) {
+            return;
+        }
+
+        $day = $today->format('Y-m-d');
+        foreach ($this->payerChanges as $change) {
+            if ($change->getChangedOn()->format('Y-m-d') === $day) {
+                // A boolean can only switch back: the day's change is undone.
+                $this->payerChanges->removeElement($change);
+
+                return;
+            }
+        }
+
+        if ($createdOn->format('Y-m-d') !== $day) {
+            $this->payerChanges->add(new PayerChange($this, $this->paidPersonally, $today));
+        }
+    }
+
+    /**
+     * Oldest first.
+     *
+     * @return list<PayerChange>
+     */
+    public function getPayerChanges(): array
+    {
+        $changes = $this->payerChanges->toArray();
+        usort($changes, static fn (PayerChange $a, PayerChange $b): int => [$a->getChangedOn(), $a->getId() ?? PHP_INT_MAX] <=> [$b->getChangedOn(), $b->getId() ?? PHP_INT_MAX]);
+
+        return $changes;
     }
 
     public function isHouseholdShared(): bool
@@ -568,6 +648,8 @@ class Subscription
             'isActive' => $this->isActive(),
             'autoRenew' => $this->isAutoRenew(),
             'b2b' => $this->isB2b(),
+            'paidPersonally' => $this->isPaidPersonally(),
+            'payerChanges' => array_map(static fn (PayerChange $change): array => $change->toArray(), $this->getPayerChanges()),
             'householdShared' => $this->isHouseholdShared(),
             'householdSize' => $this->getHouseholdSize(),
             'cancelledAt' => $this->getCancelledAt()?->format('Y-m-d'),

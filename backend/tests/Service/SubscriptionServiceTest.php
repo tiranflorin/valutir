@@ -259,6 +259,26 @@ final class SubscriptionServiceTest extends TestCase
         self::assertSame(['11.99', '13.99', '2026-11-16'], [$changes[0]['previousAmount'], $changes[0]['newAmount'], $changes[0]['changedOn']]);
     }
 
+    public function testSwitchingTheCardOfABusinessSubscriptionKeepsWhoPaidBefore(): void
+    {
+        $user = (new User())->setEmail('a@example.test');
+        $subscription = (new Subscription())->setB2b(true)->setPaidPersonally(true);
+        $subscription->setUser($user);
+        $subscription->setAmount('13.99');
+        $subscription->setCurrency('EUR');
+        $subscription->setBillingCadence('monthly');
+        $subscription->onPrePersist();
+        (new \ReflectionProperty(Subscription::class, 'createdAt'))->setValue($subscription, new \DateTimeImmutable('2026-10-01 10:00:00 UTC'));
+        $request = $this->request();
+        $request->b2b = true;
+        $request->paidPersonally = false;
+
+        $this->service($this->transactionalEntityManager(), clock: $this->clock('2026-11-15 12:00:00'))->update($subscription, $request);
+
+        self::assertFalse($subscription->isPaidPersonally());
+        self::assertSame([['previousPaidPersonally' => true, 'changedOn' => '2026-11-15']], $subscription->toArray()['payerChanges']);
+    }
+
     public function testRemovingAPriceChangeThatIsntThereIsNotFound(): void
     {
         $entityManager = $this->createMock(EntityManager::class);

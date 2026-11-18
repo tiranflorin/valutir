@@ -19,6 +19,8 @@ final readonly class BusinessCharge
         /** The amount on that day, a 2-decimal string. */
         public string $amount,
         public string $currency,
+        /** Paid with the owner's own card on that day, so the company owes it back. */
+        public bool $paidPersonally,
         /** The day is after the owner's today: the charge hasn't gone out yet. */
         public bool $upcoming,
         public bool $invoiceFiled,
@@ -38,6 +40,7 @@ final readonly class BusinessCharge
             'date' => $this->date->format('Y-m-d'),
             'amount' => $this->amount,
             'currency' => $this->currency,
+            'paidPersonally' => $this->paidPersonally,
             'upcoming' => $this->upcoming,
             'invoiceFiled' => $this->invoiceFiled,
         ];

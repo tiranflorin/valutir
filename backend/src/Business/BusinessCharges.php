@@ -17,7 +17,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * The charges of the owner's business subscriptions in a period, for the invoice checklist and the
  * accountant export. Estimates: they are counted from each subscription's billing date the same way
- * as the dashboard's month card (frontend/src/utils/monthCharges.ts), and priced from its history.
+ * as the dashboard's month card (frontend/src/utils/monthCharges.ts), with the price and the card
+ * (company or the owner's own) of their day.
  *
  * Charges before the stored billing date are counted backwards, but only ones that have gone out,
  * never before the subscription started (or, without a start date, before it was added), and never
@@ -64,6 +65,7 @@ final readonly class BusinessCharges
                     $date,
                     $terms->amount,
                     $terms->currency,
+                    $subscription->paidPersonallyOn($date),
                     $date > $today,
                     isset($filed[InvoiceFilingRepository::key((int) $subscription->getId(), $date)]),
                 );

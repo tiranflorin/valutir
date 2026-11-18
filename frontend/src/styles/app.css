@@ -3892,6 +3892,19 @@ img.catalog-tile {
     gap: 2px;
 }
 
+.invoices-paid-personally {
+    margin-left: 32px;
+    color: #98601f;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.invoices-owed {
+    margin: 12px 0 0;
+    color: #17241d;
+    font-size: 14px;
+}
+
 .invoices-billing-link {
     margin-left: 32px;
     font-size: 12px;
@@ -3936,6 +3949,11 @@ img.catalog-tile {
     }
 }
 
+:root[data-theme='dark'] .invoices-paid-personally {
+    color: #f0c27f;
+}
+
+:root[data-theme='dark'] .invoices-owed,
 :root[data-theme='dark'] .invoices-month-head h2,
 :root[data-theme='dark'] .invoices-export h2,
 :root[data-theme='dark'] .invoices-tick {

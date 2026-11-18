@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import App from '../App';
@@ -18,7 +18,7 @@ const renderApp = (route: string) => render(<MemoryRouter initialEntries={[route
 const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord => ({
     id: 1, serviceName: 'Netflix', amount: '13.99', currency: 'EUR', billingCadence: 'monthly', category: 'Streaming',
     status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null, manageUrl: null,
-    isActive: true, autoRenew: true, b2b: false, householdShared: false, householdSize: null, cancelledAt: null,
+    isActive: true, autoRenew: true, b2b: false, paidPersonally: false, householdShared: false, householdSize: null, cancelledAt: null,
     createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
     resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null, priceChanges: [],
     ...overrides,
@@ -83,7 +83,7 @@ describe('adding a subscription', () => {
         expect(bodyOf(create)).toMatchObject({
             serviceName: 'Netflix', amount: 13.99, currency: 'EUR', billingCadence: 'monthly', status: 'active',
             startedAt: todayIsoDate(), nextBillingDate: todayIsoDate(), trialEndsAt: null, cancelledAt: null,
-            autoRenew: true, b2b: false, householdShared: false, householdSize: null,
+            autoRenew: true, b2b: false, paidPersonally: false, householdShared: false, householdSize: null,
         });
     });
 
@@ -167,8 +167,23 @@ describe('managing a subscription from its detail page', () => {
         expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({
             serviceName: 'Netflix', amount: 15.49, currency: 'EUR', billingCadence: 'monthly', status: 'active',
             nextBillingDate: '2099-01-15', autoRenew: true, b2b: false, householdShared: true, householdSize: 3,
-            startedAt: '2026-01-01', paymentMethod: 'Visa',
+            startedAt: '2026-01-01', paymentMethod: 'Visa', paidPersonally: false,
         });
+    });
+
+    it('records that a business subscription is paid with the owner\'s own card', async () => {
+        signIn();
+        const calls = fakeBackend([record({ b2b: true })]);
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.click(await screen.findByRole('button', { name: 'Edit subscription' }));
+        expect(screen.getByRole('radio', { name: 'Company card' })).toBeChecked();
+        await user.click(screen.getByRole('radio', { name: 'My own card' }));
+        await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(callsTo(calls, 'PATCH /api/subs/1')).toHaveLength(1));
+        expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({ b2b: true, paidPersonally: true });
     });
 
     it('marks it cancelled with the provider, then removes it from the tracker', async () => {

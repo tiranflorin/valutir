@@ -12,6 +12,8 @@ export type BusinessCharge = {
     /** The amount on that day, e.g. "12.00". */
     amount: string;
     currency: string;
+    /** Paid with the owner's own card on that day, so the company owes it back. */
+    paidPersonally: boolean;
     /** Still to come: no invoice yet, so it can't be ticked. */
     upcoming: boolean;
     invoiceFiled: boolean;

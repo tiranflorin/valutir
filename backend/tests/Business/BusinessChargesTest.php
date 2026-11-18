@@ -114,6 +114,17 @@ final class BusinessChargesTest extends TestCase
         self::assertSame('15.00', $this->charges('2026-11')[0]->amount);
     }
 
+    public function testEachChargeHasTheCardOfItsDay(): void
+    {
+        // Moved from the owner's card to the company card on 1 November.
+        $figma = $this->subscription(1, 'Figma', nextBilling: '2026-11-25', startedAt: '2026-01-01')->setPaidPersonally(true);
+        $figma->recordPayerChange(false, new \DateTimeImmutable('2026-11-01'), new \DateTimeImmutable('2026-01-01'));
+        $figma->setPaidPersonally(false);
+
+        self::assertTrue($this->charges('2026-10')[0]->paidPersonally);
+        self::assertFalse($this->charges('2026-11')[0]->paidPersonally);
+    }
+
     public function testMarksTheChargesWhoseInvoiceIsFiled(): void
     {
         $this->subscription(1, 'Figma', nextBilling: '2026-11-25', startedAt: '2026-01-01');
@@ -162,7 +173,7 @@ final class BusinessChargesTest extends TestCase
 
     public function testTheExportListsChargesThatHaveGoneOutAsSafeCells(): void
     {
-        $this->subscription(1, '=Figma', nextBilling: '2026-11-25', startedAt: '2026-01-01', amount: '12.50', currency: 'RON')->setPaymentMethod('Company card');
+        $this->subscription(1, '=Figma', nextBilling: '2026-11-25', startedAt: '2026-01-01', amount: '12.50', currency: 'RON')->setPaidPersonally(true);
         $this->filed = [InvoiceFilingRepository::key(1, new \DateTimeImmutable('2026-10-25')) => true];
         $export = new AccountantExport($this->service());
 
@@ -170,7 +181,7 @@ final class BusinessChargesTest extends TestCase
 
         self::assertSame([
             AccountantExport::COLUMNS,
-            ['2026-10-25', "'=Figma", 'Software', '12.50', 'RON', 'Company card', 'yes'],
+            ['2026-10-25', "'=Figma", 'Software', '12.50', 'RON', 'personally', 'yes'],
         ], $rows, 'the November charge is still to come');
     }
 

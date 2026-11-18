@@ -76,11 +76,10 @@ final class SubscriptionService
             if (null !== $user) {
                 $this->freePlanLimit->assertCanSave($user, $subscription, $dto->status);
                 $now = $this->clock->now();
-                $subscription->recordPriceChange(
-                    $this->priceTermsOf($dto),
-                    UserTime::today($user, $now),
-                    UserTime::today($user, $subscription->getCreatedAt() ?? $now),
-                );
+                $today = UserTime::today($user, $now);
+                $createdOn = UserTime::today($user, $subscription->getCreatedAt() ?? $now);
+                $subscription->recordPriceChange($this->priceTermsOf($dto), $today, $createdOn);
+                $subscription->recordPayerChange($dto->b2b && $dto->paidPersonally, $today, $createdOn);
             }
 
             $this->mapDto($subscription, $dto);
@@ -158,6 +157,7 @@ final class SubscriptionService
         $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setB2b($dto->b2b);
+        $subscription->setPaidPersonally($dto->paidPersonally);
         // A size sent without householdShared is ignored, so turning sharing off always clears it.
         $subscription->setHouseholdSharing($dto->householdShared ? $dto->householdSize : null);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));

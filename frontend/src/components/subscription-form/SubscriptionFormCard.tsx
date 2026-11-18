@@ -16,10 +16,15 @@ import {
     Button,
     Chip,
     Divider,
+    FormControl,
+    FormControlLabel,
     FormHelperText,
+    FormLabel,
     IconButton,
     InputAdornment,
     MenuItem,
+    Radio,
+    RadioGroup,
     Stack,
     Switch,
     TextField,
@@ -54,6 +59,8 @@ export type SubscriptionFormValues = {
     householdSize: number;
     autoRenew: boolean;
     b2b: boolean;
+    /** Business only: paid with the owner's own card instead of the company's. */
+    paidPersonally: boolean;
 };
 
 type Props = {
@@ -474,10 +481,30 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 checked={values.b2b}
                                 onChange={(event) => patch(event.target.checked
                                     ? { b2b: true, householdShared: false }
-                                    : { b2b: false })}
+                                    : { b2b: false, paidPersonally: false })}
                                 inputProps={{ 'aria-label': 'Business subscription' }}
                             />
                         </Stack>
+
+                        {values.b2b && (
+                            <FormControl className="subscription-paid-with">
+                                <FormLabel id="paid-with-label">Paid with</FormLabel>
+                                <RadioGroup
+                                    row
+                                    aria-labelledby="paid-with-label"
+                                    value={values.paidPersonally ? 'personal' : 'company'}
+                                    onChange={(event) => patch({ paidPersonally: event.target.value === 'personal' })}
+                                >
+                                    <FormControlLabel value="company" control={<Radio size="small" />} label="Company card" />
+                                    <FormControlLabel value="personal" control={<Radio size="small" />} label="My own card" />
+                                </RadioGroup>
+                                <FormHelperText>
+                                    {values.paidPersonally
+                                        ? 'The company owes it back to you. The invoice checklist adds it up each month.'
+                                        : 'Paid by the company.'}
+                                </FormHelperText>
+                            </FormControl>
+                        )}
 
                         {isPaused && (
                             <Stack spacing={1.5}>

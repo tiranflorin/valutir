@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  */
 final readonly class AccountantExport
 {
-    public const array COLUMNS = ['Date', 'Service', 'Category', 'Amount', 'Currency', 'Payment method', 'Invoice filed'];
+    public const array COLUMNS = ['Date', 'Service', 'Category', 'Amount', 'Currency', 'Paid by', 'Invoice filed'];
 
     /** The longest period one export covers. */
     public const int MAX_MONTHS = 12;
@@ -67,7 +67,7 @@ final readonly class AccountantExport
                 (string) $charge->subscription->getCategory(),
                 $charge->amount,
                 $charge->currency,
-                (string) $charge->subscription->getPaymentMethod(),
+                $charge->paidPersonally ? 'personally' : 'company',
                 $charge->invoiceFiled ? 'yes' : 'no',
             ]);
         }

@@ -53,6 +53,9 @@ const SubscriptionInfoCard: React.FC<Props> = ({ subscription }) => {
                 <DetailRow label="Next billing date" value={formatDate(subscription.nextBillingDate)} />
                 <DetailRow label="Auto renew" value={subscription.autoRenew ? 'On' : 'Off'} />
                 <DetailRow label="Subscription view" value={subscription.b2b ? 'Business' : 'Personal'} />
+                {subscription.b2b && (
+                    <DetailRow label="Paid with" value={subscription.paidPersonally ? 'Your own card (the company owes it back)' : 'Company card'} />
+                )}
                 {!subscription.b2b && (
                     <DetailRow
                         label="Household shared"
