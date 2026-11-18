@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { usePaidFeatures } from '../../hooks/usePaidFeatures';
 import { API_URL } from '../../config';
 import { isBeforeToday } from '../../utils/dates';
 import { householdPayload } from '../../utils/householdShare';
@@ -52,14 +53,15 @@ const SubscriptionEditCard: React.FC<Props> = ({
         resumesOn: subscription.resumesOn ?? '',
         notes: subscription.notes ?? '',
         manageUrl: subscription.manageUrl ?? '',
-        providerGroup: '',
         householdShared: subscription.householdShared ?? false,
         householdSize: subscription.householdSize ?? 2,
         autoRenew: subscription.autoRenew,
         b2b: subscription.b2b || readDashboardView() === 'business',
         paidPersonally: subscription.paidPersonally ?? false,
+        reminderLeadDays: subscription.reminderLeadDays ?? null,
     });
 
+    const paidFeatures = usePaidFeatures();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -119,7 +121,6 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     nextBillingDate: values.renewalDate || null,
                     // Not on this form, but updates replace every field: send them back unchanged.
                     startedAt: subscription.startedAt ?? null,
-                    paymentMethod: subscription.paymentMethod ?? null,
                     trialEndsAt: isTrial ? values.renewalDate || null : null,
                     notes: values.notes.trim() || null,
                     manageUrl: values.manageUrl.trim() || null,
@@ -127,6 +128,7 @@ const SubscriptionEditCard: React.FC<Props> = ({
                     autoRenew,
                     b2b: values.b2b,
                     paidPersonally: values.b2b && values.paidPersonally,
+                    reminderLeadDays: values.reminderLeadDays,
                     ...householdPayload(values),
                     cancelledAt,
                     resumesOn,
@@ -185,9 +187,9 @@ const SubscriptionEditCard: React.FC<Props> = ({
             }}
             onCancel={onCancel}
             showHeader={false}
-            showProviderGroup={false}
             showHouseholdShared
             statusOptions={isCancelled ? [] : EDIT_STATUS_OPTIONS}
+            paidFeatures={paidFeatures}
         />
     );
 };

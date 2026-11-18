@@ -39,7 +39,6 @@ final class SubscriptionServiceTest extends TestCase
         $request->amount = 9.5;
         $request->category = ' Streaming ';
         $request->nextBillingDate = '2026-12-01';
-        $request->paymentMethod = ' Visa ';
 
         $created = $this->service($entityManager)->create($user, $request);
 
@@ -50,9 +49,41 @@ final class SubscriptionServiceTest extends TestCase
         self::assertSame('EUR', $created->getCurrency());
         self::assertSame('monthly', $created->getBillingCadence());
         self::assertSame('Streaming', $created->getCategory());
-        self::assertSame('Visa', $created->getPaymentMethod());
         self::assertSame('active', $created->getStatus());
         self::assertSame('2026-12-01', $created->getNextBillingDate()?->format('Y-m-d'));
+    }
+
+    public function testChoosingWhenYoureRemindedNeedsPaidFeatures(): void
+    {
+        $request = $this->request();
+        $request->reminderLeadDays = 14;
+
+        try {
+            $this->service($this->transactionalEntityManager())->create(new User(), $request);
+            self::fail('A free account chose its reminder timing.');
+        } catch (HttpException $e) {
+            self::assertSame(403, $e->getStatusCode());
+        }
+
+        $admin = (new User())->setRoles([User::ROLE_ADMIN]);
+        self::assertSame(14, $this->service($this->transactionalEntityManager())->create($admin, $request)->getReminderLeadDays());
+    }
+
+    public function testAnAccountWithoutPaidFeaturesCanStillEditASubscriptionWithAChosenTiming(): void
+    {
+        // For example after a refund: the stored choice is sent back unchanged, or cleared.
+        $subscription = (new Subscription())->setReminderLeadDays(14);
+        $subscription->setUser(new User());
+        $subscription->onPrePersist();
+        $request = $this->request();
+
+        $request->reminderLeadDays = 14;
+        $this->service($this->transactionalEntityManager())->update($subscription, $request);
+        self::assertSame(14, $subscription->getReminderLeadDays());
+
+        $request->reminderLeadDays = null;
+        $this->service($this->transactionalEntityManager())->update($subscription, $request);
+        self::assertNull($subscription->getReminderLeadDays());
     }
 
     public function testAFreeAccountAtTheLimitCannotCreateAnotherActiveSubscription(): void

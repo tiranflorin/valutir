@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { usePaidFeatures } from '../hooks/usePaidFeatures';
 import { Box, Button, Container } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Link as RouterLink, useNavigate } from 'react-router';
@@ -27,19 +28,20 @@ const AddSubscriptionPage: React.FC = () => {
         currency: user?.defaultCurrency ?? 'EUR',
         billingInterval: 'monthly' as BillingInterval,
         renewalDate: '',
-        category: 'Entertainment',
+        category: 'Other',
         status: 'Active' as SubscriptionStatus,
         resumesOn: '',
         notes: '',
         manageUrl: '',
-        providerGroup: '',
         householdShared: false,
         householdSize: 2,
         autoRenew: true,
         b2b: readDashboardView() === 'business',
         paidPersonally: false,
+        reminderLeadDays: null,
     });
 
+    const paidFeatures = usePaidFeatures();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -98,12 +100,12 @@ const AddSubscriptionPage: React.FC = () => {
                 nextBillingDate: values.renewalDate,
                 trialEndsAt: isTrial ? values.renewalDate : null,
                 notes: values.notes.trim() || null,
-                paymentMethod: values.providerGroup.trim() || null,
                 manageUrl: values.manageUrl.trim() || null,
                 ...householdPayload(values),
                 autoRenew: values.autoRenew,
                 b2b: values.b2b,
                 paidPersonally: values.b2b && values.paidPersonally,
+                reminderLeadDays: values.reminderLeadDays,
                 cancelledAt: null,
                 resumesOn: null,
             };
@@ -170,8 +172,8 @@ const AddSubscriptionPage: React.FC = () => {
                         void handleSubmit();
                     }}
                     onCancel={() => navigate('/my-subs')}
+                    paidFeatures={paidFeatures}
                     showCurrency
-                    showProviderGroup
                     showHouseholdShared
                     serviceSuggestions
                 />

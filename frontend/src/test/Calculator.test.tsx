@@ -72,6 +72,14 @@ describe('shared result links', () => {
         expect(readSharedResult(`#${fragment}`)).toEqual({ yearly: 756.4, count: 6, currency: 'EUR', topCategory: 'Entertainment' });
     });
 
+    it('reads links with the current categories, and with the older ones shared before', () => {
+        const fragment = shareFragment({ yearly: 120, count: 2, currency: 'EUR', topCategory: 'Music & audiobooks' });
+        expect(readSharedResult(`#${fragment}`)?.topCategory).toBe('Music & audiobooks');
+        // "Entertainment" was a category until 18 November 2026; links from then still open.
+        expect(readSharedResult('#y=120.00&n=2&c=EUR&t=Entertainment')?.topCategory).toBe('Entertainment');
+        expect(readSharedResult('#y=120.00&n=2&c=EUR&t=Streaming')).toBeNull();
+    });
+
     it.each([
         '',
         '#y=-1&n=2&c=EUR',
@@ -162,7 +170,7 @@ describe('calculator pages', () => {
 
         const link = await navigator.clipboard.readText();
         expect(screen.getByText(/link copied/i)).toBeInTheDocument();
-        expect(link).toMatch(/\/calculator#y=120\.00&n=1&c=EUR&t=Entertainment$/);
+        expect(link).toMatch(/\/calculator#y=120\.00&n=1&c=EUR&t=Video\+streaming$/);
         expect(link).not.toContain('Netflix');
     });
 
@@ -181,7 +189,7 @@ describe('calculator pages', () => {
         await user.click(screen.getByRole('button', { name: 'Save it free' }));
 
         expect(await screen.findByRole('heading', { name: 'Create account' })).toBeInTheDocument();
-        expect(pendingCalculatorList()).toEqual({ currency: 'EUR', rows: [{ name: 'Spotify', category: 'Entertainment', amount: '11', cadence: 'monthly' }] });
+        expect(pendingCalculatorList()).toEqual({ currency: 'EUR', rows: [{ name: 'Spotify', category: 'Music & audiobooks', amount: '11', cadence: 'monthly' }] });
     });
 });
 

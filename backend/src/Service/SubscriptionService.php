@@ -14,6 +14,7 @@ use App\Exception\ApiValidationException;
 use App\Payment\FreePlanLimit;
 use App\Repository\SubscriptionRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -55,6 +56,7 @@ final class SubscriptionService
 
         return $this->entityManager->wrapInTransaction(function () use ($user, $dto): Subscription {
             $this->freePlanLimit->assertCanSave($user, null, $dto->status);
+            $this->assertCanChooseReminderTiming($user, null, $dto);
 
             $subscription = new Subscription();
             $subscription->setUser($user);
@@ -75,6 +77,7 @@ final class SubscriptionService
             $user = $subscription->getUser();
             if (null !== $user) {
                 $this->freePlanLimit->assertCanSave($user, $subscription, $dto->status);
+                $this->assertCanChooseReminderTiming($user, $subscription->getReminderLeadDays(), $dto);
                 $now = $this->clock->now();
                 $today = UserTime::today($user, $now);
                 $createdOn = UserTime::today($user, $subscription->getCreatedAt() ?? $now);
@@ -132,6 +135,17 @@ final class SubscriptionService
         $this->entityManager->flush();
     }
 
+    /**
+     * Choosing when a reminder goes out is a paid feature. Sending back the stored choice unchanged is
+     * always allowed, so an account that lost its paid features can still edit the subscription.
+     */
+    private function assertCanChooseReminderTiming(User $user, ?int $stored, SubscriptionUpsertRequest $dto): void
+    {
+        if ($dto->reminderLeadDays !== $stored && null !== $dto->reminderLeadDays && !$user->hasPaidFeatures()) {
+            throw new AccessDeniedHttpException('Choosing when you\'re reminded comes with the one-time unlock.');
+        }
+    }
+
     private function validateDto(SubscriptionUpsertRequest $dto): void
     {
         $violations = $this->validator->validate($dto);
@@ -152,12 +166,12 @@ final class SubscriptionService
         $subscription->setStartedAt($this->parseDate($dto->startedAt));
         $subscription->setNextBillingDate($this->parseDate($dto->nextBillingDate));
         $subscription->setNotes(null !== $dto->notes ? trim($dto->notes) : null);
-        $subscription->setPaymentMethod(null !== $dto->paymentMethod ? trim($dto->paymentMethod) : null);
         $subscription->setManageUrl($dto->manageUrl);
         $subscription->setStatus($dto->status);
         $subscription->setAutoRenew($dto->autoRenew);
         $subscription->setB2b($dto->b2b);
         $subscription->setPaidPersonally($dto->paidPersonally);
+        $subscription->setReminderLeadDays($dto->reminderLeadDays);
         // A size sent without householdShared is ignored, so turning sharing off always clears it.
         $subscription->setHouseholdSharing($dto->householdShared ? $dto->householdSize : null);
         $subscription->setCancelledAt($this->parseDate($dto->cancelledAt));

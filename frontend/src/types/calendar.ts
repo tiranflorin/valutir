@@ -8,7 +8,6 @@ export interface CalendarEventExtendedProps {
     status: CalendarStatus;
     category?: string | null;
     billingCadence?: string | null;
-    paymentMethod?: string | null;
     notes?: string | null;
 }
 
@@ -29,6 +28,5 @@ export interface SubscriptionOccurrence {
     ownerName?: string;
     category?: string | null;
     billingCadence?: string | null;
-    paymentMethod?: string | null;
     notes?: string | null;
 }

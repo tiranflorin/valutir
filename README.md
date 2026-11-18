@@ -7,7 +7,7 @@ It's a web app (React) with a JSON API (Symfony). Status: an MVP, built and test
 ## What it does
 
 **Tracking**
-- Add subscriptions with price, currency, billing cycle (weekly, monthly, quarterly, yearly), category, payment method, trial end date, notes, and auto-renewal.
+- Add subscriptions with price, currency, billing cycle (weekly, monthly, quarterly, yearly), category, trial end date, notes, and auto-renewal.
 - Personal and Business views, each with cost and count totals, a "Needs attention" list of trials and renewals, and filters and sorting.
 - Household sharing: split a bill equally between 2–10 people and see your own share.
 - A calendar of upcoming charges, with a page per day.
@@ -26,13 +26,12 @@ It's a web app (React) with a JSON API (Symfony). Status: an MVP, built and test
 - **Free:** everything above, for up to 50 active subscriptions (active or in trial).
 - **One-time unlock: €19.99, VAT included, no renewal.** It lifts the 50-subscription limit. Payment runs on Stripe's hosted checkout, so ValuTir never sees card details. Everyone is charged in EUR.
 - **14-day money-back guarantee:** a full refund on request, no questions asked.
-- Some advanced business tools listed on the Plans page (project and cost-center allocation, a bookkeeping export, custom reminder timing) aren't built yet and aren't part of the purchase until they ship.
+- The unlock also adds the accountant export of business charges and a choice of how many days before each charge you're reminded.
 
 The app includes a Privacy policy, Terms of use, and Refund policy, operated by TechDivision (TECHDIVISION SRL, Oradea, Romania). No ads, tracking, or analytics, and no cookie banner, because everything stored is strictly necessary.
 
 ## Product ideas
 
-- **Paid plan:** custom reminder lead times, globally or per subscription (reminder timing is fixed today).
 - **Data:** start with manual entries, then consider importing from receipts or email, or bank-transaction sync with recurring-payment detection.
 - **Enrichment:** group by provider, record source and merchant name, and ask users to confirm a subscription is still useful.
 - **Savings suggestions** (as estimates): likely duplicate services, a known cheaper annual option, or subscriptions not confirmed as useful recently.

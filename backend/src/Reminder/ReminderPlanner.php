@@ -26,14 +26,15 @@ final readonly class ReminderPlanner
      * @param Subscription[]      $subscriptions billable subscriptions of one user
      * @param \DateTimeImmutable  $today         the user's local calendar day
      * @param array<string, true> $alreadySent   keys from ReminderLogRepository::findSentKeys()
+     * @param bool                $customTiming  the owner has paid features: each subscription's own lead time applies
      *
      * @return list<DueReminder> trials first, then by charge date
      */
-    public function plan(array $subscriptions, \DateTimeImmutable $today, array $alreadySent): array
+    public function plan(array $subscriptions, \DateTimeImmutable $today, array $alreadySent, bool $customTiming = false): array
     {
         $due = [];
         foreach ($subscriptions as $subscription) {
-            $reminder = $this->reminderFor($subscription, $today);
+            $reminder = $this->reminderFor($subscription, $today, $customTiming);
             if (null === $reminder) {
                 continue;
             }
@@ -49,7 +50,7 @@ final readonly class ReminderPlanner
         return $due;
     }
 
-    private function reminderFor(Subscription $subscription, \DateTimeImmutable $today): ?DueReminder
+    private function reminderFor(Subscription $subscription, \DateTimeImmutable $today, bool $customTiming): ?DueReminder
     {
         $status = $subscription->getStatus();
         $cadence = (string) $subscription->getBillingCadence();
@@ -67,7 +68,7 @@ final readonly class ReminderPlanner
                 return null;
             }
 
-            return $this->ifInWindow($subscription, ReminderLog::KIND_TRIAL_ENDING, CalendarDay::of($trialEnd), $today, ReminderPolicy::TRIAL_LEAD_DAYS);
+            return $this->ifInWindow($subscription, ReminderLog::KIND_TRIAL_ENDING, CalendarDay::of($trialEnd), $today, ReminderPolicy::leadDays($subscription, $customTiming));
         }
 
         $next = $subscription->getNextBillingDate();
@@ -76,7 +77,7 @@ final readonly class ReminderPlanner
         }
         $charge = $this->schedule->nextChargeOnOrAfter($next, $cadence, $today);
 
-        return $this->ifInWindow($subscription, ReminderLog::KIND_RENEWAL, $charge, $today, ReminderPolicy::renewalLeadDays($cadence));
+        return $this->ifInWindow($subscription, ReminderLog::KIND_RENEWAL, $charge, $today, ReminderPolicy::leadDays($subscription, $customTiming));
     }
 
     private function ifInWindow(Subscription $subscription, string $kind, \DateTimeImmutable $charge, \DateTimeImmutable $today, int $leadDays): ?DueReminder

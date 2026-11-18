@@ -34,7 +34,6 @@ export interface SubscriptionRecord {
     startedAt: string | null;
     nextBillingDate: string | null;
     notes: string | null;
-    paymentMethod: string | null;
     /** The provider's page to manage or cancel it (https); null when not set. */
     manageUrl: string | null;
     isActive: boolean;
@@ -42,6 +41,8 @@ export interface SubscriptionRecord {
     b2b: boolean;
     /** Business only: paid with the owner's own card, so the company owes it back. */
     paidPersonally: boolean;
+    /** Days before each charge the reminder goes out; null = the default for its cadence. Paid feature. */
+    reminderLeadDays: number | null;
     householdShared: boolean;
     /** People splitting the bill equally, the owner included; null when not shared. */
     householdSize: number | null;
@@ -74,11 +75,11 @@ export type SubscriptionCardModel = {
     autoRenew: boolean;
     b2b: boolean;
     paidPersonally?: boolean;
+    reminderLeadDays?: number | null;
     householdShared?: boolean;
     householdSize?: number | null;
     cancelledAt: string | null;
     startedAt?: string | null;
-    paymentMethod?: string | null;
     manageUrl?: string | null;
     trialEndsAt?: string | null;
     trialReminderSentAt?: string | null;

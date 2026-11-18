@@ -73,7 +73,6 @@ const buildOccurrences = (
                     ownerName: undefined,
                     category: subscription.category,
                     billingCadence: subscription.billingCadence,
-                    paymentMethod: subscription.paymentMethod,
                     notes: subscription.notes,
                 });
             }

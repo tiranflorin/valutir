@@ -2,14 +2,15 @@
  * The public subscription cost calculator (/calculator and the home page hero). Everything here
  * runs in the visitor's browser: nothing they type is sent to the server.
  */
+import { isKnownCategory } from '../data/categories';
 import type { BillingInterval } from '../components/subscription-form/SubscriptionFormCard';
 import type { Currency } from '../components/CurrencySelect';
-import type { CatalogService } from '../data/services';
 import { yearlyCostOf } from './reviewQueue';
 
 export type CalculatorRow = {
     name: string;
-    category: CatalogService['category'];
+    /** One of data/categories.ts (an older saved list may hold a legacy one). */
+    category: string;
     /** As typed; an empty or invalid price counts as nothing. */
     amount: string;
     cadence: BillingInterval;
@@ -19,8 +20,6 @@ export type CalculatorRow = {
 
 /** The currencies CurrencySelect offers. */
 const CURRENCIES: Currency[] = ['EUR', 'USD', 'RON'];
-
-export const CALCULATOR_CATEGORIES: CatalogService['category'][] = ['Entertainment', 'Software', 'Fitness', 'Banking', 'Utilities', 'Cloud', 'Other'];
 
 export const CALCULATOR_CADENCES: { value: BillingInterval; label: string }[] = [
     { value: 'weekly', label: 'Weekly' },
@@ -100,7 +99,8 @@ export const readSharedResult = (hash: string): SharedResult | null => {
     if (!params.has('y') || !Number.isFinite(yearly) || yearly <= 0 || yearly > MAX_PRICE * 52 * 100) return null;
     if (!Number.isInteger(count) || count < 1 || count > 500) return null;
     if (!currency || !CURRENCIES.includes(currency)) return null;
-    if (topCategory !== null && !(CALCULATOR_CATEGORIES as string[]).includes(topCategory)) return null;
+    // Links shared before the categories changed carry an older one, which is still valid.
+    if (topCategory !== null && !isKnownCategory(topCategory)) return null;
 
     return { yearly, count, currency, topCategory };
 };
@@ -121,7 +121,7 @@ const isImportRow = (row: unknown): row is CalculatorImport['rows'][number] => {
     const value = row as Partial<CalculatorImport['rows'][number]> | null;
     return !!value
         && typeof value.name === 'string' && value.name.trim().length > 0 && value.name.length <= 80
-        && CALCULATOR_CATEGORIES.includes(value.category as CalculatorRow['category'])
+        && typeof value.category === 'string' && isKnownCategory(value.category)
         && CALCULATOR_CADENCES.some((option) => option.value === value.cadence)
         && typeof value.amount === 'string' && priceOf({ name: '', category: 'Other', amount: value.amount, cadence: 'monthly', included: true }) > 0;
 };

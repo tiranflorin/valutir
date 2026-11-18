@@ -29,7 +29,7 @@ final readonly class AccountExportService
     /** Spreadsheet columns of the subscriptions CSV, in order. */
     public const array CSV_COLUMNS = [
         'Service', 'Category', 'Amount', 'Currency', 'Cadence', 'Next billing date', 'Status',
-        'Business', 'Shared', 'Household size', 'My share', 'Payment method', 'Notes',
+        'Business', 'Shared', 'Household size', 'My share', 'Notes',
         'Manage link', 'Started at', 'Trial ends at', 'Cancelled at',
     ];
 
@@ -128,7 +128,6 @@ final readonly class AccountExportService
                 $shared ? 'yes' : 'no',
                 $shared ? (string) $subscription->getHouseholdSize() : '',
                 $shared ? number_format((float) $amount / (int) $subscription->getHouseholdSize(), 2, '.', '') : $amount,
-                (string) $subscription->getPaymentMethod(),
                 (string) $subscription->getNotes(),
                 (string) $subscription->getManageUrl(),
                 (string) $subscription->getStartedAt()?->format('Y-m-d'),

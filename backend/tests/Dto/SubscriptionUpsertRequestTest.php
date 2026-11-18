@@ -68,6 +68,19 @@ final class SubscriptionUpsertRequestTest extends KernelTestCase
         }
     }
 
+    public function testARemindersLeadTimeIsOneToThirtyDays(): void
+    {
+        $request = $this->request();
+        foreach ([null, 1, 30] as $days) {
+            $request->reminderLeadDays = $days;
+            self::assertSame([], $this->violations($request), (string) $days);
+        }
+        foreach ([0, 31] as $days) {
+            $request->reminderLeadDays = $days;
+            self::assertSame(['reminderLeadDays' => 'Choose between 1 and 30 days before the charge.'], $this->violations($request));
+        }
+    }
+
     public function testBusinessSubscriptionsCannotBeShared(): void
     {
         self::assertSame(

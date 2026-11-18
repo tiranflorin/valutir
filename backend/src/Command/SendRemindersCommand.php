@@ -101,7 +101,7 @@ final class SendRemindersCommand extends Command
         }
 
         $subscriptions = $this->subscriptionRepository->findBillableForUser($user);
-        $due = $this->planner->plan($subscriptions, $today, $this->reminderLogRepository->findSentKeys($subscriptions, $today));
+        $due = $this->planner->plan($subscriptions, $today, $this->reminderLogRepository->findSentKeys($subscriptions, $today), $user->hasPaidFeatures());
 
         if ($dryRun) {
             foreach ($due as $reminder) {

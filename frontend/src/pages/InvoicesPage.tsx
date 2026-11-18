@@ -9,7 +9,7 @@ import AppHeader from '../components/AppHeader';
 import ServiceIcon from '../components/ServiceIcon';
 import { useAuth } from '../context/AuthContext';
 import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
-import { fetchBillingStatus } from '../services/account';
+import { usePaidFeatures } from '../hooks/usePaidFeatures';
 import { type BusinessCharge, fetchAccountantExport, fetchBusinessMonth, setInvoiceFiled } from '../services/business';
 import { daysFromToday } from '../utils/monthCharges';
 import { saveFile } from '../utils/download';
@@ -40,7 +40,7 @@ const InvoicesPage: React.FC = () => {
     const [loaded, setLoaded] = useState<{ month: string; charges: BusinessCharge[] } | null>(null);
     const charges = loaded?.month === month ? loaded.charges : null;
     const [error, setError] = useState('');
-    const [paidFeatures, setPaidFeatures] = useState<boolean | null>(null);
+    const paidFeatures = usePaidFeatures();
     const [exporting, setExporting] = useState<'month' | 'quarter' | null>(null);
     const [exportError, setExportError] = useState('');
 
@@ -57,12 +57,6 @@ const InvoicesPage: React.FC = () => {
             active = false;
         };
     }, [token, month, handleError]);
-
-    useEffect(() => {
-        if (!token) return;
-        // Unknown on failure: the export buttons stay, and the server answers if it isn't unlocked.
-        fetchBillingStatus(token).then((status) => setPaidFeatures(status.paidFeatures)).catch(() => setPaidFeatures(null));
-    }, [token]);
 
     const toggle = useCallback(async (charge: BusinessCharge, filed: boolean) => {
         if (!token) return;
@@ -209,6 +203,7 @@ const InvoicesPage: React.FC = () => {
                         A spreadsheet (CSV) of the business charges that have gone out: date, service, category, amount
                         in its own currency, paid by the company or personally, and whether the invoice is filed.
                     </p>
+                    {/* Unknown (null) keeps the buttons: the server refuses the download if it isn't allowed. */}
                     {paidFeatures === false ? (
                         <p className="invoices-locked">
                             The export comes with the one-time unlock. <RouterLink to="/plans">See plans</RouterLink>

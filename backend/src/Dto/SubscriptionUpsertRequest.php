@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use App\Entity\Subscription;
+use App\Reminder\ReminderPolicy;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -37,9 +38,6 @@ final class SubscriptionUpsertRequest
 
     public ?string $notes = null;
 
-    #[Assert\Length(max: 100)]
-    public ?string $paymentMethod = null;
-
     /** Where to manage or cancel it with the provider: https only, so it can never be a javascript: or plain-http link. */
     #[Assert\Length(max: 2048)]
     #[Assert\Url(protocols: ['https'], requireTld: true)]
@@ -48,6 +46,10 @@ final class SubscriptionUpsertRequest
     public ?bool $autoRenew = true;
 
     public bool $b2b = false;
+
+    /** Days before each charge the reminder goes out; null = the default for its cadence. Paid feature. */
+    #[Assert\Range(min: ReminderPolicy::MIN_CUSTOM_LEAD_DAYS, max: ReminderPolicy::MAX_CUSTOM_LEAD_DAYS, notInRangeMessage: 'Choose between {{ min }} and {{ max }} days before the charge.')]
+    public ?int $reminderLeadDays = null;
 
     /** Business only: paid with the owner's own card. Ignored for a personal subscription. */
     public bool $paidPersonally = false;

@@ -102,10 +102,6 @@ class Subscription
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
-    #[ORM\Column(length: 100, nullable: true)]
-    #[Assert\Length(max: 100)]
-    private ?string $paymentMethod = null;
-
     #[ORM\Column(nullable: true)]
     private ?bool $autoRenew = true;
 
@@ -113,6 +109,10 @@ class Subscription
     private bool $b2b = false;
 
     /** Whether the bill is split equally within the household (personal subscriptions only). */
+    /** Days before each charge (or trial end) the reminder goes out; null = ReminderPolicy's default. Paid feature. */
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $reminderLeadDays = null;
+
     /** Business only: paid with the owner's own card, so the company owes it back. */
     #[ORM\Column(options: ['default' => false])]
     private bool $paidPersonally = false;
@@ -281,18 +281,6 @@ class Subscription
         return $this;
     }
 
-    public function getPaymentMethod(): ?string
-    {
-        return $this->paymentMethod;
-    }
-
-    public function setPaymentMethod(?string $paymentMethod): static
-    {
-        $this->paymentMethod = $paymentMethod;
-
-        return $this;
-    }
-
     public function isActive(): ?bool
     {
         return 'active' === $this->status;
@@ -320,6 +308,18 @@ class Subscription
         $this->b2b = $b2b;
         // Only a business subscription can be paid with the owner's own card.
         $this->paidPersonally = $b2b && $this->paidPersonally;
+
+        return $this;
+    }
+
+    public function getReminderLeadDays(): ?int
+    {
+        return $this->reminderLeadDays;
+    }
+
+    public function setReminderLeadDays(?int $reminderLeadDays): static
+    {
+        $this->reminderLeadDays = $reminderLeadDays;
 
         return $this;
     }
@@ -643,11 +643,11 @@ class Subscription
             'startedAt' => $this->getStartedAt()?->format('Y-m-d'),
             'nextBillingDate' => $this->getNextBillingDate()?->format('Y-m-d'),
             'notes' => $this->getNotes(),
-            'paymentMethod' => $this->getPaymentMethod(),
             'manageUrl' => $this->getManageUrl(),
             'isActive' => $this->isActive(),
             'autoRenew' => $this->isAutoRenew(),
             'b2b' => $this->isB2b(),
+            'reminderLeadDays' => $this->getReminderLeadDays(),
             'paidPersonally' => $this->isPaidPersonally(),
             'payerChanges' => array_map(static fn (PayerChange $change): array => $change->toArray(), $this->getPayerChanges()),
             'householdShared' => $this->isHouseholdShared(),

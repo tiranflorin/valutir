@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CATEGORIES } from '../data/categories';
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
@@ -12,7 +13,6 @@ import { manageUrlError, safeManageUrl } from '../utils/manageUrl';
 import { bodyOf, callsTo, mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
-const FORM_CATEGORIES = ['Entertainment', 'Software', 'Fitness', 'Banking', 'Utilities', 'Cloud', 'Other'];
 
 const inDays = (days: number) => {
     const date = new Date();
@@ -25,7 +25,7 @@ describe('service catalog', () => {
         const names = SERVICE_CATALOG.map(({ name }) => name.toLowerCase());
         expect(new Set(names).size).toBe(names.length);
         SERVICE_CATALOG.forEach((service) => {
-            expect(FORM_CATEGORIES).toContain(service.category);
+            expect(CATEGORIES).toContain(service.category);
             if (service.manageUrl) expect(manageUrlError(service.manageUrl)).toBeNull();
         });
     });
@@ -84,12 +84,12 @@ describe('adding a subscription from the catalog', () => {
 
         await user.type(screen.getByRole('combobox', { name: /service name/i }), 'copil');
         await user.click(await screen.findByRole('option', { name: /GitHub Copilot/ }));
-        expect(screen.getByText(/Filled in category Software, the manage or cancel link for GitHub Copilot/)).toBeInTheDocument();
+        expect(screen.getByText(/Filled in category AI tools, the manage or cancel link for GitHub Copilot/)).toBeInTheDocument();
         await save(user);
 
         expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({
             serviceName: 'GitHub Copilot',
-            category: 'Software',
+            category: 'AI tools',
             billingCadence: 'monthly',
             manageUrl: 'https://github.com/settings/copilot',
         });
@@ -101,7 +101,8 @@ describe('adding a subscription from the catalog', () => {
         renderAdd();
 
         await user.click(screen.getByRole('button', { name: 'Yearly' }));
-        await user.click(screen.getByRole('button', { name: 'Cloud' }));
+        await user.click(screen.getByRole('combobox', { name: 'Category' }));
+        await user.click(await screen.findByRole('option', { name: 'Cloud storage' }));
         fireEvent.change(screen.getByLabelText(/manage or cancel link/i), { target: { value: 'https://example.com/mine' } });
         await user.type(screen.getByRole('combobox', { name: /service name/i }), 'netfl');
         await user.click(await screen.findByRole('option', { name: /Netflix/ }));
@@ -109,7 +110,7 @@ describe('adding a subscription from the catalog', () => {
 
         expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({
             serviceName: 'Netflix',
-            category: 'Cloud',
+            category: 'Cloud storage',
             billingCadence: 'yearly',
             manageUrl: 'https://example.com/mine',
         });
@@ -162,7 +163,7 @@ describe('adding a subscription from the catalog', () => {
         // The name stays as typed; only what the catalog knows is added.
         expect(bodyOf(callsTo(calls, 'POST /api/subs')[0])).toMatchObject({
             serviceName: 'netflix',
-            category: 'Entertainment',
+            category: 'Video streaming',
             manageUrl: 'https://www.netflix.com/account',
         });
     });
@@ -284,11 +285,11 @@ describe('Pick what you pay for', () => {
         const bodies = callsTo(calls, 'POST /api/subs').map(bodyOf);
         expect(bodies).toHaveLength(2);
         expect(bodies[0]).toMatchObject({
-            serviceName: 'Netflix', amount: 13.99, currency: 'EUR', billingCadence: 'monthly', category: 'Entertainment',
+            serviceName: 'Netflix', amount: 13.99, currency: 'EUR', billingCadence: 'monthly', category: 'Video streaming',
             status: 'active', nextBillingDate: inDays(5), manageUrl: 'https://www.netflix.com/account', b2b: false,
             householdShared: false, householdSize: null, resumesOn: null,
         });
-        expect(bodies[1]).toMatchObject({ serviceName: 'Strava', amount: 59.99, billingCadence: 'yearly', category: 'Fitness' });
+        expect(bodies[1]).toMatchObject({ serviceName: 'Strava', amount: 59.99, billingCadence: 'yearly', category: 'Health & fitness' });
     });
 
     it('locks the selection while saving, and keeps an unsaved pick by name when one fails', async () => {
@@ -362,7 +363,7 @@ describe('manage link on the detail page', () => {
             'GET /api/profile': () => ({ status: 200, body: profile() }),
             'GET /api/subs/1': () => ({ status: 200, body: {
                 id: 1, serviceName: 'Netflix', amount: '13.99', currency: 'EUR', billingCadence: 'monthly', category: 'Entertainment',
-                status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null, manageUrl,
+                status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, manageUrl,
                 autoRenew: true, b2b: false, householdShared: false, householdSize: null, cancelledAt: null, trialEndsAt: null,
                 resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null,
             } }),

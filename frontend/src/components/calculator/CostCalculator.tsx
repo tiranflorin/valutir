@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { CATEGORIES } from '../../data/categories';
 import { Alert, Box, Button, Checkbox, IconButton, MenuItem, Paper, Stack, TextField } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
@@ -12,7 +13,6 @@ import type { CalculatorPreset } from '../../data/calculatorPresets';
 import { type CatalogService, SERVICE_CATALOG, findCatalogService, searchCatalog } from '../../data/services';
 import {
     CALCULATOR_CADENCES,
-    CALCULATOR_CATEGORIES,
     type CalculatorRow,
     calculatorTotals,
     importFromRows,
@@ -192,10 +192,10 @@ const CostCalculator: React.FC<Props> = ({ preset, initialRows = [], initialCurr
                                         label="Category"
                                         size="small"
                                         value={row.category}
-                                        onChange={(event) => update(row.name, { category: event.target.value as CalculatorRow['category'] })}
+                                        onChange={(event) => update(row.name, { category: event.target.value })}
                                         SelectProps={{ inputProps: { 'aria-label': `${row.name} category` } }}
                                     >
-                                        {CALCULATOR_CATEGORIES.map((category) => <MenuItem key={category} value={category}>{category}</MenuItem>)}
+                                        {CATEGORIES.map((category) => <MenuItem key={category} value={category}>{category}</MenuItem>)}
                                     </TextField>
                                 )}
                                 <IconButton aria-label={`Remove ${row.name}`} size="small" onClick={() => setRows((previous) => previous.filter((item) => item.name !== row.name))}>

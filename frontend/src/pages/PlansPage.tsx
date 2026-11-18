@@ -30,8 +30,8 @@ const freeFeatures = [
 
 const unlockFeatures = [
     'Add and track more than 50 active subscriptions',
+    'Choose how many days before each charge you’re reminded',
     'Business charges for a month or quarter, exported for your accountant',
-    'Custom reminder timing and renewal reports',
     'Keep both dashboards and the same shared account',
 ];
 
@@ -196,8 +196,8 @@ const PlansPage: React.FC = () => {
 
                 <Box className="plans-business-note">
                     <strong>Business tracking itself stays free.</strong> If you freelance or run a one-person company,
-                    marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond 50 active subscriptions
-                    or using advanced business tools.
+                    marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond 50 active subscriptions,
+                    the accountant export and choosing when you’re reminded.
                 </Box>
                 {status && !status.paidFeatures && (
                     <p className="plans-usage" role="status">
@@ -230,8 +230,7 @@ const PlansPage: React.FC = () => {
                 {error && <Alert className="plans-upgrade-notice" severity="error">{error}</Alert>}
                 <p className="plans-footnote">
                     At 50 active subscriptions, your current records remain available to view, edit, review and archive.
-                    Add a 51st after the one-time unlock. Some advanced business tools are still being built; they
-                    aren&apos;t part of the purchase until they&apos;re released (see the <RouterLink to="/terms">Terms</RouterLink>).
+                    Add a 51st after the one-time unlock.
                 </p>
             </Container>
             <AppFooter />

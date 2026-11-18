@@ -17,6 +17,8 @@ docker compose exec backend php bin/console app:reminders:send
   | Renewal, monthly | 3 days before |
   | Renewal, quarterly or yearly | 7 days before |
 
+  With paid features (the unlock or an admin account), each subscription can set its own time instead ("Remind me" in the form, `reminderLeadDays`, 1 to 30 days), for a trial too. Without them the defaults apply, even if a choice was stored earlier. Changing it never sends a charge's reminder twice; a longer time that already includes today sends it on the next run.
+
   It exits with a failure status when a digest can't be sent; that user is retried on the next run.
 
 A third command removes expired rows from the PostgreSQL-backed cache pools (revoked JWTs and rate-limit counters, table `cache_items`). Expired rows are already ignored, so this only keeps the table small; run it hourly too, in any order:

@@ -107,7 +107,7 @@ final class AccountExportServiceTest extends TestCase
         ])->subscriptionRows($this->user), false);
 
         self::assertSame(AccountExportService::CSV_COLUMNS, $rows[0]);
-        self::assertSame(['Netflix', 'Streaming', '13.99', 'EUR', 'monthly', '2026-11-20', 'active', 'no', 'yes', '4', '3.50', '', 'Family plan', 'https://www.netflix.com/account', '2026-01-01', '', ''], $rows[1]);
+        self::assertSame(['Netflix', 'Streaming', '13.99', 'EUR', 'monthly', '2026-11-20', 'active', 'no', 'yes', '4', '3.50', 'Family plan', 'https://www.netflix.com/account', '2026-01-01', '', ''], $rows[1]);
         self::assertSame('spotify', $rows[2][0]);
         self::assertSame(['no', '', '10.99'], [$rows[2][8], $rows[2][9], $rows[2][10]]);
     }
@@ -130,7 +130,7 @@ final class AccountExportServiceTest extends TestCase
         ])->subscriptionRows($this->user), false);
 
         self::assertSame('\'=HYPERLINK("https://evil.example","x")', $rows[1][0]);
-        self::assertSame("'@SUM(A1)", $rows[1][12]);
+        self::assertSame("'@SUM(A1)", $rows[1][11]);
     }
 
     /**

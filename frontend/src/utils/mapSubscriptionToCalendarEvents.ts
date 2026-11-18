@@ -37,7 +37,6 @@ export const mapSubscriptionToCalendarEvents = (
             status: getStatus(occurrence.date),
             category: occurrence.category,
             billingCadence: occurrence.billingCadence,
-            paymentMethod: occurrence.paymentMethod,
             notes: occurrence.notes,
         },
     }));

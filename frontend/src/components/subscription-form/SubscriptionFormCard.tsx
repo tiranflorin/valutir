@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { todayIsoDate } from '../../utils/dates';
 import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
-import { TRIAL_REMINDER_LEAD_DAYS } from '../../utils/reminders';
+import { daysBeforeLabel, defaultReminderLeadDays, REMINDER_LEAD_DAY_CHOICES, reminderLeadDays } from '../../utils/reminders';
+import { Link as RouterLink } from 'react-router';
 import { MANAGE_URL_MAX, manageUrlError } from '../../utils/manageUrl';
 import { stepPrice } from '../../utils/stepPrice';
 import { type CatalogService, findCatalogService, searchCatalog } from '../../data/services';
 import CatalogTile from '../CatalogTile';
+import { CATEGORIES } from '../../data/categories';
 import {
     Accordion,
     AccordionDetails,
@@ -53,7 +55,6 @@ export type SubscriptionFormValues = {
     notes: string;
     /** Where to manage or cancel it with the provider (https); empty = none. */
     manageUrl: string;
-    providerGroup: string;
     householdShared: boolean;
     /** People splitting the bill equally, the owner included (used when householdShared). */
     householdSize: number;
@@ -61,6 +62,8 @@ export type SubscriptionFormValues = {
     b2b: boolean;
     /** Business only: paid with the owner's own card instead of the company's. */
     paidPersonally: boolean;
+    /** Days before each charge the reminder goes out; null = the default for its cadence. Paid feature. */
+    reminderLeadDays: number | null;
 };
 
 type Props = {
@@ -75,7 +78,6 @@ type Props = {
     onCancel: () => void;
     showHeader?: boolean;
     showCurrency?: boolean;
-    showProviderGroup?: boolean;
     showHouseholdShared?: boolean;
     /** Statuses to pick from. A new subscription is Active or Trial; Paused is for existing ones. */
     statusOptions?: SubscriptionStatus[];
@@ -83,6 +85,8 @@ type Props = {
     serviceSuggestions?: boolean;
     /** Shown under the price, e.g. that editing keeps the old price in the history. */
     priceHelperText?: string;
+    /** Whether the account may choose when it's reminded (null while unknown: the choice stays disabled). */
+    paidFeatures?: boolean | null;
 };
 
 
@@ -94,15 +98,6 @@ const intervalOptions: { label: string; value: BillingInterval }[] = [
     { label: 'Weekly', value: 'weekly' },
 ];
 
-const categoryOptions = [
-    'Entertainment',
-    'Software',
-    'Fitness',
-    'Banking',
-    'Utilities',
-    'Cloud',
-    'Other',
-];
 
 const SERVICE_SUGGESTIONS = searchCatalog('');
 
@@ -143,11 +138,11 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                                    onCancel,
                                                    showHeader = true,
                                                    showCurrency = true,
-                                                   showProviderGroup = true,
                                                    showHouseholdShared = true,
                                                    statusOptions = DEFAULT_STATUS_OPTIONS,
                                                    serviceSuggestions = false,
                                                    priceHelperText,
+                                                   paidFeatures = null,
                                                }) => {
     const theme = useTheme();
     // A catalog pick never overrides a choice the user made themselves.
@@ -200,6 +195,13 @@ const SubscriptionFormCard: React.FC<Props> = ({
 
     const summaryDateLabel = isTrial ? 'First charge' : 'Next billing';
 
+    const defaultLeadDays = defaultReminderLeadDays(isTrial, values.billingInterval);
+    const leadDays = reminderLeadDays(values.reminderLeadDays, isTrial, values.billingInterval, paidFeatures === true);
+    // A value set through the API that isn't one of the offered choices is still shown.
+    const leadDayChoices = values.reminderLeadDays !== null && !REMINDER_LEAD_DAY_CHOICES.includes(values.reminderLeadDays)
+        ? [...REMINDER_LEAD_DAY_CHOICES, values.reminderLeadDays].sort((a, b) => a - b)
+        : REMINDER_LEAD_DAY_CHOICES;
+
     const trialReminderPreview = useMemo(() => {
         if (!isTrial || !values.renewalDate) return null;
 
@@ -207,11 +209,11 @@ const SubscriptionFormCard: React.FC<Props> = ({
         if (Number.isNaN(chargeDate.getTime())) return null;
 
         const reminderDate = new Date(chargeDate);
-        reminderDate.setDate(reminderDate.getDate() - TRIAL_REMINDER_LEAD_DAYS);
+        reminderDate.setDate(reminderDate.getDate() - leadDays);
 
         // Local calendar date (toISOString() would give the UTC date, off by one near midnight).
         return todayIsoDate(reminderDate);
-    }, [isTrial, values.renewalDate]);
+    }, [isTrial, values.renewalDate, leadDays]);
 
     const patch = (partial: Partial<SubscriptionFormValues>) => {
         onChange({ ...values, ...partial });
@@ -412,26 +414,22 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             </Stack>
                         </Stack>
 
-                        <Stack spacing={1}>
-                            <FormFieldLabel label="Category" />
-
-                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                {categoryOptions.map((option) => (
-                                    <Chip
-                                        key={option}
-                                        label={option}
-                                        clickable
-                                        color={values.category === option ? 'primary' : 'default'}
-                                        variant={values.category === option ? 'filled' : 'outlined'}
-                                        onClick={() => {
-                                            setCategoryChosen(true);
-                                            patch({ category: option });
-                                        }}
-                                        sx={{ fontWeight: 600, borderRadius: 999 }}
-                                    />
-                                ))}
-                            </Stack>
-                        </Stack>
+                        <TextField
+                            select
+                            label="Category"
+                            value={values.category}
+                            onChange={(event) => {
+                                setCategoryChosen(true);
+                                patch({ category: event.target.value });
+                            }}
+                            sx={{ maxWidth: { sm: 320 } }}
+                        >
+                            {/* An older subscription may still have a category from the earlier, broader list. */}
+                            {!(CATEGORIES as readonly string[]).includes(values.category) && (
+                                <MenuItem value={values.category}>{values.category}</MenuItem>
+                            )}
+                            {CATEGORIES.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                        </TextField>
 
                         <Stack
                             className="subscription-status-date-row"
@@ -567,15 +565,6 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 }}
                             >
                                 <Stack spacing={2.5}>
-                                    {showProviderGroup && (
-                                        <TextField
-                                            label="Provider group"
-                                            value={values.providerGroup}
-                                            onChange={(e) => patch({ providerGroup: e.target.value })}
-                                            fullWidth
-                                        />
-                                    )}
-
                                     <TextField
                                         label="Manage or cancel link"
                                         type="url"
@@ -681,6 +670,23 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                             />
                                         </Stack>
                                     </Stack>
+
+                                    <TextField
+                                        select
+                                        label="Remind me"
+                                        value={values.reminderLeadDays ?? 'default'}
+                                        onChange={(event) => patch({ reminderLeadDays: event.target.value === 'default' ? null : Number(event.target.value) })}
+                                        disabled={paidFeatures !== true}
+                                        helperText={paidFeatures === false ? (
+                                            <>Choosing when you’re reminded comes with the one-time unlock. <RouterLink to="/plans">See plans</RouterLink></>
+                                        ) : 'Days before each charge the reminder email goes out.'}
+                                        sx={{ maxWidth: 320 }}
+                                    >
+                                        <MenuItem value="default">Default: {daysBeforeLabel(defaultLeadDays)}</MenuItem>
+                                        {leadDayChoices.map((days) => (
+                                            <MenuItem key={days} value={days}>{daysBeforeLabel(days)}</MenuItem>
+                                        ))}
+                                    </TextField>
                                 </Stack>
                             </AccordionDetails>
                         </Accordion>
@@ -788,7 +794,7 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                     </Typography>
 
                                     <Typography variant="body2" color="text.secondary">
-                                        Planned email step: send a reminder via email 2 days before trial expiration.
+                                        The reminder email goes out {daysBeforeLabel(leadDays)} the first charge.
                                     </Typography>
                                 </Stack>
                             </>

@@ -108,7 +108,7 @@ const PrivacyPage: React.FC = () => (
                                     <td>Contract (Art. 6(1)(b) GDPR)</td>
                                 </tr>
                                 <tr>
-                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status (including a pause and its resume date), category, notes, payment method label, the link where you manage or cancel it, household sharing, for business subscriptions whether you pay with the company card or your own (and the day you switched), any review flag with its note, and the price history (each earlier price, currency and billing cadence, and the day you changed it)</td>
+                                    <td>The subscriptions you enter: service name, price, currency, billing dates, status (including a pause and its resume date), category, notes, the link where you manage or cancel it, household sharing, for business subscriptions whether you pay with the company card or your own (and the day you switched), how many days before a charge you chose to be reminded, any review flag with its note, and the price history (each earlier price, currency and billing cadence, and the day you changed it)</td>
                                     <td>To show your dashboard and calendar, and to work out upcoming charges</td>
                                     <td>Contract</td>
                                 </tr>
@@ -141,8 +141,7 @@ const PrivacyPage: React.FC = () => (
                         </table>
                     </div>
                     <p>
-                        Please don't put sensitive information in notes, review notes or the payment method field. For example, never
-                        enter full card numbers; a label like &ldquo;Visa ending 4242&rdquo; is enough.
+                        Please don't put sensitive information in notes or review notes. For example, never enter card numbers.
                     </p>
                     <p>
                         The <RouterLink to="/calculator">subscription cost calculator</RouterLink> works entirely in your browser: what you

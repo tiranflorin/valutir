@@ -76,15 +76,35 @@ final class ReminderPlannerTest extends TestCase
         self::assertSame([], $this->plan([$sent, $notRenewing, $cancelled, $deleted], $alreadySent));
     }
 
+    public function testAChosenLeadTimeReplacesTheDefaultWithPaidFeatures(): void
+    {
+        // A yearly plan 20 days away is outside the 7-day default; its owner chose 21 days.
+        $yearly = $this->subscription(1, 'Domain', 'yearly', '2026-11-22')->setReminderLeadDays(21);
+        // A monthly charge in 3 days is inside the default; its owner chose 1 day.
+        $monthly = $this->subscription(2, 'Figma', 'monthly', '2026-11-05')->setReminderLeadDays(1);
+        $trial = $this->subscription(3, 'Trial', 'monthly', '2026-11-12', 'trial')->setReminderLeadDays(10);
+        $trial->setTrialEndsAt(CalendarDay::fromString('2026-11-12'));
+
+        self::assertSame(['Trial', 'Domain'], $this->names($this->plan([$yearly, $monthly, $trial], customTiming: true)));
+    }
+
+    public function testAChosenLeadTimeIsIgnoredWithoutPaidFeatures(): void
+    {
+        $yearly = $this->subscription(1, 'Domain', 'yearly', '2026-11-22')->setReminderLeadDays(21);
+        $monthly = $this->subscription(2, 'Figma', 'monthly', '2026-11-05')->setReminderLeadDays(1);
+
+        self::assertSame(['Figma'], $this->names($this->plan([$yearly, $monthly])));
+    }
+
     /**
      * @param list<Subscription>  $subscriptions
      * @param array<string, true> $alreadySent
      *
      * @return list<DueReminder>
      */
-    private function plan(array $subscriptions, array $alreadySent = []): array
+    private function plan(array $subscriptions, array $alreadySent = [], bool $customTiming = false): array
     {
-        return (new ReminderPlanner(new BillingSchedule()))->plan($subscriptions, CalendarDay::fromString(self::TODAY), $alreadySent);
+        return (new ReminderPlanner(new BillingSchedule()))->plan($subscriptions, CalendarDay::fromString(self::TODAY), $alreadySent, $customTiming);
     }
 
     /**

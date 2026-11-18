@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, TextField } from '@mui/material';
+import { Button, InputAdornment, TextField } from '@mui/material';
 import { useNavigate } from 'react-router';
 import CatalogTile from '../CatalogTile';
 import { SERVICE_CATALOG, type CatalogService } from '../../data/services';
@@ -58,6 +58,9 @@ const HeroCalculator: React.FC = () => {
                                 value={row.amount}
                                 onChange={(event) => setRows((previous) => previous.map((item) => (item.name === row.name ? { ...item, amount: event.target.value } : item)))}
                                 inputProps={{ min: 0, step: '0.01', 'aria-label': `${row.name} price in euros` }}
+                                // The quick calculator is in euros; the full one lets you pick the currency.
+                                // disableTypography: plain text, not a <p> (the hero's paragraph margin would push it up).
+                                InputProps={{ startAdornment: <InputAdornment position="start" disableTypography>€</InputAdornment> }}
                             />
                             <small>{CADENCE_SUFFIX[row.cadence]}</small>
                         </li>

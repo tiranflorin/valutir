@@ -4813,7 +4813,7 @@ img.catalog-tile {
 
 .hero-calculator-rows li {
     display: grid;
-    grid-template-columns: 1fr 112px 64px;
+    grid-template-columns: 1fr 120px 64px;
     align-items: center;
     gap: 10px;
     color: #2b3d31;
@@ -5301,7 +5301,7 @@ img.catalog-tile {
     }
 
     .hero-calculator-rows li {
-        grid-template-columns: 1fr 96px 56px;
+        grid-template-columns: 1fr 108px 56px;
     }
 
     .calculator-figures {

@@ -17,18 +17,22 @@ const renderApp = (route: string) => render(<MemoryRouter initialEntries={[route
 
 const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord => ({
     id: 1, serviceName: 'Netflix', amount: '13.99', currency: 'EUR', billingCadence: 'monthly', category: 'Streaming',
-    status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, paymentMethod: null, manageUrl: null,
-    isActive: true, autoRenew: true, b2b: false, paidPersonally: false, householdShared: false, householdSize: null, cancelledAt: null,
+    status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, manageUrl: null,
+    isActive: true, autoRenew: true, b2b: false, paidPersonally: false, reminderLeadDays: null, householdShared: false, householdSize: null, cancelledAt: null,
     createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
     resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null, priceChanges: [],
     ...overrides,
 });
 
 /** An in-memory /api/subs, so each step of a flow sees what the previous one saved. */
-const fakeBackend = (initial: SubscriptionRecord[]) => {
+const fakeBackend = (initial: SubscriptionRecord[], { paidFeatures = false } = {}) => {
     let subscriptions = [...initial];
     const handlers: Handlers = {
         'GET /api/profile': () => ({ status: 200, body: profile() }),
+        'GET /api/billing': () => ({
+            status: 200,
+            body: { unlocked: paidFeatures, unlockedAt: null, paidFeatures, checkoutAvailable: true, price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true }, freeActiveLimit: 50, activeCount: 1 },
+        }),
         'GET /api/subs': () => ({ status: 200, body: subscriptions }),
         'POST /api/subs': (call) => {
             const created = record({ ...bodyOf(call), id: 100, amount: String(bodyOf(call).amount) });
@@ -83,7 +87,7 @@ describe('adding a subscription', () => {
         expect(bodyOf(create)).toMatchObject({
             serviceName: 'Netflix', amount: 13.99, currency: 'EUR', billingCadence: 'monthly', status: 'active',
             startedAt: todayIsoDate(), nextBillingDate: todayIsoDate(), trialEndsAt: null, cancelledAt: null,
-            autoRenew: true, b2b: false, paidPersonally: false, householdShared: false, householdSize: null,
+            autoRenew: true, b2b: false, paidPersonally: false, reminderLeadDays: null, householdShared: false, householdSize: null,
         });
     });
 
@@ -155,7 +159,7 @@ describe('statuses', () => {
 describe('managing a subscription from its detail page', () => {
     it('edits the price and sends every field (updates replace the whole subscription)', async () => {
         signIn();
-        const calls = fakeBackend([record({ householdShared: true, householdSize: 3, paymentMethod: 'Visa' })]);
+        const calls = fakeBackend([record({ householdShared: true, householdSize: 3 })]);
         const user = userEvent.setup();
         renderApp('/subscriptions/1');
 
@@ -167,8 +171,37 @@ describe('managing a subscription from its detail page', () => {
         expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({
             serviceName: 'Netflix', amount: 15.49, currency: 'EUR', billingCadence: 'monthly', status: 'active',
             nextBillingDate: '2099-01-15', autoRenew: true, b2b: false, householdShared: true, householdSize: 3,
-            startedAt: '2026-01-01', paymentMethod: 'Visa', paidPersonally: false,
+            startedAt: '2026-01-01', paidPersonally: false,
         });
+    });
+
+    it('lets an account with paid features choose when it is reminded', async () => {
+        signIn();
+        const calls = fakeBackend([record({ billingCadence: 'yearly' })], { paidFeatures: true });
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.click(await screen.findByRole('button', { name: 'Edit subscription' }));
+        await user.click(screen.getByRole('button', { name: /Optional details/ }));
+        await user.click(screen.getByRole('combobox', { name: 'Remind me' }));
+        await user.click(await screen.findByRole('option', { name: '21 days before' }));
+        await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(callsTo(calls, 'PATCH /api/subs/1')).toHaveLength(1));
+        expect(bodyOf(callsTo(calls, 'PATCH /api/subs/1')[0])).toMatchObject({ reminderLeadDays: 21 });
+    });
+
+    it('keeps the reminder timing at its default without paid features', async () => {
+        signIn();
+        fakeBackend([record({})]);
+        const user = userEvent.setup();
+        renderApp('/subscriptions/1');
+
+        await user.click(await screen.findByRole('button', { name: 'Edit subscription' }));
+        await user.click(screen.getByRole('button', { name: /Optional details/ }));
+
+        expect(await screen.findByText(/Choosing when you’re reminded comes with the one-time unlock/)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: 'Remind me' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('records that a business subscription is paid with the owner\'s own card', async () => {
