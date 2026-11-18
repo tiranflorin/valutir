@@ -13,6 +13,7 @@ const unverified = profile({ emailVerified: false });
 const billing = {
     unlocked: false,
     unlockedAt: null,
+    paidFeatures: false,
     checkoutAvailable: true,
     price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true },
     freeActiveLimit: 50,

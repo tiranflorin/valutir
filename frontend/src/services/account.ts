@@ -30,7 +30,7 @@ export class ApiError extends Error {
 }
 
 type RequestOptions = {
-    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     token?: string | null;
     body?: unknown;
     fallbackError: string;
@@ -55,7 +55,7 @@ export const apiErrorMessage = (data: unknown, fallback: string): string => {
     return typeof error === 'string' && error ? error : fallback;
 };
 
-async function apiRequest<T>(path: string, { method = 'GET', token, body, fallbackError }: RequestOptions): Promise<T> {
+export async function apiRequest<T>(path: string, { method = 'GET', token, body, fallbackError }: RequestOptions): Promise<T> {
     const response = await fetch(`${API_URL}${path}`, {
         method,
         headers: {
@@ -194,8 +194,11 @@ export const unsubscribeFromReminders = (unsubscribeToken: string) =>
 
 /** The account's plan: free (limited active subscriptions) or unlocked by the one-time payment. */
 export type BillingStatus = {
+    /** Paid for the one-time unlock. */
     unlocked: boolean;
     unlockedAt: string | null;
+    /** Every paid feature is open: the unlock, or an admin account. Gate features on this, not on `unlocked`. */
+    paidFeatures: boolean;
     /** False when the server has no Stripe keys: the upgrade button is disabled. */
     checkoutAvailable: boolean;
     /** amountInCents: 1999 = €19.99, tax included. */

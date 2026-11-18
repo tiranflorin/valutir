@@ -2,6 +2,8 @@
 
 The paid plan is a **one-time unlock: €19.99, VAT included, no renewal**. It lifts the free plan's limit of 50 active (active or trial) subscriptions. Payment runs on Stripe-hosted Checkout, so card details never reach ValuTir.
 
+What it opens: no 50-subscription limit, and the accountant export of business charges. Admin accounts (`ROLE_ADMIN`, granted with `app:create-admin`) get the same without paying, so the operator can use and test paid tools: the code checks `User::hasPaidFeatures()` (and the app `paidFeatures` from `GET /api/billing`), never the purchase alone. `unlocked` stays true only for accounts that paid.
+
 How it works:
 
 1. `POST /api/billing/checkout` (signed in) creates a Checkout session. The product, amount, currency, and buyer all come from the server (`App\Payment\UnlockOffer`); the request has no body. Any earlier open session of the same user is expired first, so only one can be paid. A `purchase` row records the session (status `pending`). Rate limit: 10 attempts per hour per user.

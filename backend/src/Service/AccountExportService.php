@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Clock\Clock;
+use App\Entity\InvoiceFiling;
 use App\Entity\Purchase;
 use App\Entity\ReminderLog;
 use App\Entity\Subscription;
 use App\Entity\User;
+use App\Repository\InvoiceFilingRepository;
 use App\Repository\PurchaseRepository;
 use App\Repository\ReminderLogRepository;
 use App\Repository\SubscriptionRepository;
@@ -36,6 +38,7 @@ final readonly class AccountExportService
         private SubscriptionRepository $subscriptionRepository,
         private PurchaseRepository $purchaseRepository,
         private ReminderLogRepository $reminderLogRepository,
+        private InvoiceFilingRepository $invoiceFilingRepository,
         private Clock $clock,
     ) {
     }
@@ -81,6 +84,14 @@ final readonly class AccountExportService
                     'sentAt' => $log->getSentAt()->format(\DateTimeInterface::ATOM),
                 ],
                 $this->reminderLogRepository->findByUserForExport($user),
+            ),
+            'invoicesFiled' => array_map(
+                static fn (InvoiceFiling $filing): array => [
+                    'subscriptionId' => $filing->getSubscription()->getId(),
+                    'chargeDate' => $filing->getChargeDate()->format('Y-m-d'),
+                    'filedAt' => $filing->getFiledAt()->format(\DateTimeInterface::ATOM),
+                ],
+                $this->invoiceFilingRepository->findByUserForExport($user),
             ),
         ];
     }

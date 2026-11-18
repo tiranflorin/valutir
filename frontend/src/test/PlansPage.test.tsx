@@ -9,6 +9,7 @@ import { renderWithMemoryRoute } from './test-utils';
 const freeStatus = {
     unlocked: false,
     unlockedAt: null,
+    paidFeatures: false,
     checkoutAvailable: true,
     price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true },
     freeActiveLimit: 50,
@@ -61,12 +62,23 @@ describe('plans page checkout', () => {
     it('confirms the unlock after returning from a successful payment', async () => {
         mockApi({
             'GET /api/profile': () => ({ status: 200, body: profile() }),
-            'GET /api/billing': () => ({ status: 200, body: { ...freeStatus, unlocked: true, unlockedAt: '2026-11-03T10:00:00+00:00' } }),
+            'GET /api/billing': () => ({ status: 200, body: { ...freeStatus, unlocked: true, unlockedAt: '2026-11-03T10:00:00+00:00', paidFeatures: true } }),
         });
         renderWithMemoryRoute(<PlansPage />, { route: '/plans?checkout=success' });
 
         expect(await screen.findByText('Your account is unlocked. Thank you!')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Unlocked on this account' })).toBeDisabled();
+    });
+
+    it('tells an admin the paid features are already included', async () => {
+        mockApi({
+            'GET /api/profile': () => ({ status: 200, body: profile() }),
+            'GET /api/billing': () => ({ status: 200, body: { ...freeStatus, paidFeatures: true } }),
+        });
+        renderWithMemoryRoute(<PlansPage />, { route: '/plans' });
+
+        expect(await screen.findByRole('button', { name: 'Included with your admin account' })).toBeDisabled();
+        expect(screen.queryByText(/active subscriptions on the free plan/)).not.toBeInTheDocument();
     });
 
     it('tells the user a cancelled payment cost nothing', async () => {

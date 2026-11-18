@@ -3848,6 +3848,109 @@ img.catalog-tile {
     color: #f0c27f;
 }
 
+/* Business invoices page (InvoicesPage): the month checklist and the accountant export. */
+.invoices-month.MuiPaper-root,
+.invoices-export.MuiPaper-root {
+    padding: 12px 18px 14px;
+}
+
+.invoices-month-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+}
+
+.invoices-month-head h2,
+.invoices-export h2 {
+    margin: 0;
+    color: #17241d;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.invoices-month-head h2 {
+    min-width: 132px;
+    text-align: center;
+}
+
+.invoices-progress {
+    margin-left: auto;
+    color: #69776e;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.invoices-list li {
+    grid-template-columns: 52px minmax(0, 1fr) auto 128px;
+}
+
+.invoices-list .charge-name-cell {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.invoices-billing-link {
+    margin-left: 32px;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.invoices-tick {
+    display: inline-flex;
+    align-items: center;
+    color: #17241d;
+    cursor: pointer;
+}
+
+.invoices-tick .MuiCheckbox-root {
+    padding: 4px;
+}
+
+.invoices-list li.paid .invoices-tick {
+    color: var(--vt-green);
+}
+
+.invoices-export p {
+    margin: 6px 0 12px;
+    color: #4f5d55;
+    font-size: 14px;
+}
+
+.invoices-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 700px) {
+    .invoices-list li {
+        grid-template-columns: 44px minmax(0, 1fr) auto;
+    }
+
+    .invoices-progress {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+:root[data-theme='dark'] .invoices-month-head h2,
+:root[data-theme='dark'] .invoices-export h2,
+:root[data-theme='dark'] .invoices-tick {
+    color: #f1f5f9;
+}
+
+:root[data-theme='dark'] .invoices-progress,
+:root[data-theme='dark'] .invoices-export p {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .invoices-list li.paid .invoices-tick {
+    color: #7fd0a0;
+}
+
 /* Insights page (InsightsPage). */
 .insights-controls {
     margin: 4px 0 0;

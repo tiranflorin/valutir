@@ -474,6 +474,21 @@ class Subscription
         return new PriceTerms((string) $this->amount, (string) $this->currency, (string) $this->billingCadence);
     }
 
+    /** What it cost on $day: the terms before the first price change made after that day, else today's. */
+    public function priceTermsOn(\DateTimeImmutable $day): PriceTerms
+    {
+        $day = $day->format('Y-m-d');
+        $firstLater = null;
+        foreach ($this->priceChanges as $change) {
+            $changedOn = $change->getChangedOn()->format('Y-m-d');
+            if ($changedOn > $day && (null === $firstLater || $changedOn < $firstLater->getChangedOn()->format('Y-m-d'))) {
+                $firstLater = $change;
+            }
+        }
+
+        return $firstLater?->previous() ?? $this->priceTerms();
+    }
+
     /**
      * Keeps the old price when an edit changes the amount, currency or cadence, so the owner can see
      * what it cost before. Call before applying the edit. Typo fixes don't pile up: edits on the day the

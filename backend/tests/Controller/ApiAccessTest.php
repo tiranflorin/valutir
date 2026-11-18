@@ -41,6 +41,10 @@ final class ApiAccessTest extends WebTestCase
         yield 'logout everywhere' => ['POST', '/api/logout/all'];
         yield 'billing status' => ['GET', '/api/billing'];
         yield 'start checkout' => ['POST', '/api/billing/checkout'];
+        yield 'business charges' => ['GET', '/api/business/charges'];
+        yield 'file an invoice' => ['PUT', '/api/business/charges/1/2026-10-25/invoice'];
+        yield 'unfile an invoice' => ['DELETE', '/api/business/charges/1/2026-10-25/invoice'];
+        yield 'accountant export' => ['GET', '/api/business/export.csv'];
     }
 
     #[DataProvider('protectedEndpoints')]

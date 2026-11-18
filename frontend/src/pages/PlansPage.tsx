@@ -23,6 +23,7 @@ const freeFeatures = [
     'Monthly and yearly cost summaries',
     'Trial tracking and review decisions',
     'Price history: each change you make, and what it adds a year',
+    'Invoice checklist for business charges',
     'Download all your data (JSON) and subscriptions (CSV)',
     'One account; each subscription belongs to one view',
 ];
@@ -123,6 +124,9 @@ const PlansPage: React.FC = () => {
         if (status?.unlocked) {
             return <Button variant="contained" fullWidth disabled>Unlocked on this account</Button>;
         }
+        if (status?.paidFeatures) {
+            return <Button variant="contained" fullWidth disabled>Included with your admin account</Button>;
+        }
 
         return (
             <Button
@@ -195,17 +199,17 @@ const PlansPage: React.FC = () => {
                     marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond 50 active subscriptions
                     or using advanced business tools.
                 </Box>
-                {status && !status.unlocked && (
+                {status && !status.paidFeatures && (
                     <p className="plans-usage" role="status">
                         You have {status.activeCount} of {status.freeActiveLimit} active subscriptions on the free plan.
                     </p>
                 )}
-                {status && !status.unlocked && emailUnverified && (
+                {status && !status.paidFeatures && emailUnverified && (
                     <Alert className="plans-upgrade-notice" severity="info">
                         Confirm your email address first: Stripe sends your receipt there. Use the link we emailed you, or “Resend link” at the top of the page.
                     </Alert>
                 )}
-                {status && !status.checkoutAvailable && !status.unlocked && (
+                {status && !status.checkoutAvailable && !status.paidFeatures && (
                     <Alert className="plans-upgrade-notice" severity="info">Payments are not available right now. Please try again later.</Alert>
                 )}
                 {returnState === 'confirming' && (

@@ -132,6 +132,7 @@ export const UNLISTED_PAGES: UnlistedPage[] = [
     { path: '/calendar', title: 'Renewal calendar · ValuTir' },
     { path: '/insights', title: 'Insights · ValuTir' },
     { path: '/review', title: 'Review my subscriptions · ValuTir' },
+    { path: '/invoices', title: 'Business invoices · ValuTir' },
     { path: '/profile', title: 'Your profile · ValuTir' },
     { path: '/preferences', title: 'Preferences · ValuTir' },
 ];

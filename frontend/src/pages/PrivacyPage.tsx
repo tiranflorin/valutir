@@ -118,6 +118,11 @@ const PrivacyPage: React.FC = () => (
                                     <td>Contract</td>
                                 </tr>
                                 <tr>
+                                    <td>Invoice checklist: which charges of your business subscriptions you&apos;ve ticked as having their invoice filed, and when (never the invoices themselves)</td>
+                                    <td>To show which invoices are still missing for a month</td>
+                                    <td>Contract</td>
+                                </tr>
+                                <tr>
                                     <td>One-time unlock: which purchase, its Stripe reference, amount, and status. Stripe handles your name, billing address, VAT ID, and payment details</td>
                                     <td>To unlock your account and handle refunds</td>
                                     <td>Contract; keeping payment records is a legal obligation (Art. 6(1)(c))</td>

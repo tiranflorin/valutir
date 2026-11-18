@@ -21,6 +21,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** Default user time zone: Frankfurt, where the app is hosted (AWS eu-central-1). */
     public const string DEFAULT_TIMEZONE = 'Europe/Berlin';
 
+    /** The operator's accounts (granted with app:create-admin); they get every paid feature without paying. */
+    public const string ROLE_ADMIN = 'ROLE_ADMIN';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -244,9 +247,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->remindersProcessedOn;
     }
 
+    /** Paid for the one-time unlock (set only by the Stripe webhook). Gate features with hasPaidFeatures(). */
     public function isUnlocked(): bool
     {
         return null !== $this->unlockedAt;
+    }
+
+    /** Every paid feature is open: the account paid for the unlock, or it's an admin account. */
+    public function hasPaidFeatures(): bool
+    {
+        return $this->isUnlocked() || \in_array(self::ROLE_ADMIN, $this->getRoles(), true);
     }
 
     public function getUnlockedAt(): ?\DateTimeImmutable

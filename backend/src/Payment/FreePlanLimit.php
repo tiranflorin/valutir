@@ -43,7 +43,7 @@ final class FreePlanLimit
      */
     public function assertCanSave(User $user, ?Subscription $existing, ?string $newStatus): void
     {
-        if ($user->isUnlocked() || !$this->counts($newStatus)) {
+        if ($user->hasPaidFeatures() || !$this->counts($newStatus)) {
             return;
         }
         if (null !== $existing && null === $existing->getDeletedAt() && $this->counts($existing->getStatus())) {

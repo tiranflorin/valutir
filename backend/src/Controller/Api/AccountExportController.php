@@ -6,6 +6,7 @@ namespace App\Controller\Api;
 
 use App\Clock\Clock;
 use App\Entity\User;
+use App\Http\CsvDownload;
 use App\Service\AccountExportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -13,7 +14,6 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -59,22 +59,9 @@ final class AccountExportController extends AbstractController
         }
 
         $rows = $this->exportService->subscriptionRows($user, null === $view ? null : self::VIEWS[$view]);
-        $response = new StreamedResponse(static function () use ($rows): void {
-            $out = fopen('php://output', 'w');
-            if (false === $out) {
-                return;
-            }
-            // Byte order mark, so Excel reads the file as UTF-8.
-            fwrite($out, "\u{FEFF}");
-            foreach ($rows as $row) {
-                fputcsv($out, $row, ',', '"', '');
-            }
-            fclose($out);
-        });
-        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
         $suffix = null === $view ? '' : '-'.$view;
 
-        return $this->asDownload($response, \sprintf('valutir-subscriptions%s-%s.csv', $suffix, $this->today()));
+        return new CsvDownload($rows, \sprintf('valutir-subscriptions%s-%s.csv', $suffix, $this->today()));
     }
 
     private function asDownload(Response $response, string $filename): Response

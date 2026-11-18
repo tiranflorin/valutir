@@ -42,6 +42,8 @@ final class BillingController extends AbstractController
     {
         return $this->json([
             'unlocked' => $user->isUnlocked(),
+            // True for the unlock and for admin accounts: what the app opens up.
+            'paidFeatures' => $user->hasPaidFeatures(),
             'unlockedAt' => $user->getUnlockedAt()?->format(\DATE_ATOM),
             'checkoutAvailable' => $this->checkoutService->isAvailable(),
             'price' => ['amountInCents' => UnlockOffer::AMOUNT_IN_CENTS, 'currency' => strtoupper(UnlockOffer::CURRENCY), 'taxInclusive' => true],

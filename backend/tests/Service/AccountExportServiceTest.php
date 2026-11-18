@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Clock\Clock;
+use App\Entity\InvoiceFiling;
 use App\Entity\Purchase;
 use App\Entity\ReminderLog;
 use App\Entity\Subscription;
 use App\Entity\User;
 use App\Repository\EmailChangeRequestRepository;
+use App\Repository\InvoiceFilingRepository;
 use App\Repository\PurchaseRepository;
 use App\Repository\ReminderLogRepository;
 use App\Repository\SubscriptionRepository;
@@ -49,8 +51,9 @@ final class AccountExportServiceTest extends TestCase
             ->setDeletedUseful(true);
         $purchase = new Purchase($this->user, 'unlock', self::STRIPE_SESSION, 1999, 'EUR', new \DateTimeImmutable('2026-10-01T08:59:00+00:00'));
         $reminder = new ReminderLog($netflix, 'renewal', new \DateTimeImmutable('2026-11-20'), new \DateTimeImmutable('2026-11-17T07:00:00+00:00'));
+        $filing = new InvoiceFiling($netflix, new \DateTimeImmutable('2026-10-20'), new \DateTimeImmutable('2026-10-22T18:30:00+00:00'));
 
-        $export = $this->service(subscriptions: [$netflix, $old], purchases: [$purchase], reminders: [$reminder])->export($this->user);
+        $export = $this->service(subscriptions: [$netflix, $old], purchases: [$purchase], reminders: [$reminder], filings: [$filing])->export($this->user);
 
         self::assertSame('valutir-account-export', $export['format']);
         self::assertSame(self::NOW, $export['exportedAt']);
@@ -76,6 +79,11 @@ final class AccountExportServiceTest extends TestCase
             'chargeDate' => '2026-11-20',
             'sentAt' => '2026-11-17T07:00:00+00:00',
         ]], $export['reminders']);
+        self::assertSame([[
+            'subscriptionId' => 1,
+            'chargeDate' => '2026-10-20',
+            'filedAt' => '2026-10-22T18:30:00+00:00',
+        ]], $export['invoicesFiled']);
     }
 
     public function testJsonNeverContainsSecretsOrStripeReferences(): void
@@ -165,11 +173,12 @@ final class AccountExportServiceTest extends TestCase
     }
 
     /**
-     * @param Subscription[] $subscriptions
-     * @param Purchase[]     $purchases
-     * @param ReminderLog[]  $reminders
+     * @param Subscription[]  $subscriptions
+     * @param Purchase[]      $purchases
+     * @param ReminderLog[]   $reminders
+     * @param InvoiceFiling[] $filings
      */
-    private function service(array $subscriptions = [], array $purchases = [], array $reminders = []): AccountExportService
+    private function service(array $subscriptions = [], array $purchases = [], array $reminders = [], array $filings = []): AccountExportService
     {
         $subscriptionRepository = $this->createStub(SubscriptionRepository::class);
         $subscriptionRepository->method('findAllForExport')->willReturn($subscriptions);
@@ -181,6 +190,8 @@ final class AccountExportServiceTest extends TestCase
         $purchaseRepository->method('findByUserForExport')->willReturn($purchases);
         $reminderLogRepository = $this->createStub(ReminderLogRepository::class);
         $reminderLogRepository->method('findByUserForExport')->willReturn($reminders);
+        $invoiceFilingRepository = $this->createStub(InvoiceFilingRepository::class);
+        $invoiceFilingRepository->method('findByUserForExport')->willReturn($filings);
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new \DateTimeImmutable(self::NOW));
 
@@ -192,6 +203,6 @@ final class AccountExportServiceTest extends TestCase
             new NullLogger(),
         );
 
-        return new AccountExportService($accountService, $subscriptionRepository, $purchaseRepository, $reminderLogRepository, $clock);
+        return new AccountExportService($accountService, $subscriptionRepository, $purchaseRepository, $reminderLogRepository, $invoiceFilingRepository, $clock);
     }
 }

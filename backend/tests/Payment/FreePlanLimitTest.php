@@ -66,6 +66,12 @@ final class FreePlanLimitTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    public function testAnAdminAccountHasNoLimit(): void
+    {
+        $this->limit(500)->assertCanSave((new User())->setRoles([User::ROLE_ADMIN]), null, 'active');
+        $this->addToAssertionCount(1);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

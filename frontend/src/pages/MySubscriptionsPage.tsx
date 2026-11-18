@@ -14,6 +14,7 @@ import {
     ToggleButtonGroup,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -503,6 +504,11 @@ const MySubscriptionsPage: React.FC = () => {
                         </nav>
                     </div>
                     <Box className="dashboard-heading-actions">
+                        {view === 'business' && contextSubscriptions.length > 0 && (
+                            <Button component={RouterLink} to="/invoices" startIcon={<ReceiptLongOutlinedIcon />} variant="outlined" className="start-review">
+                                Invoices
+                            </Button>
+                        )}
                         {chargedSubscriptions.length >= REVIEW_MIN_SUBSCRIPTIONS && (
                             <Button component={RouterLink} to="/review" startIcon={<FactCheckOutlinedIcon />} variant="outlined" className="start-review">
                                 Review my subscriptions

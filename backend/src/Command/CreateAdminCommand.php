@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[AsCommand(name: 'app:create-admin', description: 'Grants ROLE_ADMIN to an account, creating it interactively if needed')]
 final class CreateAdminCommand extends Command
 {
-    private const ROLE = 'ROLE_ADMIN';
+    private const ROLE = User::ROLE_ADMIN;
 
     public function __construct(
         private readonly UserRepository $userRepository,
