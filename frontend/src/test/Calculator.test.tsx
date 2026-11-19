@@ -302,7 +302,7 @@ describe('home page', () => {
         const user = userEvent.setup();
         renderApp('/');
 
-        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Stop paying for what you don’t use.');
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('What you pay for, and when it charges.');
         await user.click(screen.getByRole('button', { name: 'Netflix' }));
         await user.type(screen.getByLabelText('Netflix price in euros'), '10');
         expect(screen.getByTestId('hero-yearly')).toHaveTextContent('€120.00');
@@ -312,5 +312,42 @@ describe('home page', () => {
         expect(await screen.findByRole('heading', { name: 'What do your subscriptions cost a year?' })).toBeInTheDocument();
         expect(screen.getByLabelText('Netflix price')).toHaveValue(10);
         expect(screen.getByTestId('calculator-yearly')).toHaveTextContent('€120.00');
+    });
+
+    it('puts a yearly bill in its month and previews the reminder for the largest charge', async () => {
+        const user = userEvent.setup();
+        renderApp('/');
+
+        expect(screen.getByRole('figure', { name: 'Example of a reminder email' })).toHaveTextContent('Example');
+
+        await user.click(screen.getByRole('button', { name: 'Netflix' }));
+        await user.type(screen.getByLabelText('Netflix price in euros'), '10');
+        expect(screen.getByTestId('hero-peak')).toHaveTextContent('€10.00 every month.');
+        expect(screen.getByRole('figure')).toHaveTextContent('Netflix renews in 3 days: €10.00');
+
+        await user.click(screen.getByRole('button', { name: 'Amazon Prime' }));
+        await user.type(screen.getByLabelText('Amazon Prime price in euros'), '90');
+        const third = screen.getByLabelText('Amazon Prime next charge').querySelectorAll('option')[2];
+        await user.selectOptions(screen.getByLabelText('Amazon Prime next charge'), third);
+
+        expect(screen.getByTestId('hero-yearly')).toHaveTextContent('€210.00');
+        expect(screen.getByTestId('hero-peak')).toHaveTextContent(`Biggest month: ${third.textContent?.split(' ')[0]}, €100.00.`);
+        expect(screen.getByRole('figure')).toHaveTextContent('Amazon Prime renews in 7 days: €90.00');
+        expect(screen.getByRole('figure')).not.toHaveTextContent('Example');
+    });
+
+    it('steps the price by a whole unit and asks for the month once a row is billed yearly', async () => {
+        const user = userEvent.setup();
+        renderApp('/');
+
+        await user.click(screen.getByRole('button', { name: 'Netflix' }));
+        await user.type(screen.getByLabelText('Netflix price in euros'), '12.99');
+        await user.click(screen.getByRole('button', { name: 'Up by 1' }));
+        expect(screen.getByLabelText('Netflix price in euros')).toHaveValue(13.99);
+
+        expect(screen.queryByLabelText('Netflix next charge')).not.toBeInTheDocument();
+        await user.selectOptions(screen.getByLabelText('Netflix billing cadence'), 'yearly');
+        expect(screen.getByLabelText('Netflix next charge')).toBeInTheDocument();
+        expect(screen.getByTestId('hero-yearly')).toHaveTextContent('€13.99');
     });
 });

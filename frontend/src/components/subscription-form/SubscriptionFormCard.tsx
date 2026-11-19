@@ -4,7 +4,8 @@ import { HOUSEHOLD_SIZES } from '../../utils/householdShare';
 import { daysBeforeLabel, defaultReminderLeadDays, REMINDER_LEAD_DAY_CHOICES, reminderLeadDays } from '../../utils/reminders';
 import { Link as RouterLink } from 'react-router';
 import { MANAGE_URL_MAX, manageUrlError } from '../../utils/manageUrl';
-import { stepPrice } from '../../utils/stepPrice';
+import PriceStepButtons from '../PriceStepButtons';
+import { hideNumberSpinners, priceStepKeyDown } from '../../utils/stepPrice';
 import { type CatalogService, findCatalogService, searchCatalog } from '../../data/services';
 import CatalogTile from '../CatalogTile';
 import { CATEGORIES } from '../../data/categories';
@@ -22,8 +23,6 @@ import {
     FormControlLabel,
     FormHelperText,
     FormLabel,
-    IconButton,
-    InputAdornment,
     MenuItem,
     Radio,
     RadioGroup,
@@ -34,10 +33,9 @@ import {
     useTheme,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import CurrencySelect, { type Currency } from '../CurrencySelect';
 import AppSurfaceCard from '../AppSurfaceCard';
+import DateField from '../DateField';
 
 export type BillingInterval = 'monthly' | 'yearly' | 'quarterly' | 'weekly';
 export type SubscriptionStatus = 'Active' | 'Trial' | 'Paused';
@@ -113,11 +111,7 @@ const requiredFieldSx = {
 const priceFieldSx = {
     ...requiredFieldSx,
     maxWidth: { sm: 200 },
-    '& input[type=number]': { MozAppearance: 'textfield' },
-    '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
-        WebkitAppearance: 'none',
-        margin: 0,
-    },
+    ...hideNumberSpinners,
 };
 
 const FormFieldLabel: React.FC<{ label: string; required?: boolean }> = ({ label, required = false }) => (
@@ -354,27 +348,9 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                 type="number"
                                 value={values.amount}
                                 onChange={(e) => patch({ amount: e.target.value })}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-                                        event.preventDefault();
-                                        patch({ amount: stepPrice(values.amount, event.key === 'ArrowUp' ? 1 : -1) });
-                                    }
-                                }}
+                                onKeyDown={priceStepKeyDown(values.amount, (amount) => patch({ amount }))}
                                 inputProps={{ min: 0, step: '0.01', 'aria-describedby': priceHelperText ? 'price-helper-text' : undefined }}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end" sx={{ flexDirection: 'column', justifyContent: 'center', height: 'auto', maxHeight: 'none', ml: 0 }}>
-                                            <IconButton size="small" tabIndex={-1} aria-label="Up by 1" sx={{ p: 0 }}
-                                                onClick={() => patch({ amount: stepPrice(values.amount, 1) })}>
-                                                <KeyboardArrowUpRoundedIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton size="small" tabIndex={-1} aria-label="Down by 1" sx={{ p: 0 }}
-                                                onClick={() => patch({ amount: stepPrice(values.amount, -1) })}>
-                                                <KeyboardArrowDownRoundedIcon fontSize="small" />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
+                                InputProps={{ endAdornment: <PriceStepButtons value={values.amount} onChange={(amount) => patch({ amount })} /> }}
                                 sx={priceFieldSx}
                                 fullWidth
                                 required
@@ -453,16 +429,14 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                     ))}
                                 </Stack>
                             </Stack>}
-                            <TextField
+                            <DateField
                                 className="subscription-date-field"
                                 label={billingDateLabel}
-                                type="date"
                                 value={values.renewalDate}
                                 onChange={(e) => patch({ renewalDate: e.target.value })}
                                 fullWidth
                                 required
                                 helperText={billingDateHelperText}
-                                InputLabelProps={{ shrink: true }}
                                 inputProps={{ min: todayIsoDate() }}
                                 sx={requiredFieldSx}
                             />
@@ -510,14 +484,12 @@ const SubscriptionFormCard: React.FC<Props> = ({
                                     A paused subscription isn’t charged, gets no reminders and isn’t counted in your totals.
                                     Pick the day it starts again, or leave it empty to keep it paused until you change it.
                                 </Alert>
-                                <TextField
+                                <DateField
                                     className="subscription-date-field"
                                     label="Resumes on (optional)"
-                                    type="date"
                                     value={values.resumesOn}
                                     onChange={(e) => patch({ resumesOn: e.target.value })}
                                     helperText="It becomes active again on this day."
-                                    InputLabelProps={{ shrink: true }}
                                     inputProps={{ min: todayIsoDate() }}
                                 />
                             </Stack>

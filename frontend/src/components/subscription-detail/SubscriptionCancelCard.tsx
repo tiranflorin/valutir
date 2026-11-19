@@ -10,7 +10,6 @@ import {
     Radio,
     RadioGroup,
     Stack,
-    TextField,
     Typography,
 } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
@@ -19,6 +18,7 @@ import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import ManageLinkNote from '../ManageLinkNote';
 import { safeManageUrl } from '../../utils/manageUrl';
 import type { SubscriptionCardModel } from '../../types/subscription';
+import DateField from '../DateField';
 
 type Props = {
     subscription: SubscriptionCardModel;
@@ -168,23 +168,19 @@ const SubscriptionCancelCard: React.FC<Props> = ({
                 </FormControl>
 
                 {providerCancelled === true && <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <TextField
+                    <DateField
                         label="Provider cancellation date"
-                        type="date"
                         value={cancellationDate}
                         onChange={(event) => setCancellationDate(event.target.value)}
-                        InputLabelProps={{ shrink: true }}
                         // You can only have cancelled already (today or earlier), and not before it started.
                         inputProps={{ min: subscription.startedAt ?? undefined, max: todayIsoDate() }}
                         fullWidth
                         required
                     />
-                    <TextField
+                    <DateField
                         label="Access ends (optional)"
-                        type="date"
                         value={accessEndsAt}
                         onChange={(event) => setAccessEndsAt(event.target.value)}
-                        InputLabelProps={{ shrink: true }}
                         // Access may run into the future, but can't end before the cancellation.
                         inputProps={{ min: cancellationDate || undefined }}
                         helperText="Keeps the final access date on this record."

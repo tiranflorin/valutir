@@ -6,6 +6,8 @@ import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import { useNavigate } from 'react-router';
 import CatalogTile from '../CatalogTile';
+import PriceStepButtons from '../PriceStepButtons';
+import { hideNumberSpinners, priceStepKeyDown } from '../../utils/stepPrice';
 import CurrencySelect, { type Currency } from '../CurrencySelect';
 import type { BillingInterval } from '../subscription-form/SubscriptionFormCard';
 import { useAuth } from '../../context/AuthContext';
@@ -174,7 +176,10 @@ const CostCalculator: React.FC<Props> = ({ preset, initialRows = [], initialCurr
                                     size="small"
                                     value={row.amount}
                                     onChange={(event) => update(row.name, { amount: event.target.value })}
+                                    onKeyDown={priceStepKeyDown(row.amount, (amount) => update(row.name, { amount }))}
                                     inputProps={{ min: 0, step: '0.01', 'aria-label': `${row.name} price` }}
+                                    InputProps={{ endAdornment: <PriceStepButtons value={row.amount} onChange={(amount) => update(row.name, { amount })} /> }}
+                                    sx={hideNumberSpinners}
                                 />
                                 <TextField
                                     select

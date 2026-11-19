@@ -22,6 +22,7 @@ import CatalogTile from '../components/CatalogTile';
 import { type CatalogService, SERVICE_CATALOG, searchCatalog } from '../data/services';
 import { isBeforeToday, todayIsoDate } from '../utils/dates';
 import { readDashboardView } from '../utils/dashboardView';
+import DateField from '../components/DateField';
 
 type Row = { amount: string; cadence: BillingInterval; nextBillingDate: string };
 
@@ -218,15 +219,13 @@ const PickServicesPage: React.FC = () => {
                                             >
                                                 {CADENCES.map((cadence) => <MenuItem key={cadence.value} value={cadence.value}>{cadence.label}</MenuItem>)}
                                             </TextField>
-                                            <TextField
+                                            <DateField
                                                 label="Next charge"
-                                                type="date"
                                                 size="small"
                                                 disabled={saving}
                                                 required
                                                 value={rows[service.name]?.nextBillingDate ?? ''}
                                                 onChange={(event) => updateRow(service.name, { nextBillingDate: event.target.value })}
-                                                InputLabelProps={{ shrink: true }}
                                                 inputProps={{ min: todayIsoDate(), 'aria-label': `${service.name} next charge` }}
                                             />
                                         </Stack>

@@ -14,6 +14,7 @@ import { API_URL } from '../../config';
 import { nextChargeOnOrAfter } from '../../utils/buildRecurringOccurrences';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import type { SubscriptionCardModel } from '../../types/subscription';
+import DateField from '../DateField';
 
 type Props = {
     subscription: SubscriptionCardModel;
@@ -166,13 +167,11 @@ const SubscriptionReenableCard: React.FC<Props> = ({
                 </Box>
 
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                    <TextField
+                    <DateField
                         label="Re-enabled from"
-                        type="date"
                         fullWidth
                         value={reenabledFromDate}
                         onChange={(e) => setReenabledFromDate(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
                         // Already restarted: today or earlier, and not before it was cancelled.
                         inputProps={{ min: subscription.cancelledAt ?? undefined, max: todayIsoDate() }}
                         disabled={wasReenabled !== true}

@@ -16,31 +16,30 @@ const HomePage: React.FC = () => (
         <AppHeader />
 
         <main>
-            <section className="landing-hero" id="top">
-                <div className="hero-copy-block">
-                    <h1>Stop paying for what you <em>don’t use.</em></h1>
-                    <p>
-                        Know what you’re paying, when you’re paying it, and whether it’s still worth it.
-                        Streaming, software, AI tools and the gym, in one list with a reminder before each charge.
-                    </p>
-                    <div className="hero-actions">
-                        <Button component={RouterLink} to="/register" variant="contained" className="primary-action">
-                            Create a free account <span aria-hidden="true">&nbsp;→</span>
-                        </Button>
-                        <Button href="#the-app" variant="outlined" className="secondary-action">
-                            See how it works
-                        </Button>
-                    </div>
-                    <div className="free-caption">Free for up to 50 subscriptions · No card required</div>
-                    <div className="promise-line">
-                        <span><b>✓</b>No bank login</span>
-                        <span><b>✓</b>No ads</span>
-                        <span><b>✓</b>Your data stays yours</span>
-                    </div>
-                </div>
-
-                <HeroCalculator />
-            </section>
+            <HeroCalculator
+                intro={(
+                    <>
+                        <h1>What you pay for, and when it charges.</h1>
+                        <p>
+                            Tap the services you pay for and type each price. You’ll see your year, the months the big bills land in,
+                            and the email ValuTir sends before each charge, so you decide in time whether it’s still worth it.
+                        </p>
+                    </>
+                )}
+                actions={(
+                    <>
+                        <div className="hero-actions">
+                            <Button component={RouterLink} to="/register" variant="contained" className="primary-action">
+                                Create a free account <span aria-hidden="true">&nbsp;→</span>
+                            </Button>
+                            <Button href="#the-app" variant="outlined" className="secondary-action">
+                                See how it works
+                            </Button>
+                        </div>
+                        <p className="free-caption">Free for up to 50 subscriptions · No card · No bank login · No ads</p>
+                    </>
+                )}
+            />
 
             <section className="landing-section pillars-section" id="why" aria-labelledby="pillars-title">
                 <div className="section-head">
