@@ -243,6 +243,10 @@ describe('Pick what you pay for', () => {
         signIn();
     });
 
+    // The price and date fields, looked up in the Selected panel only: searching the whole
+    // catalog list for each label is slow enough to time tests out on CI.
+    const selected = () => within(screen.getByRole('region', { name: /^Selected/ }));
+
     it('is offered on an empty dashboard', async () => {
         mockApi({
             'GET /api/profile': () => ({ status: 200, body: profile() }),
@@ -268,17 +272,17 @@ describe('Pick what you pay for', () => {
         );
 
         const list = screen.getByRole('list', { name: 'Common services' });
-        await user.click(within(list).getByRole('checkbox', { name: 'Netflix' }));
+        await user.click(within(list).getByLabelText('Netflix'));
         await user.type(screen.getByRole('searchbox', { name: 'Search services' }), 'strava');
-        await user.click(within(screen.getByRole('list', { name: 'Common services' })).getByRole('checkbox', { name: 'Strava' }));
+        await user.click(within(screen.getByRole('list', { name: 'Common services' })).getByLabelText('Strava'));
 
         await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
         expect(screen.getByText('Enter the price and next charge date for Netflix.')).toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText('Netflix price'), { target: { value: '13.99' } });
-        fireEvent.change(screen.getByLabelText('Netflix next charge'), { target: { value: inDays(5) } });
-        fireEvent.change(screen.getByLabelText('Strava price'), { target: { value: '59.99' } });
-        fireEvent.change(screen.getByLabelText('Strava next charge'), { target: { value: inDays(40) } });
+        fireEvent.change(selected().getByLabelText('Netflix price'), { target: { value: '13.99' } });
+        fireEvent.change(selected().getByLabelText('Netflix next charge'), { target: { value: inDays(5) } });
+        fireEvent.change(selected().getByLabelText('Strava price'), { target: { value: '59.99' } });
+        fireEvent.change(selected().getByLabelText('Strava next charge'), { target: { value: inDays(40) } });
         await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
 
         expect(await screen.findByText('Dashboard')).toBeInTheDocument();
@@ -310,22 +314,22 @@ describe('Pick what you pay for', () => {
 
         const list = screen.getByRole('list', { name: 'Common services' });
         for (const name of ['Netflix', 'Spotify']) {
-            await user.click(within(list).getByRole('checkbox', { name }));
-            fireEvent.change(screen.getByLabelText(`${name} price`), { target: { value: '9.99' } });
-            fireEvent.change(screen.getByLabelText(`${name} next charge`), { target: { value: inDays(5) } });
+            await user.click(within(list).getByLabelText(name));
+            fireEvent.change(selected().getByLabelText(`${name} price`), { target: { value: '9.99' } });
+            fireEvent.change(selected().getByLabelText(`${name} next charge`), { target: { value: inDays(5) } });
         }
         await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
 
         // Netflix is still saving: nothing can be unticked or changed.
         expect(await screen.findByRole('button', { name: 'Adding...' })).toBeDisabled();
-        expect(within(list).getByRole('checkbox', { name: 'Netflix' })).toBeDisabled();
-        expect(screen.getByLabelText('Spotify price')).toBeDisabled();
+        expect(within(list).getByLabelText('Netflix')).toBeDisabled();
+        expect(selected().getByLabelText('Spotify price')).toBeDisabled();
 
         release?.();
         expect(await screen.findByText('Added 1 of 2. Server down.')).toBeInTheDocument();
-        expect(within(list).getByRole('checkbox', { name: 'Netflix' })).not.toBeChecked();
-        expect(within(list).getByRole('checkbox', { name: 'Spotify' })).toBeChecked();
-        expect(screen.getByLabelText('Spotify price')).toHaveValue(9.99);
+        expect(within(list).getByLabelText('Netflix')).not.toBeChecked();
+        expect(within(list).getByLabelText('Spotify')).toBeChecked();
+        expect(selected().getByLabelText('Spotify price')).toHaveValue(9.99);
     });
 
     it('stops at the free-plan limit and keeps only the ones not yet added', async () => {
@@ -341,9 +345,9 @@ describe('Pick what you pay for', () => {
 
         const list = screen.getByRole('list', { name: 'Common services' });
         for (const name of ['Netflix', 'Spotify']) {
-            await user.click(within(list).getByRole('checkbox', { name }));
-            fireEvent.change(screen.getByLabelText(`${name} price`), { target: { value: '9.99' } });
-            fireEvent.change(screen.getByLabelText(`${name} next charge`), { target: { value: inDays(5) } });
+            await user.click(within(list).getByLabelText(name));
+            fireEvent.change(selected().getByLabelText(`${name} price`), { target: { value: '9.99' } });
+            fireEvent.change(selected().getByLabelText(`${name} next charge`), { target: { value: inDays(5) } });
         }
         await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
 

@@ -1251,18 +1251,22 @@ a {
     color: #d32f2f;
 }
 
-.subscription-status-field {
+/* A chip group with a field beside it: Status next to the date, Billing cadence next to Category. */
+.subscription-status-field,
+.subscription-cadence-field {
     flex: .9 1 0;
     min-width: 0;
 }
 
 @media (min-width: 600px) {
-    .subscription-status-field {
+    .subscription-status-field,
+    .subscription-cadence-field {
         transform: translateY(-14px);
     }
 }
 
-.subscription-date-field.MuiFormControl-root {
+.subscription-date-field.MuiFormControl-root,
+.subscription-category-field.MuiFormControl-root {
     flex: 1.1 1 0;
     min-width: 0;
 }

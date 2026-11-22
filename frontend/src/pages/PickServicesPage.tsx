@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import {
     Alert,
     Box,
@@ -33,6 +33,31 @@ const CADENCES: { value: BillingInterval; label: string }[] = [
     { value: 'yearly', label: 'Yearly' },
 ];
 
+/** One catalog row. Memoized so typing a price or date doesn't re-render the whole list. */
+const ServiceOption = memo(function ServiceOption({ service, checked, disabled, onToggle }: {
+    service: CatalogService;
+    checked: boolean;
+    disabled: boolean;
+    onToggle: (service: CatalogService) => void;
+}) {
+    return (
+        <li>
+            <label>
+                <Checkbox
+                    size="small"
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={() => onToggle(service)}
+                    inputProps={{ 'aria-label': service.name }}
+                />
+                <CatalogTile service={service} />
+                <span className="pick-services-name">{service.name}</span>
+                <small>{service.category}</small>
+            </label>
+        </li>
+    );
+});
+
 /**
  * "Pick what you pay for": tick common services, type what each costs and when it's next charged,
  * and add them all at once. Each one is its own POST, so the free-plan limit applies as usual.
@@ -57,17 +82,15 @@ const PickServicesPage: React.FC = () => {
         ? 'Add subscriptions'
         : `Add ${pickedServices.length} subscription${pickedServices.length === 1 ? '' : 's'}`;
 
-    const toggle = (service: CatalogService) => {
+    const toggle = useCallback((service: CatalogService) => {
         setError('');
-        if (picked.includes(service.name)) {
-            setPicked(picked.filter((name) => name !== service.name));
-            return;
-        }
-        setPicked([...picked, service.name]);
+        setPicked((previous) => previous.includes(service.name)
+            ? previous.filter((name) => name !== service.name)
+            : [...previous, service.name]);
         setRows((previous) => previous[service.name]
             ? previous
             : { ...previous, [service.name]: { amount: '', cadence: service.cadence, nextBillingDate: '' } });
-    };
+    }, []);
 
     const updateRow = (name: string, partial: Partial<Row>) =>
         setRows((previous) => ({ ...previous, [name]: { ...previous[name], ...partial } }));
@@ -168,20 +191,13 @@ const PickServicesPage: React.FC = () => {
                         ) : (
                             <ul aria-label="Common services">
                                 {matches.map((service) => (
-                                    <li key={service.name}>
-                                        <label>
-                                            <Checkbox
-                                                size="small"
-                                                checked={picked.includes(service.name)}
-                                                disabled={saving}
-                                                onChange={() => toggle(service)}
-                                                inputProps={{ 'aria-label': service.name }}
-                                            />
-                                            <CatalogTile service={service} />
-                                            <span className="pick-services-name">{service.name}</span>
-                                            <small>{service.category}</small>
-                                        </label>
-                                    </li>
+                                    <ServiceOption
+                                        key={service.name}
+                                        service={service}
+                                        checked={picked.includes(service.name)}
+                                        disabled={saving}
+                                        onToggle={toggle}
+                                    />
                                 ))}
                             </ul>
                         )}

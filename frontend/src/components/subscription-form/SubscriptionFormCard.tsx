@@ -369,43 +369,50 @@ const SubscriptionFormCard: React.FC<Props> = ({
                             <FormHelperText id="price-helper-text" sx={{ mt: '4px !important', mx: '14px' }}>{priceHelperText}</FormHelperText>
                         )}
 
-                        <Stack spacing={1}>
-                            <FormFieldLabel label="Billing cadence" required />
-
-                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                                {intervalOptions.map((option) => (
-                                    <Chip
-                                        key={option.value}
-                                        label={option.label}
-                                        clickable
-                                        color={values.billingInterval === option.value ? 'primary' : 'default'}
-                                        variant={values.billingInterval === option.value ? 'filled' : 'outlined'}
-                                        onClick={() => {
-                                            setCadenceChosen(true);
-                                            patch({ billingInterval: option.value });
-                                        }}
-                                        sx={{ fontWeight: 600, borderRadius: 999 }}
-                                    />
-                                ))}
-                            </Stack>
-                        </Stack>
-
-                        <TextField
-                            select
-                            label="Category"
-                            value={values.category}
-                            onChange={(event) => {
-                                setCategoryChosen(true);
-                                patch({ category: event.target.value });
-                            }}
-                            sx={{ maxWidth: { sm: 320 } }}
+                        <Stack
+                            direction={{ xs: 'column', sm: 'row' }}
+                            spacing={2}
+                            alignItems="flex-start"
                         >
-                            {/* An older subscription may still have a category from the earlier, broader list. */}
-                            {!(CATEGORIES as readonly string[]).includes(values.category) && (
-                                <MenuItem value={values.category}>{values.category}</MenuItem>
-                            )}
-                            {CATEGORIES.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
-                        </TextField>
+                            <Stack spacing={1} className="subscription-cadence-field">
+                                <FormFieldLabel label="Billing cadence" required />
+
+                                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                                    {intervalOptions.map((option) => (
+                                        <Chip
+                                            key={option.value}
+                                            label={option.label}
+                                            clickable
+                                            color={values.billingInterval === option.value ? 'primary' : 'default'}
+                                            variant={values.billingInterval === option.value ? 'filled' : 'outlined'}
+                                            onClick={() => {
+                                                setCadenceChosen(true);
+                                                patch({ billingInterval: option.value });
+                                            }}
+                                            sx={{ fontWeight: 600, borderRadius: 999 }}
+                                        />
+                                    ))}
+                                </Stack>
+                            </Stack>
+
+                            <TextField
+                                select
+                                label="Category"
+                                value={values.category}
+                                onChange={(event) => {
+                                    setCategoryChosen(true);
+                                    patch({ category: event.target.value });
+                                }}
+                                className="subscription-category-field"
+                                fullWidth
+                            >
+                                {/* An older subscription may still have a category from the earlier, broader list. */}
+                                {!(CATEGORIES as readonly string[]).includes(values.category) && (
+                                    <MenuItem value={values.category}>{values.category}</MenuItem>
+                                )}
+                                {CATEGORIES.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                            </TextField>
+                        </Stack>
 
                         <Stack
                             className="subscription-status-date-row"
