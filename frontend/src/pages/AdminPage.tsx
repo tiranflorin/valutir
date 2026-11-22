@@ -51,7 +51,7 @@ const AccountResult: React.FC<{ account: AdminAccount; freeLimit: number | null 
             ['Email', account.email],
             ['Plan', planOf(account)],
             ['Email verified', account.emailVerifiedAt ? dateLabel(account.emailVerifiedAt) : 'No'],
-            ['Created', account.createdAt ? dateLabel(account.createdAt) : 'Before 22 Nov 2026 (not recorded)'],
+            ['Created', dateLabel(account.createdAt)],
             ['Active subscriptions', !account.paidFeatures && freeLimit ? `${account.activeSubscriptions} of ${freeLimit}` : String(account.activeSubscriptions)],
             ['Reminders', remindersOf(account)],
         ]} />

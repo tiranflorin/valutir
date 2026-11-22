@@ -181,13 +181,7 @@ final class SubscriptionService
             $subscription->clearReviewFlag();
         }
 
-        // trialReminderSentAt is server-owned (set when a reminder is sent), never taken from the client.
-        // A new trial end date needs a new reminder, so clear the old one.
-        $trialEndsAt = $this->parseDate($dto->trialEndsAt);
-        if ($trialEndsAt?->format('Y-m-d') !== $subscription->getTrialEndsAt()?->format('Y-m-d')) {
-            $subscription->setTrialReminderSentAt(null);
-        }
-        $subscription->setTrialEndsAt($trialEndsAt);
+        $subscription->setTrialEndsAt($this->parseDate($dto->trialEndsAt));
     }
 
     private function priceTermsOf(SubscriptionUpsertRequest $dto): PriceTerms

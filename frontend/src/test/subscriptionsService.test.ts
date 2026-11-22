@@ -28,7 +28,6 @@ const stored = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord
     createdAt: '2026-01-10T10:00:00+00:00',
     updatedAt: '2026-01-10T10:00:00+00:00',
     trialEndsAt: null,
-    trialReminderSentAt: null,
     resumesOn: null,
     reviewFlagged: true,
     reviewFlaggedAt: '2026-11-01T10:00:00+00:00',

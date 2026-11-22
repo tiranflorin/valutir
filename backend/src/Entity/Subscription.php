@@ -18,7 +18,8 @@ class Subscription
 {
     /**
      * active and trial are charged; paused isn't (no reminders, not in totals) until it resumes;
-     * cancelled is set only through the cancel flow.
+     * cancelled is set only through the cancel flow. The database checks the same list
+     * (CHK_SUBSCRIPTION_STATUS), so a new status needs a migration too.
      */
     public const array STATUSES = ['active', 'trial', 'paused', 'cancelled'];
     public const string STATUS_PAUSED = 'paused';
@@ -95,15 +96,11 @@ class Subscription
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $trialEndsAt = null;
 
-    /** When the trial-ending reminder was sent (server-owned timestamp). */
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $trialReminderSentAt = null;
-
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?bool $autoRenew = true;
+    #[ORM\Column(options: ['default' => true])]
+    private bool $autoRenew = true;
 
     #[ORM\Column(options: ['default' => false])]
     private bool $b2b = false;
@@ -286,12 +283,12 @@ class Subscription
         return 'active' === $this->status;
     }
 
-    public function isAutoRenew(): ?bool
+    public function isAutoRenew(): bool
     {
         return $this->autoRenew;
     }
 
-    public function setAutoRenew(?bool $autoRenew): static
+    public function setAutoRenew(bool $autoRenew): static
     {
         $this->autoRenew = $autoRenew;
 
@@ -539,16 +536,6 @@ class Subscription
         $this->trialEndsAt = $trialEndsAt;
     }
 
-    public function getTrialReminderSentAt(): ?\DateTimeImmutable
-    {
-        return $this->trialReminderSentAt;
-    }
-
-    public function setTrialReminderSentAt(?\DateTimeImmutable $trialReminderSentAt): void
-    {
-        $this->trialReminderSentAt = $trialReminderSentAt;
-    }
-
     public function priceTerms(): PriceTerms
     {
         return new PriceTerms((string) $this->amount, (string) $this->currency, (string) $this->billingCadence);
@@ -656,7 +643,6 @@ class Subscription
             'createdAt' => $this->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'updatedAt' => $this->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
             'trialEndsAt' => $this->getTrialEndsAt()?->format('Y-m-d'),
-            'trialReminderSentAt' => $this->getTrialReminderSentAt()?->format(\DateTimeInterface::ATOM),
             'resumesOn' => $this->getResumesOn()?->format('Y-m-d'),
             'reviewFlagged' => $this->isReviewFlagged(),
             'reviewFlaggedAt' => $this->getReviewFlaggedAt()?->format(\DateTimeInterface::ATOM),

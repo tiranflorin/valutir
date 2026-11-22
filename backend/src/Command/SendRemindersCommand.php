@@ -6,7 +6,6 @@ namespace App\Command;
 
 use App\Billing\UserTime;
 use App\Clock\Clock;
-use App\Entity\ReminderLog;
 use App\Entity\User;
 use App\Reminder\DueReminder;
 use App\Reminder\ReminderMailer;
@@ -139,9 +138,6 @@ final class SendRemindersCommand extends Command
     {
         foreach ($due as $reminder) {
             $this->reminderLogRepository->recordSent($reminder->subscription, $reminder->kind, $reminder->chargeDate, $now);
-            if (ReminderLog::KIND_TRIAL_ENDING === $reminder->kind) {
-                $reminder->subscription->setTrialReminderSentAt($now);
-            }
         }
         $this->entityManager->flush();
     }

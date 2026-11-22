@@ -22,7 +22,6 @@ const sub = (id: number, serviceName: string, extra: Partial<SubscriptionRecord>
     nextBillingDate: '2030-01-15',
     cancelledAt: null,
     trialEndsAt: null,
-    trialReminderSentAt: null,
     b2b: false,
     autoRenew: true,
     householdShared: false,

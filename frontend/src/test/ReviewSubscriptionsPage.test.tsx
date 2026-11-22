@@ -20,7 +20,6 @@ const subscription = (id: number, serviceName: string, extra: Record<string, unk
     notes: null,
     cancelledAt: null,
     trialEndsAt: null,
-    trialReminderSentAt: null,
     b2b: false,
     autoRenew: true,
     householdShared: false,

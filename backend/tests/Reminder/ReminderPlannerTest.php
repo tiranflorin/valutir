@@ -62,6 +62,17 @@ final class ReminderPlannerTest extends TestCase
         self::assertSame(ReminderLog::KIND_TRIAL_ENDING, $due[0]->kind);
     }
 
+    public function testATrialMovedToANewEndDateIsRemindedAgain(): void
+    {
+        $trial = $this->subscription(1, 'Trial', 'monthly', '2026-11-04', 'trial');
+        $trial->setTrialEndsAt(CalendarDay::fromString('2026-11-04'));
+        $sentForTheOldEnd = [ReminderLogRepository::key(1, ReminderLog::KIND_TRIAL_ENDING, CalendarDay::fromString('2026-11-03')) => true];
+        $sentForThisEnd = [ReminderLogRepository::key(1, ReminderLog::KIND_TRIAL_ENDING, CalendarDay::fromString('2026-11-04')) => true];
+
+        self::assertSame(['Trial'], $this->names($this->plan([$trial], $sentForTheOldEnd)));
+        self::assertSame([], $this->plan([$trial], $sentForThisEnd));
+    }
+
     public function testSkipsAlreadySentNonRenewingCancelledAndDeleted(): void
     {
         $sent = $this->subscription(1, 'Already sent', 'monthly', '2026-11-04');

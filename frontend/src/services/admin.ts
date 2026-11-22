@@ -43,8 +43,7 @@ export type AdminPurchase = {
 /** One account's status for a support request (`GET /api/admin/accounts?email=`). */
 export type AdminAccount = {
     email: string;
-    /** Null for accounts created before sign-up dates were recorded. */
-    createdAt: string | null;
+    createdAt: string;
     emailVerifiedAt: string | null;
     unlockedAt: string | null;
     admin: boolean;

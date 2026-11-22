@@ -17,7 +17,6 @@ const subscription = (id: number, serviceName: string, status: string, extra: Re
     nextBillingDate: '2027-01-15',
     cancelledAt: null,
     trialEndsAt: null,
-    trialReminderSentAt: null,
     b2b: false,
     autoRenew: true,
     ...extra,

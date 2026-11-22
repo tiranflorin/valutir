@@ -12,7 +12,7 @@ import { renderWithMemoryRoute } from './test-utils';
 
 const subscription = (id: number, serviceName: string, amount: string, sharing: { householdShared: boolean; householdSize: number | null }) => ({
     id, serviceName, amount, currency: 'EUR', billingCadence: 'monthly', category: 'Streaming', status: 'active',
-    startedAt: '2026-01-01', nextBillingDate: '2099-01-15', cancelledAt: null, trialEndsAt: null, trialReminderSentAt: null,
+    startedAt: '2026-01-01', nextBillingDate: '2099-01-15', cancelledAt: null, trialEndsAt: null,
     b2b: false, autoRenew: true, ...sharing,
 });
 

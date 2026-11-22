@@ -50,7 +50,6 @@ export interface SubscriptionRecord {
     createdAt: string;
     updatedAt: string;
     trialEndsAt: string | null;
-    trialReminderSentAt: string | null;
     /** Paused only: when it becomes active again; null = paused until changed. */
     resumesOn: string | null;
     /** Flagged by the owner to decide on later; a flag, not a status (still charged and reminded). */
@@ -82,7 +81,6 @@ export type SubscriptionCardModel = {
     startedAt?: string | null;
     manageUrl?: string | null;
     trialEndsAt?: string | null;
-    trialReminderSentAt?: string | null;
     resumesOn?: string | null;
     reviewFlagged?: boolean;
     reviewFlaggedAt?: string | null;

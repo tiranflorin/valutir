@@ -21,7 +21,7 @@ const overview = {
 
 const account = {
     email: 'ada@example.test',
-    createdAt: null,
+    createdAt: '2026-11-03T09:00:00+00:00',
     emailVerifiedAt: '2026-11-01T08:00:00+00:00',
     unlockedAt: null,
     admin: false,
@@ -63,7 +63,7 @@ describe('admin page', () => {
         const lookup = screen.getByRole('region', { name: 'Look up an account' });
         expect(await within(lookup).findByText('Free')).toBeInTheDocument();
         expect(within(lookup).getByText('Active subscriptions').nextSibling).toHaveTextContent('7 of 40');
-        expect(within(lookup).getByText('Created').nextSibling).toHaveTextContent('not recorded');
+        expect(within(lookup).getByText('Created').nextSibling).toHaveTextContent('3 Nov 2026');
         expect(within(lookup).getByRole('cell', { name: 'refunded' })).toBeInTheDocument();
 
         await user.clear(screen.getByLabelText(/email/i));

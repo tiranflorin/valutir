@@ -43,7 +43,7 @@ final class SubscriptionUpsertRequest
     #[Assert\Url(protocols: ['https'], requireTld: true)]
     public ?string $manageUrl = null;
 
-    public ?bool $autoRenew = true;
+    public bool $autoRenew = true;
 
     public bool $b2b = false;
 

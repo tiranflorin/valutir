@@ -66,7 +66,7 @@ class SubscriptionRepository extends ServiceEntityRepository
     {
         return $this->createVisibleForUserQueryBuilder($user)
             ->andWhere('s.status IN (:billableStatuses)')
-            ->andWhere('s.autoRenew IS NULL OR s.autoRenew = true')
+            ->andWhere('s.autoRenew = true')
             ->setParameter('billableStatuses', ['active', 'trial'])
             ->orderBy('s.id', 'ASC')
             ->getQuery()

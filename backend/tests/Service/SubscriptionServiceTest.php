@@ -161,22 +161,6 @@ final class SubscriptionServiceTest extends TestCase
         self::assertNull($subscription->getManageUrl());
     }
 
-    public function testUpdateKeepsTheTrialReminderUnlessTheTrialEndDateChanges(): void
-    {
-        $subscription = new Subscription();
-        $subscription->setTrialEndsAt(new \DateTimeImmutable('2026-11-15'));
-        $sentAt = new \DateTimeImmutable('2026-11-13 09:00:00');
-        $subscription->setTrialReminderSentAt($sentAt);
-        $service = $this->service($this->transactionalEntityManager(times: 2));
-
-        $service->update($subscription, $this->trialRequest('2026-11-15'));
-        self::assertSame($sentAt, $subscription->getTrialReminderSentAt());
-
-        $service->update($subscription, $this->trialRequest('2026-12-01'));
-        self::assertNull($subscription->getTrialReminderSentAt());
-        self::assertSame('2026-12-01', $subscription->getTrialEndsAt()?->format('Y-m-d'));
-    }
-
     public function testDeleteSoftDeletesAndMarksSubscriptionCancelled(): void
     {
         $subscription = new Subscription();
@@ -355,15 +339,6 @@ final class SubscriptionServiceTest extends TestCase
         $request->currency = 'EUR';
         $request->billingCadence = 'monthly';
         $request->status = 'active';
-
-        return $request;
-    }
-
-    private function trialRequest(string $trialEndsAt): SubscriptionUpsertRequest
-    {
-        $request = $this->request();
-        $request->status = 'trial';
-        $request->trialEndsAt = $trialEndsAt;
 
         return $request;
     }

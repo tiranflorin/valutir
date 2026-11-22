@@ -96,7 +96,7 @@ describe('Download my data', () => {
             'GET /api/subs': () => ({ status: 200, body: [{
                 id: 1, serviceName: 'Figma', amount: '15.00', currency: 'EUR', billingCadence: 'monthly', category: 'Design',
                 status: 'active', startedAt: null, nextBillingDate: '2030-01-01', cancelledAt: null, trialEndsAt: null,
-                trialReminderSentAt: null, b2b: true, autoRenew: true, notes: null,
+                b2b: true, autoRenew: true, notes: null,
             }] }),
         });
         const downloads = captureDownloads();

@@ -92,7 +92,7 @@ final class OperatorReport
 
         return [
             'email' => $user->getEmail(),
-            'createdAt' => $user->getCreatedAt()?->format(\DATE_ATOM),
+            'createdAt' => $user->getCreatedAt()->format(\DATE_ATOM),
             'emailVerifiedAt' => $user->getEmailVerifiedAt()?->format(\DATE_ATOM),
             'unlockedAt' => $user->getUnlockedAt()?->format(\DATE_ATOM),
             'admin' => \in_array(User::ROLE_ADMIN, $user->getRoles(), true),

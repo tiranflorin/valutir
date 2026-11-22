@@ -87,7 +87,7 @@ final class OperatorReportTest extends TestCase
 
         self::assertSame([
             'email' => 'ada@example.test',
-            'createdAt' => null,
+            'createdAt' => $user->getCreatedAt()->format(\DATE_ATOM),
             'emailVerifiedAt' => '2026-11-01T08:00:00+00:00',
             'unlockedAt' => null,
             'admin' => false,

@@ -17,7 +17,6 @@ const subscription = (id: number, serviceName: string, extra: Record<string, unk
     nextBillingDate: '2030-01-15',
     cancelledAt: null,
     trialEndsAt: null,
-    trialReminderSentAt: null,
     b2b: false,
     autoRenew: true,
     householdShared: false,

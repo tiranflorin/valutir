@@ -19,7 +19,7 @@ const record = (overrides: Partial<SubscriptionRecord> = {}): SubscriptionRecord
     id: 1, serviceName: 'Netflix', amount: '13.99', currency: 'EUR', billingCadence: 'monthly', category: 'Streaming',
     status: 'active', startedAt: '2026-01-01', nextBillingDate: '2099-01-15', notes: null, manageUrl: null,
     isActive: true, autoRenew: true, b2b: false, paidPersonally: false, reminderLeadDays: null, householdShared: false, householdSize: null, cancelledAt: null,
-    createdAt: '', updatedAt: '', trialEndsAt: null, trialReminderSentAt: null,
+    createdAt: '', updatedAt: '', trialEndsAt: null,
     resumesOn: null, reviewFlagged: false, reviewFlaggedAt: null, reviewNote: null, priceChanges: [],
     ...overrides,
 });
