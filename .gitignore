@@ -40,6 +40,7 @@ frontend/.env.*.local
 /backend/var/bootstrap.php.cache
 /backend/bin/*
 !/backend/bin/console
+!/backend/bin/scheduled-run
 !/backend/bin/symfony_requirements
 /backend/vendor/
 

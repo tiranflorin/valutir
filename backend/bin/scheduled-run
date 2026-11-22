@@ -1,0 +1,13 @@
+#!/bin/sh
+# The scheduled commands, in the order they must run. Production's systemd timer runs this every
+# hour in a one-off container of the deployed image; locally the "scheduler" Compose service loops
+# it. Every command is safe to repeat. A failing step stops the rest and exits non-zero, so the
+# caller sees the failure; the next run retries.
+set -eu
+cd "$(dirname "$0")/.."
+
+echo "Scheduled run started $(date -u '+%Y-%m-%d %H:%M:%S') UTC"
+php bin/console app:subscriptions:advance-billing-dates --no-interaction
+php bin/console app:reminders:send --no-interaction
+php bin/console cache:pool:prune --no-interaction
+echo "Scheduled run finished $(date -u '+%Y-%m-%d %H:%M:%S') UTC"

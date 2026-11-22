@@ -20,6 +20,7 @@ Local services:
 | Backend health check | http://localhost:8080/health |
 | MailDev inbox | http://localhost:1080 |
 | PostgreSQL | localhost:5432 |
+| Scheduled commands (`scheduler`, no port) | every 5 minutes, logs in `docker compose logs -f scheduler`; see [scheduled-commands.md](scheduled-commands.md#locally) |
 | Production image (opt-in, see below) | http://localhost:8081/health |
 
 The backend image is `backend/docker/Dockerfile`, served by FrankenPHP (`backend/docker/Caddyfile`) in classic mode, so every request starts fresh, like PHP-FPM. It has two targets:
@@ -66,6 +67,7 @@ Variable names only; templates are `backend/.env.sample` and `frontend/.env.dist
 | `APP_SECRET` | backend | Symfony secret (also signs reminder unsubscribe links) |
 | `JWT_SECRET_KEY`, `JWT_PUBLIC_KEY`, `JWT_PASSPHRASE` | backend | JWT key pair and its passphrase |
 | `MAILER_DSN` | backend | Email transport (MailDev locally, Amazon SES in production) |
+| `SCHEDULER_INTERVAL` | backend, local only | Seconds between runs of the local `scheduler` service (default 300) |
 | `FRONTEND_URL` | backend | The app's origin (`scheme://host[:port]`, no trailing slash): base URL for links in emails and the only CORS-allowed origin |
 | `DEFAULT_URI` | backend | The API's public URL, used for URLs built in console commands (one-click unsubscribe) |
 | `SYMFONY_TRUSTED_PROXIES` | backend | Reverse proxies allowed to pass on the client IP and scheme; empty locally. See [Client IPs behind proxies](cloudflare-and-proxies.md#client-ips-behind-proxies) |

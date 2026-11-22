@@ -4,8 +4,8 @@ Fixed items are removed from this list; the git history records what changed. It
 
 ## Correctness and reliability
 
-2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built (see [Scheduled commands](scheduled-commands.md)) but nothing schedules them in production yet:
-   - Schedule the commands hourly with a systemd timer on the EC2 instance, running them in one-off containers of the deployed image (`advance-billing-dates` before `reminders:send`, plus `cache:pool:prune`); see [architecture.md](architecture.md#scheduled-commands). The units belong in `valutir-infra`. Still to decide: how a failed run raises an alert.
+2. **Later: run the scheduled commands and send email on AWS.** Payment reminders are built and run locally by the `scheduler` Compose service (see [Scheduled commands](scheduled-commands.md)), but nothing schedules them in production yet:
+   - Install the systemd service and timer written out in [scheduled-commands.md](scheduled-commands.md#in-production) on the EC2 instance, through `valutir-infra`. They run `bin/scheduled-run` hourly in a one-off container of the deployed image, so the Compose file there needs the `valutir-api` image pinned to the deployed tag. Still to decide: how a failed run raises an alert (the unit's `OnFailure=`).
    - Send email through Amazon SES with the existing Mailer SMTP transport (`MAILER_DSN=smtp://…@email-smtp.eu-central-1.amazonaws.com:587`), after verifying the sending domain (SPF, DKIM, DMARC) and requesting production access out of the SES sandbox.
    - Set `DEFAULT_URI` to the API's public URL (the one-click unsubscribe header is built from it) and `FRONTEND_URL` to the app's origin (links in the email, and CORS).
    - Later: handle SES bounces and complaints (SNS) by turning reminders off for those addresses.

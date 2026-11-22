@@ -45,7 +45,7 @@ Browser ──► https://valutir.app       Cloudflare Pages: React build (free)
    └─ EC2 t4g.small (2 GB, 20 GB gp3), no inbound rules, no SSH
        ├─ cloudflared             tunnel agent
        ├─ valutir-api             the one PHP container (Symfony, PHP 8.3)
-       └─ systemd timer, hourly:  app:subscriptions:advance-billing-dates → app:reminders:send → cache:pool:prune
+       └─ systemd timer, hourly:  bin/scheduled-run (advance-billing-dates → reminders:send → cache:pool:prune)
             │  private VPC network, TLS required
             ▼
    RDS for PostgreSQL db.t4g.micro (private, encrypted, Single-AZ, automated backups)
@@ -116,13 +116,9 @@ sudo docker compose -f /opt/valutir/compose.yaml run --rm valutir-api php bin/co
 
 ## Scheduled commands
 
-A systemd timer on the instance (`OnCalendar=hourly`, with `Persistent=true` so a run missed while the instance was down happens at boot) starts a oneshot service. The service runs each command in a one-off container of the currently deployed image, in this order:
+A systemd timer on the instance (`OnCalendar=hourly`, with `Persistent=true` so a run missed while the instance was down happens at boot) starts a oneshot service. The service runs `bin/scheduled-run` in a one-off container of the currently deployed image, which runs `app:subscriptions:advance-billing-dates`, `app:reminders:send` and `cache:pool:prune` in that order. Locally, the `scheduler` Compose service loops the same script.
 
-1. `app:subscriptions:advance-billing-dates`
-2. `app:reminders:send`
-3. `cache:pool:prune`
-
-A failing step stops the rest of that run, and the next hourly run retries: every command is idempotent (a unique key per charge in `reminder_log`). There's no queue, worker, EventBridge, or ECS. The timer and service units are part of `valutir-infra`. Still open: how a failed run raises an alert (TODO #2). Command details: [scheduled-commands.md](scheduled-commands.md).
+A failing step stops the rest of that run, and the next hourly run retries: every command is idempotent (a unique key per charge in `reminder_log`). There's no queue, worker, EventBridge, or ECS. The timer and service units are part of `valutir-infra`; their contents are in [scheduled-commands.md](scheduled-commands.md#in-production). Still open: how a failed run raises an alert (TODO #2).
 
 ## Repository visibility
 
