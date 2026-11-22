@@ -10,25 +10,25 @@ import {
 } from '@mui/material';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import AppSurfaceCard from '../AppSurfaceCard';
-import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 import { nextChargeOnOrAfter } from '../../utils/buildRecurringOccurrences';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
-import type { SubscriptionCardModel } from '../../types/subscription';
+import { updateSubscription } from '../../services/subscriptions';
+import type { SubscriptionCardModel, SubscriptionRecord } from '../../types/subscription';
 import DateField from '../DateField';
 
 type Props = {
     subscription: SubscriptionCardModel;
-    token: string;
-    onUnauthorized: () => void;
-    onReenabled: (subscription: SubscriptionCardModel) => void;
+    onReenabled: (subscription: SubscriptionRecord) => void;
 };
 
 const SubscriptionReenableCard: React.FC<Props> = ({
                                                        subscription,
-                                                       token,
-                                                       onUnauthorized,
                                                        onReenabled,
                                                    }) => {
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [wasReenabled, setWasReenabled] = useState<boolean | null>(null);
     const [reenabledFromDate, setReenabledFromDate] = useState('');
     const [reenabledPrice, setReenabledPrice] = useState(String(subscription.amount ?? ''));
@@ -69,57 +69,18 @@ const SubscriptionReenableCard: React.FC<Props> = ({
             setSaving(true);
             setError('');
 
-            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    serviceName: subscription.serviceName,
-                    category: subscription.category,
-                    amount: Number(reenabledPrice),
-                    currency: subscription.currency,
-                    billingCadence: subscription.billingCadence,
-                    nextBillingDate,
-                    notes: subscription.notes,
-                    manageUrl: subscription.manageUrl ?? null,
-                    status: 'active',
-                    autoRenew: true,
-                    b2b: subscription.b2b,
-                    paidPersonally: subscription.paidPersonally ?? false,
-                    reminderLeadDays: subscription.reminderLeadDays ?? null,
-                    householdShared: subscription.householdShared ?? false,
-                    householdSize: subscription.householdSize ?? null,
-                    cancelledAt: null,
-                    resumesOn: null,
-                    trialEndsAt: null,
-                    startedAt: reenabledFromDate,
-                }),
-            });
-
-            const data = await response.json().catch(() => null);
-
-            if (response.status === 401) {
-                onUnauthorized();
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(data?.message || 'Failed to re-enable subscription.');
-            }
-
-            onReenabled(data ?? {
-                ...subscription,
+            onReenabled(await updateSubscription(token, subscription, {
                 amount: Number(reenabledPrice),
+                nextBillingDate,
                 status: 'active',
                 autoRenew: true,
                 cancelledAt: null,
+                trialEndsAt: null,
                 startedAt: reenabledFromDate,
-                nextBillingDate,
-            });
+            }));
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSaving(false);
         }

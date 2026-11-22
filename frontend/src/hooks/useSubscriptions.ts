@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
+import { listSubscriptions } from '../services/subscriptions';
 import type { SubscriptionRecord } from '../types/subscription';
+import { useAccountErrorHandler } from './useAccountErrorHandler';
 
 type SubscriptionsState = {
     subscriptions: SubscriptionRecord[];
@@ -12,40 +12,31 @@ type SubscriptionsState = {
 
 const NOT_SIGNED_IN: SubscriptionsState = { subscriptions: [], loading: false, error: 'You are not authenticated.' };
 
-/** The signed-in user's subscriptions from `GET /api/subs`; signs out and goes to /login on a 401. */
-export const useSubscriptions = (): SubscriptionsState => {
-    const navigate = useNavigate();
-    const { token, logout } = useAuth();
+/**
+ * The signed-in user's subscriptions; signs out and goes to /login on a 401. A new `reloadKey`
+ * loads the list again (the dashboard passes the calculator's save result).
+ */
+export const useSubscriptions = (reloadKey?: unknown): SubscriptionsState => {
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [state, setState] = useState<SubscriptionsState>({ subscriptions: [], loading: true, error: null });
 
     useEffect(() => {
         if (!token) return;
         let cancelled = false;
-        const load = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/subs`, {
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                });
-                const data = await response.json().catch(() => null);
-                if (cancelled) return;
-                if (response.status === 401) {
-                    logout();
-                    navigate('/login', { replace: true });
-                    return;
-                }
-                if (!response.ok) throw new Error(data?.message || 'Failed to load subscriptions.');
-                setState({ subscriptions: Array.isArray(data) ? data : [], loading: false, error: null });
-            } catch (err) {
-                if (!cancelled) {
-                    setState({ subscriptions: [], loading: false, error: err instanceof Error ? err.message : 'Something went wrong.' });
-                }
-            }
-        };
-        load();
+        listSubscriptions(token).then(
+            (subscriptions) => {
+                if (!cancelled) setState({ subscriptions, loading: false, error: null });
+            },
+            (error: unknown) => {
+                const message = errorMessage(error);
+                if (!cancelled && message !== null) setState({ subscriptions: [], loading: false, error: message });
+            },
+        );
         return () => {
             cancelled = true;
         };
-    }, [token, logout, navigate]);
+    }, [token, errorMessage, reloadKey]);
 
     // ProtectedRoute normally keeps signed-out users away; this covers a token cleared mid-session.
     return token ? state : NOT_SIGNED_IN;

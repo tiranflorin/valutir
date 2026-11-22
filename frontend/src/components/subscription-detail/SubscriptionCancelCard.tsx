@@ -13,28 +13,28 @@ import {
     Typography,
 } from '@mui/material';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 import { isAfterToday, todayIsoDate } from '../../utils/dates';
 import ManageLinkNote from '../ManageLinkNote';
 import { safeManageUrl } from '../../utils/manageUrl';
-import type { SubscriptionCardModel } from '../../types/subscription';
+import { updateSubscription } from '../../services/subscriptions';
+import type { SubscriptionCardModel, SubscriptionRecord } from '../../types/subscription';
 import DateField from '../DateField';
 
 type Props = {
     subscription: SubscriptionCardModel;
-    token: string;
-    onUnauthorized: () => void;
-    onCancelled: (subscription: SubscriptionCardModel) => void;
+    onCancelled: (subscription: SubscriptionRecord) => void;
     onKeepTracking: () => void;
 };
 
 const SubscriptionCancelCard: React.FC<Props> = ({
     subscription,
-    token,
-    onUnauthorized,
     onCancelled,
     onKeepTracking,
 }) => {
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [providerCancelled, setProviderCancelled] = useState<boolean | null>(null);
     const [cancellationDate, setCancellationDate] = useState('');
     const [accessEndsAt, setAccessEndsAt] = useState(subscription.nextBillingDate ?? '');
@@ -73,55 +73,15 @@ const SubscriptionCancelCard: React.FC<Props> = ({
             setSaving(true);
             setError('');
 
-            const payload = {
-                serviceName: subscription.serviceName,
-                amount: Number(subscription.amount),
-                currency: subscription.currency,
-                billingCadence: subscription.billingCadence,
-                category: subscription.category,
-                startedAt: subscription.startedAt ?? null,
-                nextBillingDate: accessEndsAt || null,
-                notes: subscription.notes,
-                manageUrl: subscription.manageUrl ?? null,
-                status: 'cancelled',
-                autoRenew: false,
-                b2b: subscription.b2b,
-                paidPersonally: subscription.paidPersonally ?? false,
-                reminderLeadDays: subscription.reminderLeadDays ?? null,
-                householdShared: subscription.householdShared ?? false,
-                householdSize: subscription.householdSize ?? null,
-                cancelledAt: cancellationDate,
-                trialEndsAt: subscription.trialEndsAt ?? null,
-                resumesOn: null,
-            };
-
-            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-            const data = await response.json().catch(() => null);
-
-            if (response.status === 401) {
-                onUnauthorized();
-                return;
-            }
-            if (!response.ok) {
-                throw new Error(data?.message || 'Failed to update the subscription.');
-            }
-
-            onCancelled(data ?? {
-                ...subscription,
+            onCancelled(await updateSubscription(token, subscription, {
                 status: 'cancelled',
                 autoRenew: false,
                 cancelledAt: cancellationDate,
                 nextBillingDate: accessEndsAt || null,
-            });
+            }));
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSaving(false);
         }

@@ -16,7 +16,8 @@ import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import CurrencySelect, { type Currency } from '../components/CurrencySelect';
 import type { BillingInterval } from '../components/subscription-form/SubscriptionFormCard';
-import { API_URL } from '../config';
+import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
+import { createSubscription } from '../services/subscriptions';
 import { useAuth } from '../context/AuthContext';
 import CatalogTile from '../components/CatalogTile';
 import { type CatalogService, SERVICE_CATALOG, searchCatalog } from '../data/services';
@@ -64,7 +65,8 @@ const ServiceOption = memo(function ServiceOption({ service, checked, disabled, 
  */
 const PickServicesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { token, logout, user } = useAuth();
+    const { token, user } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [query, setQuery] = useState('');
     const [picked, setPicked] = useState<string[]>([]);
     const [rows, setRows] = useState<Record<string, Row>>({});
@@ -116,45 +118,22 @@ const PickServicesPage: React.FC = () => {
         try {
             for (const service of pickedServices) {
                 const row = rows[service.name];
-                const response = await fetch(`${API_URL}/api/subs`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({
-                        serviceName: service.name,
-                        amount: Number(row.amount),
-                        currency,
-                        billingCadence: row.cadence,
-                        category: service.category,
-                        status: 'active',
-                        startedAt: todayIsoDate(),
-                        nextBillingDate: row.nextBillingDate,
-                        trialEndsAt: null,
-                        notes: null,
-                        manageUrl: service.manageUrl ?? null,
-                        paidPersonally: false,
-                        reminderLeadDays: null,
-                        householdShared: false,
-                        householdSize: null,
-                        autoRenew: true,
-                        b2b,
-                        cancelledAt: null,
-                        resumesOn: null,
-                    }),
+                await createSubscription(token, {
+                    serviceName: service.name,
+                    amount: Number(row.amount),
+                    currency,
+                    billingCadence: row.cadence,
+                    category: service.category,
+                    nextBillingDate: row.nextBillingDate,
+                    manageUrl: service.manageUrl ?? null,
+                    b2b,
                 });
-                if (response.status === 401) {
-                    logout();
-                    navigate('/login', { replace: true });
-                    return;
-                }
-                if (!response.ok) {
-                    const data = await response.json().catch(() => null);
-                    throw new Error(data?.message || `Could not add ${service.name}.`);
-                }
                 saved.push(service.name);
             }
             navigate('/my-subs');
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Something went wrong.';
+            const message = errorMessage(err);
+            if (message === null) return;
             // Drop the ones already saved, so trying again doesn't add them twice.
             setPicked((previous) => previous.filter((name) => !saved.includes(name)));
             setError(saved.length > 0 ? `Added ${saved.length} of ${pickedServices.length}. ${message}` : message);

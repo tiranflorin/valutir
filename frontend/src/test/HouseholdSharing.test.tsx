@@ -5,7 +5,7 @@ import AddSubscriptionPage from '../pages/AddSubscriptionPage';
 import MySubscriptionsPage from '../pages/MySubscriptionsPage';
 import SubscriptionInfoCard from '../components/subscription-detail/SubscriptionInfoCard';
 import type { SubscriptionCardModel } from '../types/subscription';
-import { householdPayload, shareOf, splitCount } from '../utils/householdShare';
+import { shareOf, splitCount } from '../utils/householdShare';
 import { todayIsoDate } from '../utils/dates';
 import { bodyOf, callsTo, mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
@@ -37,12 +37,6 @@ describe('household share helpers', () => {
         expect(shareOf(13.99, { householdShared: true, householdSize: 4 })).toBeCloseTo(3.4975);
         expect(splitCount({ householdShared: false, householdSize: 4 })).toBe(1);
         expect(splitCount({ householdShared: true, householdSize: null })).toBe(1);
-    });
-
-    it('never sends sharing for business subscriptions', () => {
-        expect(householdPayload({ householdShared: true, householdSize: 3, b2b: false })).toEqual({ householdShared: true, householdSize: 3 });
-        expect(householdPayload({ householdShared: true, householdSize: 3, b2b: true })).toEqual({ householdShared: false, householdSize: null });
-        expect(householdPayload({ householdShared: false, householdSize: 3, b2b: false })).toEqual({ householdShared: false, householdSize: null });
     });
 });
 

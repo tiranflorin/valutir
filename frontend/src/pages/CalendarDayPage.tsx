@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, Box, Button, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Link as RouterLink, Navigate, useParams } from 'react-router';
@@ -7,10 +7,8 @@ import AppFooter from '../components/AppFooter';
 import AppShell from '../components/AppShell';
 import CalendarFiltersBar from '../components/calendar/CalendarFiltersBar';
 import type { CalendarFilters } from '../components/calendar/CalendarFiltersBar';
-import { useAuth } from '../context/AuthContext';
+import { useSubscriptions } from '../hooks/useSubscriptions';
 import useCalendarEvents from '../hooks/useCalendarEvents';
-import { API_URL } from '../config';
-import type { SubscriptionRecord } from '../types/subscription';
 import ServiceIcon from '../components/ServiceIcon';
 import '../styles/calendar.css';
 
@@ -27,10 +25,7 @@ const formatDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDate
 
 const CalendarDayPage: React.FC = () => {
     const { date = '' } = useParams<{ date: string }>();
-    const { token, logout } = useAuth();
-    const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { subscriptions, loading, error } = useSubscriptions();
     const [filters, setFilters] = useState<CalendarFilters>({
         status: 'all', category: 'all', billingCadence: 'all', activeOnly: false,
     });
@@ -40,35 +35,6 @@ const CalendarDayPage: React.FC = () => {
         && parsedDate.getUTCFullYear() === year
         && parsedDate.getUTCMonth() === month - 1
         && parsedDate.getUTCDate() === day;
-
-    useEffect(() => {
-        const loadSubscriptions = async () => {
-            if (!token) {
-                setError('You are not authenticated.');
-                setLoading(false);
-                return;
-            }
-            try {
-                setLoading(true);
-                setError('');
-                const response = await fetch(`${API_URL}/api/subs`, {
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                });
-                const data = await response.json().catch(() => null);
-                if (response.status === 401) {
-                    logout();
-                    return;
-                }
-                if (!response.ok) throw new Error(data?.message || 'Failed to load subscriptions.');
-                setSubscriptions(Array.isArray(data) ? data : []);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Something went wrong.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadSubscriptions();
-    }, [token, logout]);
 
     const categories = useMemo(() => Array.from(new Set(
         subscriptions.map((subscription) => subscription.category).filter((category): category is string => Boolean(category)),

@@ -8,21 +8,21 @@ import {
     Paper,
 } from '@mui/material';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { API_URL } from '../../config';
+import { deleteSubscription } from '../../services/subscriptions';
+import { useAuth } from '../../context/AuthContext';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
 
 type Props = {
     subscriptionId: number;
-    token: string;
-    onUnauthorized: () => void;
     onDeleted: () => void;
 };
 
 const SubscriptionDeleteCard: React.FC<Props> = ({
                                                      subscriptionId,
-                                                     token,
-                                                     onUnauthorized,
                                                      onDeleted,
                                                  }) => {
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [usedAndUseful, setUsedAndUseful] = useState<boolean | null>(null);
     const [step, setStep] = useState<1 | 2>(1);
     const [deleting, setDeleting] = useState(false);
@@ -38,29 +38,11 @@ const SubscriptionDeleteCard: React.FC<Props> = ({
             setDeleting(true);
             setError('');
 
-            const response = await fetch(`${API_URL}/api/subs/${subscriptionId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ usedAndUseful }),
-            });
-
-            const data = await response.json().catch(() => null);
-
-            if (response.status === 401) {
-                onUnauthorized();
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(data?.message || 'Failed to delete subscription.');
-            }
-
+            await deleteSubscription(token, subscriptionId, usedAndUseful);
             onDeleted();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setDeleting(false);
         }

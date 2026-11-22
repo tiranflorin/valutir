@@ -4,7 +4,8 @@
  * first sign-in afterwards saves it (CalculatorListSaver) and removes it. Nothing is sent to the API
  * before the visitor is signed in. Listed in the Privacy Policy's storage table.
  */
-import { API_URL } from '../config';
+import { ApiError } from './account';
+import { createSubscription, listSubscriptions } from './subscriptions';
 import { findCatalogService } from '../data/services';
 import { type CalculatorImport, validCalculatorImport } from '../utils/calculator';
 import { todayIsoDate } from '../utils/dates';
@@ -71,68 +72,50 @@ export type CalculatorSaveResult = {
     nextBillingDate: string;
 };
 
-export class UnauthorizedError extends Error {}
-
-const authHeaders = (token: string) => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` });
-
 /**
  * Adds the list to the signed-in account: one POST per subscription (the free-plan limit applies),
- * active, next charged a month from today. Services already in the account are skipped.
+ * active, next charged a month from today. Services already in the account are skipped. A 401 is
+ * thrown as an ApiError, for the caller to sign out.
  */
 export const saveCalculatorList = async (token: string, list: CalculatorImport, now: Date = new Date()): Promise<CalculatorSaveResult> => {
     const nextBillingDate = monthAfter(todayIsoDate(now));
     const result: CalculatorSaveResult = { added: [], skipped: [], failed: [], nextBillingDate };
 
-    const existingResponse = await fetch(`${API_URL}/api/subs`, { headers: authHeaders(token) });
-    if (existingResponse.status === 401) throw new UnauthorizedError();
-    const existing = existingResponse.ok ? await existingResponse.json().catch(() => []) : [];
-    const existingNames = new Set((Array.isArray(existing) ? existing : [])
-        .filter((subscription: { status?: string }) => subscription.status !== 'cancelled')
-        .map((subscription: { serviceName?: string }) => (subscription.serviceName ?? '').trim().toLowerCase()));
+    // If the list can't be read, nothing is skipped as a duplicate; the save still goes ahead.
+    const existing = await listSubscriptions(token).catch((error: unknown) => {
+        if (!(error instanceof ApiError) || error.status === 401) throw error;
+        return [];
+    });
+    const existingNames = new Set(existing
+        .filter((subscription) => subscription.status !== 'cancelled')
+        .map((subscription) => subscription.serviceName.trim().toLowerCase()));
 
-    for (const row of list.rows) {
+    for (const [index, row] of list.rows.entries()) {
         if (existingNames.has(row.name.trim().toLowerCase())) {
             result.skipped.push(row.name);
             continue;
         }
-        const response = await fetch(`${API_URL}/api/subs`, {
-            method: 'POST',
-            headers: authHeaders(token),
-            body: JSON.stringify({
+        try {
+            await createSubscription(token, {
                 serviceName: row.name,
                 amount: Number(row.amount),
                 currency: list.currency,
                 billingCadence: row.cadence,
                 category: row.category,
-                status: 'active',
                 startedAt: todayIsoDate(now),
                 nextBillingDate,
-                trialEndsAt: null,
-                notes: null,
                 manageUrl: findCatalogService(row.name)?.manageUrl ?? null,
-                paidPersonally: false,
-                reminderLeadDays: null,
-                householdShared: false,
-                householdSize: null,
-                autoRenew: true,
-                b2b: false,
-                cancelledAt: null,
-                resumesOn: null,
-            }),
-        });
-        if (response.status === 401) throw new UnauthorizedError();
-        if (response.ok) {
+            });
             result.added.push(row.name);
             existingNames.add(row.name.trim().toLowerCase());
-            continue;
-        }
-        const data = await response.json().catch(() => null);
-        result.failed.push({ name: row.name, message: data?.message || `Could not add ${row.name}.` });
-        // The free-plan limit stops the rest too.
-        if (response.status === 402) {
-            const index = list.rows.indexOf(row);
-            list.rows.slice(index + 1).forEach((rest) => result.failed.push({ name: rest.name, message: data?.message || 'The free plan limit was reached.' }));
-            break;
+        } catch (error) {
+            if (!(error instanceof ApiError) || error.status === 401) throw error;
+            result.failed.push({ name: row.name, message: error.message });
+            // The free-plan limit stops the rest too.
+            if (error.status === 402) {
+                list.rows.slice(index + 1).forEach((rest) => result.failed.push({ name: rest.name, message: error.message }));
+                break;
+            }
         }
     }
 

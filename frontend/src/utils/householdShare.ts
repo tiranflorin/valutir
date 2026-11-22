@@ -12,10 +12,3 @@ export const splitCount = ({ householdShared, householdSize }: Shareable): numbe
 
 /** The owner's equal share of a bill amount (the full amount when not shared). */
 export const shareOf = (amount: number, subscription: Shareable): number => amount / splitCount(subscription);
-
-/** The sharing fields as the API expects them: business subscriptions are never shared. */
-export const householdPayload = (values: { householdShared: boolean; householdSize: number; b2b: boolean }) => {
-    const shared = values.householdShared && !values.b2b;
-
-    return { householdShared: shared, householdSize: shared ? values.householdSize : null };
-};

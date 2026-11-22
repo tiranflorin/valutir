@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import { API_URL } from '../../config';
-import type { SubscriptionCardModel } from '../../types/subscription';
+import { useAuth } from '../../context/AuthContext';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
+import { clearReviewFlag, flagForReview } from '../../services/subscriptions';
+import type { SubscriptionCardModel, SubscriptionRecord } from '../../types/subscription';
 
 type Props = {
     subscription: SubscriptionCardModel;
-    token: string;
-    onUnauthorized: () => void;
-    onUpdated: (subscription: SubscriptionCardModel) => void;
+    onUpdated: (subscription: SubscriptionRecord) => void;
 };
 
 const NOTE_MAX = 500;
@@ -20,7 +20,9 @@ const flaggedOn = (iso: string | null | undefined) =>
  * "Flag for review": a reminder to yourself to decide whether to keep it. A flag, not a status:
  * the subscription stays as it is (still charged and reminded) until you keep, pause or cancel it.
  */
-const SubscriptionReviewFlagCard: React.FC<Props> = ({ subscription, token, onUnauthorized, onUpdated }) => {
+const SubscriptionReviewFlagCard: React.FC<Props> = ({ subscription, onUpdated }) => {
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const flagged = subscription.reviewFlagged === true;
     const [editing, setEditing] = useState(false);
     const [note, setNote] = useState(subscription.reviewNote ?? '');
@@ -31,24 +33,15 @@ const SubscriptionReviewFlagCard: React.FC<Props> = ({ subscription, token, onUn
         setError('');
         setSaving(true);
         try {
-            const response = await fetch(`${API_URL}/api/subs/${subscription.id}/review`, {
-                method,
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: method === 'PUT' ? JSON.stringify({ note: note.trim() || null }) : undefined,
-            });
-            const data = await response.json().catch(() => null);
-            if (response.status === 401) {
-                onUnauthorized();
-                return;
-            }
-            if (!response.ok) {
-                throw new Error(data?.errors?.note?.[0] || data?.message || 'Could not save the review flag.');
-            }
+            const updated = method === 'PUT'
+                ? await flagForReview(token, subscription.id, note.trim() || null)
+                : await clearReviewFlag(token, subscription.id);
             setEditing(false);
             if (method === 'DELETE') setNote('');
-            onUpdated(data);
+            onUpdated(updated);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSaving(false);
         }

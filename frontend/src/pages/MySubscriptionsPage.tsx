@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     Alert,
     Box,
@@ -18,7 +18,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router';
+import { Link as RouterLink, useLocation } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import ServiceIcon from '../components/ServiceIcon';
 import AppHeader from '../components/AppHeader';
@@ -27,7 +27,7 @@ import CalculatorSavedNotice from '../components/calculator/CalculatorSavedNotic
 import type { CalculatorSaveResult } from '../services/calculatorList';
 import { useAuth } from '../context/AuthContext';
 import { useAccountExport } from '../hooks/useAccountExport';
-import { API_URL } from '../config';
+import { useSubscriptions } from '../hooks/useSubscriptions';
 import { shareOf, splitCount } from '../utils/householdShare';
 import { formatAmount, groupedMoney } from '../utils/money';
 import { priceLabel } from '../utils/priceHistory';
@@ -357,12 +357,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({ subscriptions, 
 );
 
 const MySubscriptionsPage: React.FC = () => {
-    const navigate = useNavigate();
     const location = useLocation();
-    const { token, logout } = useAuth();
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<Filter>('all');
     const { download: downloadExport, working: exporting, error: exportError } = useAccountExport();
     const [view, setView] = useState<DashboardView>(readDashboardView);
@@ -377,39 +372,7 @@ const MySubscriptionsPage: React.FC = () => {
         (location.state as { deletedSubscriptionMessage?: string } | null)?.deletedSubscriptionMessage ?? '';
     // Set by CalculatorListSaver after adding the calculator's list; the list below reloads for it.
     const calculatorSaved = (location.state as { calculatorSaved?: CalculatorSaveResult } | null)?.calculatorSaved;
-
-    useEffect(() => {
-        const loadSubscriptions = async () => {
-            if (!token) {
-                setLoading(false);
-                setError('You are not authenticated.');
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError(null);
-                const response = await fetch(`${API_URL}/api/subs`, {
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                });
-                const data = await response.json().catch(() => null);
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        logout();
-                        navigate('/login', { replace: true });
-                        return;
-                    }
-                    throw new Error(data?.message || 'Failed to load subscriptions.');
-                }
-                setSubscriptions(Array.isArray(data) ? data : []);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Something went wrong.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadSubscriptions();
-    }, [token, logout, navigate, calculatorSaved]);
+    const { subscriptions, loading, error } = useSubscriptions(calculatorSaved);
 
     const contextSubscriptions = useMemo(
         () => subscriptions.filter((subscription) => view === 'business' ? subscription.b2b === true : subscription.b2b !== true),

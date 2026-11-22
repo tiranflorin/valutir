@@ -3,11 +3,11 @@ import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import {
     type CalculatorSaveResult,
-    UnauthorizedError,
     forgetCalculatorList,
     pendingCalculatorList,
     saveCalculatorList,
 } from '../../services/calculatorList';
+import { ApiError } from '../../services/account';
 
 /**
  * Saves the calculator's list (services/calculatorList.ts) as soon as someone is signed in, in any
@@ -15,7 +15,7 @@ import {
  * from the browser before saving, so a second tab or React's double effects can't add it twice.
  */
 const CalculatorListSaver: React.FC = () => {
-    const { token, logout } = useAuth();
+    const { token, clearSession } = useAuth();
     const navigate = useNavigate();
     const { key } = useLocation();
 
@@ -28,8 +28,8 @@ const CalculatorListSaver: React.FC = () => {
         saveCalculatorList(token, list)
             .then((calculatorSaved) => navigate('/my-subs', { replace: true, state: { calculatorSaved } }))
             .catch((error: unknown) => {
-                if (error instanceof UnauthorizedError) {
-                    logout();
+                if (error instanceof ApiError && error.status === 401) {
+                    clearSession();
                     navigate('/login', { replace: true });
                     return;
                 }
@@ -42,7 +42,7 @@ const CalculatorListSaver: React.FC = () => {
                 navigate('/my-subs', { replace: true, state: { calculatorSaved } });
             });
         // `key` re-checks after every navigation, e.g. "Save it free" while already signed in.
-    }, [token, key, logout, navigate]);
+    }, [token, key, clearSession, navigate]);
 
     return null;
 };

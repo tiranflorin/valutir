@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { usePaidFeatures } from '../../hooks/usePaidFeatures';
-import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
+import { useAccountErrorHandler } from '../../hooks/useAccountErrorHandler';
+import { updateSubscription } from '../../services/subscriptions';
 import { isBeforeToday } from '../../utils/dates';
-import { householdPayload } from '../../utils/householdShare';
 import { manageUrlError } from '../../utils/manageUrl';
 import SubscriptionFormCard, {
     type BillingInterval,
@@ -10,14 +11,12 @@ import SubscriptionFormCard, {
     type SubscriptionStatus,
 } from '../subscription-form/SubscriptionFormCard';
 import type { Currency } from '../CurrencySelect';
-import type { SubscriptionCardModel } from '../../types/subscription';
+import type { SubscriptionCardModel, SubscriptionRecord } from '../../types/subscription';
 import { readDashboardView } from '../../utils/dashboardView';
 
 type Props = {
     subscription: SubscriptionCardModel;
-    token: string;
-    onUnauthorized: () => void;
-    onSaved: (subscription: SubscriptionCardModel) => void;
+    onSaved: (subscription: SubscriptionRecord) => void;
     onCancel: () => void;
 };
 
@@ -37,8 +36,6 @@ const EDIT_STATUS_OPTIONS: SubscriptionStatus[] = ['Active', 'Trial', 'Paused'];
 
 const SubscriptionEditCard: React.FC<Props> = ({
                                                    subscription,
-                                                   token,
-                                                   onUnauthorized,
                                                    onSaved,
                                                    onCancel,
                                                }) => {
@@ -62,15 +59,12 @@ const SubscriptionEditCard: React.FC<Props> = ({
     });
 
     const paidFeatures = usePaidFeatures();
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    // Cancelled is changed only through the cancel and re-enable cards: editing keeps it as it is.
     const isCancelled = subscription.status === 'cancelled';
-    const statusPayload = useMemo(
-        () => (isCancelled ? 'cancelled' : mapStatusToPayload(values.status)),
-        [isCancelled, values.status]
-    );
 
     const isTrial = !isCancelled && values.status === 'Trial';
     const isPaused = !isCancelled && values.status === 'Paused';
@@ -102,71 +96,29 @@ const SubscriptionEditCard: React.FC<Props> = ({
             setSaving(true);
             setError('');
 
-            const cancelledAt = isCancelled ? subscription.cancelledAt : null;
-            const autoRenew = isCancelled ? subscription.autoRenew : values.autoRenew;
-            const resumesOn = isPaused ? values.resumesOn || null : null;
-
-            const response = await fetch(`${API_URL}/api/subs/${subscription.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    serviceName: values.serviceName.trim(),
-                    category: values.category,
-                    amount: Number(values.amount),
-                    currency: values.currency,
-                    billingCadence: values.billingInterval,
-                    nextBillingDate: values.renewalDate || null,
-                    // Not on this form, but updates replace every field: send them back unchanged.
-                    startedAt: subscription.startedAt ?? null,
-                    trialEndsAt: isTrial ? values.renewalDate || null : null,
-                    notes: values.notes.trim() || null,
-                    manageUrl: values.manageUrl.trim() || null,
-                    status: statusPayload,
-                    autoRenew,
-                    b2b: values.b2b,
-                    paidPersonally: values.b2b && values.paidPersonally,
-                    reminderLeadDays: values.reminderLeadDays,
-                    ...householdPayload(values),
-                    cancelledAt,
-                    resumesOn,
-                }),
+            const saved = await updateSubscription(token, subscription, {
+                serviceName: values.serviceName.trim(),
+                category: values.category,
+                amount: Number(values.amount),
+                currency: values.currency,
+                billingCadence: values.billingInterval,
+                nextBillingDate: values.renewalDate || null,
+                trialEndsAt: isTrial ? values.renewalDate || null : null,
+                notes: values.notes.trim() || null,
+                manageUrl: values.manageUrl.trim() || null,
+                // Cancelled is changed only through the cancel and re-enable cards: editing keeps it as it is.
+                ...(isCancelled ? {} : { status: mapStatusToPayload(values.status), autoRenew: values.autoRenew, cancelledAt: null }),
+                b2b: values.b2b,
+                paidPersonally: values.paidPersonally,
+                reminderLeadDays: values.reminderLeadDays,
+                householdShared: values.householdShared,
+                householdSize: values.householdSize,
+                resumesOn: values.resumesOn || null,
             });
-
-            const data = await response.json().catch(() => null);
-
-            if (response.status === 401) {
-                onUnauthorized();
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(data?.message || 'Failed to update subscription.');
-            }
-
-            onSaved(
-                data ?? {
-                    ...subscription,
-                    serviceName: values.serviceName.trim(),
-                    category: values.category,
-                    amount: Number(values.amount),
-                    currency: values.currency,
-                    billingCadence: values.billingInterval,
-                    nextBillingDate: values.renewalDate || null,
-                    notes: values.notes.trim() || null,
-                    manageUrl: values.manageUrl.trim() || null,
-                    status: statusPayload,
-                    autoRenew,
-                    b2b: values.b2b,
-                    ...householdPayload(values),
-                    cancelledAt,
-                    resumesOn,
-                }
-            );
+            onSaved(saved);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSaving(false);
         }

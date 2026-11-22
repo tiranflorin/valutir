@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
 import type { SubscriptionCardModel } from '../types/subscription';
 import { todayIsoDate } from '../utils/dates';
+import { renderWithMemoryRoute } from './test-utils';
 
 const subscription: SubscriptionCardModel = {
     id: 7,
@@ -40,7 +41,7 @@ describe('provider cancellation dates', () => {
 
     const renderCard = async () => {
         const user = userEvent.setup();
-        render(<SubscriptionCancelCard subscription={subscription} token="t" onUnauthorized={vi.fn()} onCancelled={vi.fn()} onKeepTracking={vi.fn()} />);
+        renderWithMemoryRoute(<SubscriptionCancelCard subscription={subscription} onCancelled={vi.fn()} onKeepTracking={vi.fn()} />);
         await user.click(screen.getByLabelText(/yes, cancelled with provider/i));
         return { user, cancellation: screen.getByLabelText(/provider cancellation date/i), accessEnds: screen.getByLabelText(/access ends/i) };
     };

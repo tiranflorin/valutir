@@ -5,12 +5,12 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import { Link as RouterLink, useNavigate } from 'react-router';
+import { Link as RouterLink } from 'react-router';
 import AppFooter from '../components/AppFooter';
 import AppHeader from '../components/AppHeader';
 import SubscriptionCancelCard from '../components/subscription-detail/SubscriptionCancelCard';
-import type { SubscriptionCardModel } from '../types/subscription';
-import { API_URL } from '../config';
+import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
+import { clearReviewFlag, toCardModel } from '../services/subscriptions';
 import { useAuth } from '../context/AuthContext';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import type { SubscriptionRecord } from '../types/subscription';
@@ -31,11 +31,6 @@ const dayLabel = (iso: string | null) =>
 
 const cadenceLabel = (cadence: string) => cadence.charAt(0).toUpperCase() + cadence.slice(1).toLowerCase();
 
-const cardModel = (subscription: SubscriptionRecord): SubscriptionCardModel => ({
-    ...subscription,
-    amount: Number(subscription.amount) || 0,
-});
-
 const yearlyOf = (subscription: SubscriptionRecord) => yearlyCostOf(Number(subscription.amount) || 0, subscription.billingCadence);
 
 /**
@@ -44,8 +39,8 @@ const yearlyOf = (subscription: SubscriptionRecord) => yearlyCostOf(Number(subsc
  * a review flag. Progress lives in this page only.
  */
 const ReviewSubscriptionsPage: React.FC = () => {
-    const navigate = useNavigate();
-    const { token, logout } = useAuth();
+    const { token } = useAuth();
+    const errorMessage = useAccountErrorHandler();
     const { subscriptions, loading, error: loadError } = useSubscriptions();
     // Fixed when the list arrives, so a decision never reorders the cards still to come.
     const [queue, setQueue] = useState<SubscriptionRecord[] | null>(null);
@@ -69,11 +64,6 @@ const ReviewSubscriptionsPage: React.FC = () => {
     const rise = current ? recentRise(current, todayIsoDate()) : null;
     const finished = queue !== null && current === null;
     const currentDecision = current ? decisions[current.id] : undefined;
-
-    const signOut = useCallback(() => {
-        logout();
-        navigate('/login', { replace: true });
-    }, [logout, navigate]);
 
     const decide = useCallback((subscription: SubscriptionRecord, decision: Decision) => {
         setDecisions((previous) => ({ ...previous, [subscription.id]: decision }));
@@ -108,26 +98,16 @@ const ReviewSubscriptionsPage: React.FC = () => {
         setSaving(true);
         setError('');
         try {
-            const response = await fetch(`${API_URL}/api/subs/${subscription.id}/review`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            });
-            if (response.status === 401) {
-                signOut();
-                return;
-            }
-            if (!response.ok) {
-                const data = await response.json().catch(() => null);
-                throw new Error(data?.message || 'Could not clear the review flag.');
-            }
+            await clearReviewFlag(token, subscription.id);
             setFlagsCleared((previous) => new Set(previous).add(subscription.id));
             decide(subscription, 'kept');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSaving(false);
         }
-    }, [decide, signOut, token, flagsCleared]);
+    }, [decide, errorMessage, token, flagsCleared]);
 
     // Letters decide (K keep, C cancel, S skip), arrows move (← previous, → next). A cancelled card
     // can't be decided again here. Never while typing or in the cancel step.
@@ -214,9 +194,7 @@ const ReviewSubscriptionsPage: React.FC = () => {
                         {cancelling ? (
                             <SubscriptionCancelCard
                                 key={current.id}
-                                subscription={cardModel(current)}
-                                token={token ?? ''}
-                                onUnauthorized={signOut}
+                                subscription={toCardModel(current)}
                                 onCancelled={() => decide(current, 'cancelled')}
                                 onKeepTracking={() => setCancelling(false)}
                             />

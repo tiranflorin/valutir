@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { usePaidFeatures } from '../hooks/usePaidFeatures';
 import { Box, Button, Container } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -10,9 +10,9 @@ import SubscriptionFormCard, {
     type SubscriptionFormValues,
     type SubscriptionStatus,
 } from '../components/subscription-form/SubscriptionFormCard';
-import { API_URL } from '../config';
-import { isBeforeToday, todayIsoDate } from '../utils/dates';
-import { householdPayload } from '../utils/householdShare';
+import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
+import { createSubscription } from '../services/subscriptions';
+import { isBeforeToday } from '../utils/dates';
 import { manageUrlError } from '../utils/manageUrl';
 import { useAuth } from '../context/AuthContext';
 import { readDashboardView } from '../utils/dashboardView';
@@ -20,7 +20,8 @@ import { readDashboardView } from '../utils/dashboardView';
 
 const AddSubscriptionPage: React.FC = () => {
     const navigate = useNavigate();
-    const { token, logout, user } = useAuth();
+    const { token, user } = useAuth();
+    const errorMessage = useAccountErrorHandler();
 
     const [values, setValues] = useState<SubscriptionFormValues>({
         serviceName: '',
@@ -47,7 +48,6 @@ const AddSubscriptionPage: React.FC = () => {
 
     const isTrial = values.status === 'Trial';
     // A new subscription is Active or Trial; pausing is for one already tracked.
-    const statusPayload = useMemo(() => (values.status === 'Trial' ? 'trial' : 'active'), [values.status]);
 
     const billingDateLabel = isTrial ? 'First charge date' : 'Next billing date';
 
@@ -87,53 +87,29 @@ const AddSubscriptionPage: React.FC = () => {
             setSubmitting(true);
             setError('');
 
-            const today = todayIsoDate();
-
-            const payload = {
+            await createSubscription(token, {
                 serviceName: values.serviceName.trim(),
                 amount: Number(values.amount),
                 currency: values.currency,
                 billingCadence: values.billingInterval,
                 category: values.category,
-                status: statusPayload,
-                startedAt: today,
+                status: isTrial ? 'trial' : 'active',
                 nextBillingDate: values.renewalDate,
                 trialEndsAt: isTrial ? values.renewalDate : null,
                 notes: values.notes.trim() || null,
                 manageUrl: values.manageUrl.trim() || null,
-                ...householdPayload(values),
+                householdShared: values.householdShared,
+                householdSize: values.householdSize,
                 autoRenew: values.autoRenew,
                 b2b: values.b2b,
-                paidPersonally: values.b2b && values.paidPersonally,
+                paidPersonally: values.paidPersonally,
                 reminderLeadDays: values.reminderLeadDays,
-                cancelledAt: null,
-                resumesOn: null,
-            };
-
-            const response = await fetch(`${API_URL}/api/subs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
             });
-
-            const data = await response.json().catch(() => null);
-
-            if (response.status === 401) {
-                logout();
-                navigate('/login', { replace: true });
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(data?.message || 'Failed to create subscription.');
-            }
 
             navigate('/my-subs');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong.');
+            const message = errorMessage(err);
+            if (message !== null) setError(message);
         } finally {
             setSubmitting(false);
         }
