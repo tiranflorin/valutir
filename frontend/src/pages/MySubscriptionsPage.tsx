@@ -33,7 +33,8 @@ import { formatAmount, groupedMoney } from '../utils/money';
 import { priceLabel } from '../utils/priceHistory';
 import { monthlyEquivalentOf } from '../utils/insights';
 import type { ChargeSource } from '../utils/monthCharges';
-import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
+import { useDashboardView } from '../hooks/useDashboardView';
+import type { DashboardView } from '../utils/dashboardView';
 
 type Subscription = {
     id: number;
@@ -360,19 +361,16 @@ const MySubscriptionsPage: React.FC = () => {
     const location = useLocation();
     const [filter, setFilter] = useState<Filter>('all');
     const { download: downloadExport, working: exporting, error: exportError } = useAccountExport();
-    const [view, setView] = useState<DashboardView>(readDashboardView);
-
-    const selectView = (nextView: DashboardView) => {
-        setView(nextView);
-        setFilter('all');
-        saveDashboardView(nextView);
-    };
-
     const deletedSubscriptionMessage =
         (location.state as { deletedSubscriptionMessage?: string } | null)?.deletedSubscriptionMessage ?? '';
     // Set by CalculatorListSaver after adding the calculator's list; the list below reloads for it.
     const calculatorSaved = (location.state as { calculatorSaved?: CalculatorSaveResult } | null)?.calculatorSaved;
     const { subscriptions, loading, error } = useSubscriptions(calculatorSaved);
+    const { view, selectView: pickView, hasBusiness } = useDashboardView(subscriptions, !loading && !error);
+    const selectView = (nextView: DashboardView) => {
+        pickView(nextView);
+        setFilter('all');
+    };
 
     const contextSubscriptions = useMemo(
         () => subscriptions.filter((subscription) => view === 'business' ? subscription.b2b === true : subscription.b2b !== true),
@@ -461,10 +459,12 @@ const MySubscriptionsPage: React.FC = () => {
                         <p>{view === 'business'
                             ? 'The tools your freelance work or company pays for, apart from your household bills.'
                             : 'See what you pay, what renews next, and what may need a review.'}</p>
-                        <nav className="view-switch" aria-label="Subscription view">
-                            <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
-                            <button type="button" aria-current={view === 'business' ? 'page' : undefined} onClick={() => selectView('business')}>Business</button>
-                        </nav>
+                        {hasBusiness && (
+                            <nav className="view-switch" aria-label="Subscription view">
+                                <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
+                                <button type="button" aria-current={view === 'business' ? 'page' : undefined} onClick={() => selectView('business')}>Business</button>
+                            </nav>
+                        )}
                     </div>
                     <Box className="dashboard-heading-actions">
                         {view === 'business' && contextSubscriptions.length > 0 && (

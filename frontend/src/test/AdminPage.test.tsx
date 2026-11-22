@@ -51,7 +51,7 @@ describe('admin page', () => {
 
         const accounts = await screen.findByRole('region', { name: 'Accounts' });
         expect(within(accounts).getByText('All accounts').nextSibling).toHaveTextContent('12');
-        expect(screen.getByTestId('admin-near-limit')).toHaveTextContent('4 free accounts have 30 or more of the 40 active subscriptions the free plan allows.');
+        expect(within(accounts).getByText('Free, near the limit (30+ of 40 active)').nextSibling).toHaveTextContent('4');
         expect(within(screen.getByRole('region', { name: 'Purchases' })).getByText('Paid and kept').nextSibling).toHaveTextContent('€59.97');
         const health = screen.getByRole('region', { name: 'Background work' });
         expect(within(health).getByText('Checkouts pending for over an hour').nextSibling).toHaveTextContent('0');
@@ -73,15 +73,26 @@ describe('admin page', () => {
         expect(callsTo(calls, 'GET /api/admin/accounts')).toHaveLength(2);
     });
 
-    it('asks nothing of the admin API for a regular account, and offers no admin link', async () => {
+    it('shows a regular account the ordinary Page not found, asks nothing of the admin API, and offers no admin link', async () => {
         signIn();
         const calls = mockApi({ 'GET /api/profile': () => ({ status: 200, body: profile() }) });
         renderWithMemoryRoute(<AdminPage />, { route: '/admin' });
 
-        expect(await screen.findByText('This page is for admin accounts.')).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+        expect(screen.queryByText(/admin|operator/i)).not.toBeInTheDocument();
         await userEvent.setup().click(screen.getByRole('button', { name: 'Open account menu' }));
         expect(screen.queryByRole('menuitem', { name: 'Admin' })).not.toBeInTheDocument();
         expect(calls.some((call) => call.key.startsWith('GET /api/admin'))).toBe(false);
+    });
+
+    it('shows a signed-out visitor Page not found instead of the sign-in page', () => {
+        const calls = mockApi({});
+        renderWithMemoryRoute(<AdminPage />, { route: '/admin' });
+
+        expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Go to the homepage' })).toHaveAttribute('href', '/');
+        expect(screen.queryByText(/admin|operator/i)).not.toBeInTheDocument();
+        expect(calls).toHaveLength(0);
     });
 
     it('offers the admin link in the account menu to admins', async () => {

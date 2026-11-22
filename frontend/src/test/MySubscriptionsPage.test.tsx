@@ -122,6 +122,40 @@ describe('MySubscriptionsPage sections', () => {
     });
 });
 
+describe('MySubscriptionsPage Personal/Business switch', () => {
+    beforeEach(() => {
+        signIn();
+    });
+
+    it('stays hidden until there is a business subscription', async () => {
+        dashboardApi(subscriptions);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await screen.findByText('My subscriptions · 2');
+        expect(screen.queryByRole('navigation', { name: 'Subscription view' })).not.toBeInTheDocument();
+    });
+
+    it('shows once one business subscription exists, even a cancelled one', async () => {
+        dashboardApi([...subscriptions.slice(0, 2), { ...subscriptions[2], b2b: true }]);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        await screen.findByText('My subscriptions · 2');
+        const viewSwitch = screen.getByRole('navigation', { name: 'Subscription view' });
+        await userEvent.setup().click(within(viewSwitch).getByRole('button', { name: 'Business' }));
+        expect(screen.getByRole('heading', { name: 'Business subscriptions' })).toBeInTheDocument();
+    });
+
+    it('goes back to Personal when Business was picked but no business subscription is left', async () => {
+        window.localStorage.setItem('valutir_dashboard_view', 'business');
+        dashboardApi(subscriptions);
+        renderWithMemoryRoute(<MySubscriptionsPage />, { route: '/my-subs' });
+
+        expect(await screen.findByRole('heading', { name: 'Your recurring expenses' })).toBeInTheDocument();
+        expect(rowsUnder(/^My subscriptions/)).toEqual(['Netflix', 'Spotify']);
+        expect(window.localStorage.getItem('valutir_dashboard_view')).toBe('personal');
+    });
+});
+
 /** A YYYY-MM-DD date `days` from today, local time. */
 const daysFromToday = (days: number) => {
     const date = new Date();

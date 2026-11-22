@@ -21,7 +21,8 @@ import { formatCurrency } from '../utils/money';
 import { findOverlaps } from '../utils/overlaps';
 import type { ChargeSource } from '../utils/monthCharges';
 import ServiceIcon from '../components/ServiceIcon';
-import { type DashboardView, readDashboardView, saveDashboardView } from '../utils/dashboardView';
+import { useDashboardView } from '../hooks/useDashboardView';
+import type { DashboardView } from '../utils/dashboardView';
 
 type AmountMode = 'full' | 'share';
 
@@ -37,7 +38,7 @@ const dayLabel = (iso: string) =>
 const InsightsPage: React.FC = () => {
     const { user } = useAuth();
     const { subscriptions, loading, error } = useSubscriptions();
-    const [view, setView] = useState<DashboardView>(readDashboardView);
+    const { view, selectView: pickView, hasBusiness } = useDashboardView(subscriptions, !loading && !error);
     const [amountMode, setAmountMode] = useState<AmountMode>('full');
     const [pickedCurrency, setPickedCurrency] = useState<string | null>(null);
     const [openCategory, setOpenCategory] = useState<string | null>(null);
@@ -45,9 +46,8 @@ const InsightsPage: React.FC = () => {
     const [now] = useState(() => new Date());
 
     const selectView = (next: DashboardView) => {
-        setView(next);
+        pickView(next);
         setOpenCategory(null);
-        saveDashboardView(next);
     };
 
     const inView = useMemo(
@@ -102,10 +102,12 @@ const InsightsPage: React.FC = () => {
                     <div>
                         <h1>Insights</h1>
                         <p>Where your recurring money goes, and what the next 12 months will cost.</p>
-                        <nav className="view-switch" aria-label="Subscription view">
-                            <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
-                            <button type="button" aria-current={view === 'business' ? 'page' : undefined} onClick={() => selectView('business')}>Business</button>
-                        </nav>
+                        {hasBusiness && (
+                            <nav className="view-switch" aria-label="Subscription view">
+                                <button type="button" aria-current={view === 'personal' ? 'page' : undefined} onClick={() => selectView('personal')}>Personal</button>
+                                <button type="button" aria-current={view === 'business' ? 'page' : undefined} onClick={() => selectView('business')}>Business</button>
+                            </nav>
+                        )}
                     </div>
                 </Box>
 

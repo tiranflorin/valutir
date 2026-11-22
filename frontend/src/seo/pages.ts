@@ -6,6 +6,7 @@
  *   sitemap and llms.txt, and open to every crawler.
  * - UNLISTED_PAGES get an empty, noindex page: signed-in screens, and links that carry a token.
  *   robots.txt keeps crawlers out of them.
+ * - HIDDEN_PAGES look like unknown paths to anyone who may not open them.
  */
 import { LEGAL } from '../legal';
 
@@ -135,8 +136,13 @@ export const UNLISTED_PAGES: UnlistedPage[] = [
     { path: '/invoices', title: 'Business invoices · ValuTir' },
     { path: '/profile', title: 'Your profile · ValuTir' },
     { path: '/preferences', title: 'Preferences · ValuTir' },
-    { path: '/admin', title: 'Admin · ValuTir' },
 ];
+
+/**
+ * Routes that answer "Page not found" to everyone but admins. They get no prerendered page and no
+ * robots.txt line (that would name them), so the host serves them 404.html like any unknown path.
+ */
+export const HIDDEN_PAGES = ['/admin'];
 
 /** Routes with parameters (/subscriptions/:id, /calendar/day/:date) live under these. */
 export const PRIVATE_PREFIXES = ['/subscriptions/', '/calendar/'];

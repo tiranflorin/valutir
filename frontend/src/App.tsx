@@ -20,6 +20,7 @@ import InsightsPage from './pages/InsightsPage';
 import ReviewSubscriptionsPage from './pages/ReviewSubscriptionsPage';
 import InvoicesPage from './pages/InvoicesPage';
 import AdminPage from './pages/AdminPage';
+import NotFoundPage from './pages/NotFoundPage';
 import ProfilePage from './pages/ProfilePage';
 import PreferencesPage from './pages/PreferencesPage';
 import PlansPage from './pages/PlansPage';
@@ -126,7 +127,7 @@ const AppRoutes: React.FC = () => {
 
             <Route
                 path="*"
-                element={<Navigate to={isAuthenticated ? '/my-subs' : '/'} replace />}
+                element={<NotFoundPage />}
             />
 
             <Route
@@ -156,14 +157,7 @@ const AppRoutes: React.FC = () => {
                 }
             />
 
-            <Route
-                path="/admin"
-                element={
-                    <ProtectedRoute>
-                        <AdminPage />
-                    </ProtectedRoute>
-                }
-            />
+            <Route path="/admin" element={<AdminPage />} />
 
             <Route
                 path="/review"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, renderPage } from '../entry-server';
 import { disallowedPaths, fillTemplate, headTags, llmsTxt, publicPageProblems, redirectsFile, robotsTxt, sitemapXml } from '../seo/documents';
-import { INDEXED_PAGES, UNLISTED_PAGES, pageHead } from '../seo/pages';
+import { HIDDEN_PAGES, INDEXED_PAGES, UNLISTED_PAGES, pageHead } from '../seo/pages';
 import { REVENUE_COMMITMENT } from '../legal';
 import appSource from '../App.tsx?raw';
 import { isPageRequest } from '../../build/pageRequest';
@@ -14,8 +14,8 @@ const appRoutePaths = () => [...appSource.matchAll(/path="([^"]+)"/g)]
     .filter((path) => path !== '*' && !path.includes(':'));
 
 describe('which pages crawlers see', () => {
-    it('lists every route in App.tsx as indexed or unlisted, once', () => {
-        const listed = [...INDEXED_PAGES, ...UNLISTED_PAGES].map((page) => page.path);
+    it('lists every route in App.tsx as indexed, unlisted or hidden, once', () => {
+        const listed = [...INDEXED_PAGES, ...UNLISTED_PAGES].map((page) => page.path).concat(HIDDEN_PAGES);
         expect(new Set(listed).size).toBe(listed.length);
         expect([...appRoutePaths()].sort()).toEqual([...listed].sort());
     });
@@ -26,6 +26,13 @@ describe('which pages crawlers see', () => {
         expect(blocked('/subscriptions/12')).toBe(true);
         expect(blocked('/calendar/day/2026-11-14')).toBe(true);
         for (const page of INDEXED_PAGES) expect(blocked(page.path), page.path).toBe(false);
+    });
+
+    it('never names a hidden page in robots.txt, and gives it the not-found head', () => {
+        for (const path of HIDDEN_PAGES) {
+            expect(robotsTxt(SITE), path).not.toContain(path);
+            expect(pageHead(path, SITE)).toMatchObject({ title: 'ValuTir', indexable: false });
+        }
     });
 
     it('writes robots.txt, the sitemap and llms.txt from the same list', () => {

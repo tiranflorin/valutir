@@ -7,6 +7,7 @@ import { useAccountErrorHandler } from '../hooks/useAccountErrorHandler';
 import { type AdminAccount, type AdminOverview, fetchAdminOverview, lookUpAccount } from '../services/admin';
 import { ApiError } from '../services/account';
 import { formatCurrency } from '../utils/money';
+import NotFoundPage from './NotFoundPage';
 
 const ADMIN_ROLE = 'ROLE_ADMIN';
 
@@ -81,10 +82,9 @@ const AccountResult: React.FC<{ account: AdminAccount; freeLimit: number | null 
  * The operator's read-only page: one account's status for a support or refund request, account and
  * purchase counts, and signs that a background job stopped. The API allows it for ROLE_ADMIN only.
  */
-const AdminPage: React.FC = () => {
-    const { token, user } = useAuth();
+const AdminTools: React.FC = () => {
+    const { token } = useAuth();
     const errorMessage = useAccountErrorHandler();
-    const isAdmin = user?.roles?.includes(ADMIN_ROLE) === true;
     const [overview, setOverview] = useState<AdminOverview | null>(null);
     const [overviewError, setOverviewError] = useState('');
     const [email, setEmail] = useState('');
@@ -93,7 +93,6 @@ const AdminPage: React.FC = () => {
     const [looking, setLooking] = useState(false);
 
     useEffect(() => {
-        if (!isAdmin) return undefined;
         let cancelled = false;
         fetchAdminOverview(token).then(
             (data) => {
@@ -107,7 +106,7 @@ const AdminPage: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [isAdmin, token, errorMessage]);
+    }, [token, errorMessage]);
 
     const lookUp = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -124,9 +123,7 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    const content = !isAdmin ? (
-        <Alert severity="info">This page is for admin accounts.</Alert>
-    ) : (
+    const content = (
         <>
             <Paper className="settings-card" component="section" aria-labelledby="admin-lookup-title">
                 <div className="settings-section-heading">
@@ -161,12 +158,8 @@ const AdminPage: React.FC = () => {
                             ['Not verified yet', overview.accounts.unverified],
                             ['Created in the last 7 days', overview.accounts.createdLast7Days],
                             ['Created in the last 30 days', overview.accounts.createdLast30Days],
+                            [`Free, near the limit (${overview.nearFreeLimit.threshold}+ of ${overview.nearFreeLimit.limit} active)`, overview.nearFreeLimit.accounts],
                         ]} />
-                        <p className="admin-note">Sign-up dates are recorded from 22 Nov 2026; older accounts aren&apos;t in the last two counts.</p>
-                        <p className="admin-note" data-testid="admin-near-limit">
-                            {overview.nearFreeLimit.accounts} free {overview.nearFreeLimit.accounts === 1 ? 'account has' : 'accounts have'} {overview.nearFreeLimit.threshold} or
-                            more of the {overview.nearFreeLimit.limit} active subscriptions the free plan allows.
-                        </p>
                     </Paper>
 
                     <Paper className="settings-card" component="section" aria-labelledby="admin-purchases-title">
@@ -217,6 +210,13 @@ const AdminPage: React.FC = () => {
             <AppFooter />
         </Box>
     );
+};
+
+/** Everyone but an admin, signed in or not, gets the ordinary "Page not found", so the page's existence isn't shown. */
+const AdminPage: React.FC = () => {
+    const { user } = useAuth();
+
+    return user?.roles?.includes(ADMIN_ROLE) === true ? <AdminTools /> : <NotFoundPage />;
 };
 
 export default AdminPage;
