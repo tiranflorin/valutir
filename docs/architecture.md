@@ -173,7 +173,7 @@ Measure before revisiting: after launch, time `GET /health` from a US location (
 | Email | Amazon SES in `eu-central-1` through the existing Mailer SMTP transport. Domain verified with SPF, DKIM, and DMARC. |
 | Secrets | SSM Parameter Store SecureStrings under `/valutir/prod/` (free tier): the database password, `APP_SECRET`, newly generated JWT keys and passphrase, Stripe keys, the Turnstile secret, and the Tunnel token. The instance reads them at deploy time. |
 | Images | An ECR repository, tagged by commit SHA, with a lifecycle rule keeping the last 10 images. |
-| Logs | Container logs go to CloudWatch with **30-day retention**, as the Privacy policy promises. |
+| Logs | Container logs go to CloudWatch with **30-day retention**, as the Privacy policy promises. In production, notices, warnings, errors and the `admin` channel (admin page views) are written as they happen; `info` and `debug` lines are buffered and written only for a request that logs an error (`monolog.yaml`, `ProductionLoggingTest`). |
 | Cost control | An AWS Budget with an alert at $40 a month. |
 
 ## Security, layer by layer

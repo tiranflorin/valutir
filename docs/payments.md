@@ -77,7 +77,7 @@ The Refund policy (`/refunds`) promises a full refund within 14 days of paying, 
 2. **Find the payment.** In the Stripe Dashboard (live mode), open Payments and search for that email. Checkout sends it as the customer email, and the payment's metadata holds the account's `user_id`.
 3. **Check the date.** Paid 14 days ago or less: refund. Later: refund only if the unlock doesn't work as described and can't be fixed in reasonable time (section 4 of the policy); otherwise reply that the purchase is final.
 4. **Refund the full amount.** On the payment, choose Refund and keep the full €19.99. A partial refund keeps the account unlocked.
-5. **Check the account went back to the free plan.** Under Developers → Webhooks, the endpoint shows a `charge.refunded` event delivered with 200, and the API logs `Stripe payment reversed; unlock revoked.` If the delivery failed, Stripe retries it for up to three days; fix whatever blocks the webhook rather than changing the account by hand.
+5. **Check the account went back to the free plan.** Look the email up on the admin page (`/admin`): the plan says Free and the purchase says refunded. If it still says Paid, check under Developers → Webhooks whether the endpoint got the `charge.refunded` event with a 200. If the delivery failed, Stripe retries it for up to three days; fix whatever blocks the webhook rather than changing the account by hand.
 6. **Reply to the buyer.** The refund is issued; it can take 5 to 10 business days to show up, depending on their bank. Stripe also emails them a refund receipt if refund receipts are turned on (Settings → Customer emails).
 7. **Delete the message** from the inbox once it's handled, as the Privacy Policy promises for contact messages.
 

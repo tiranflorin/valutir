@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[ORM\UniqueConstraint(name: 'UNIQ_USER_EMAIL_VERIFICATION_TOKEN', fields: ['emailVerificationTokenHash'])]
@@ -88,6 +89,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerificationExpiresAt = null;
+
+    /** When the account was created; null for accounts made before this was recorded (22 November 2026). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        $this->createdAt ??= new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -240,6 +251,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->remindersEnabled = $remindersEnabled;
 
         return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
     }
 
     public function getRemindersProcessedOn(): ?\DateTimeImmutable

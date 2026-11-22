@@ -89,4 +89,14 @@ class ReminderLogRepository extends ServiceEntityRepository
     {
         return sprintf('%d|%s|%s', $subscriptionId, $kind, $chargeDate->format('Y-m-d'));
     }
+
+    public function countSentSince(\DateTimeImmutable $since): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.sentAt >= :since')
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

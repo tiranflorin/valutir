@@ -10,6 +10,7 @@ use App\Repository\PasswordResetTokenRepository;
 use App\Service\PasswordResetService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class PasswordResetServiceTest extends TestCase
@@ -30,7 +31,7 @@ final class PasswordResetServiceTest extends TestCase
         $entityManager->expects(self::once())->method('flush');
         $entityManager->expects(self::once())->method('commit');
 
-        $service = new PasswordResetService($repository, $entityManager, $this->createStub(UserPasswordHasherInterface::class));
+        $service = new PasswordResetService($repository, $entityManager, $this->createStub(UserPasswordHasherInterface::class), $this->createStub(LoggerInterface::class));
         $rawToken = $service->createToken($user);
 
         self::assertSame(64, strlen($rawToken));
@@ -44,6 +45,7 @@ final class PasswordResetServiceTest extends TestCase
     public function testResetPasswordHashesNewPasswordAndConsumesToken(): void
     {
         $user = (new User())->setPassword('old-hash');
+        (new \ReflectionProperty(User::class, 'id'))->setValue($user, 5);
         $token = new PasswordResetToken($user, hash('sha256', str_repeat('a', 64)), new \DateTimeImmutable('+1 hour'));
         $repository = $this->createMock(PasswordResetTokenRepository::class);
         $repository->expects(self::once())->method('findValid')->with(hash('sha256', str_repeat('a', 64)), self::isInstanceOf(\DateTimeImmutable::class))->willReturn($token);
@@ -55,7 +57,11 @@ final class PasswordResetServiceTest extends TestCase
         $entityManager->expects(self::once())->method('flush');
         $entityManager->expects(self::once())->method('commit');
 
-        $service = new PasswordResetService($repository, $entityManager, $hasher);
+        // A reset is a security event: written as it happens in production (notice level), with the user ID only.
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('notice')->with('Account password reset from an email link.', ['user_id' => 5]);
+
+        $service = new PasswordResetService($repository, $entityManager, $hasher, $logger);
 
         self::assertTrue($service->resetPassword(str_repeat('a', 64), 'A-new-password9!'));
         self::assertSame('new-hash', $user->getPassword());
@@ -74,7 +80,10 @@ final class PasswordResetServiceTest extends TestCase
         $hasher = $this->createMock(UserPasswordHasherInterface::class);
         $hasher->expects(self::never())->method('hashPassword');
 
-        $service = new PasswordResetService($repository, $entityManager, $hasher);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('notice');
+
+        $service = new PasswordResetService($repository, $entityManager, $hasher, $logger);
 
         self::assertFalse($service->resetPassword(str_repeat('b', 64), 'A-new-password9!'));
     }
@@ -87,6 +96,7 @@ final class PasswordResetServiceTest extends TestCase
             $repository,
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(UserPasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
         );
 
         self::assertFalse($service->resetPassword('not-a-token', 'A-new-password9!'));

@@ -67,7 +67,7 @@ final readonly class EmailVerificationService
 
         $user->markEmailVerified($now);
         $this->entityManager->flush();
-        $this->logger->info('Email address verified.', ['user_id' => $user->getId()]);
+        $this->logger->notice('Email address verified.', ['user_id' => $user->getId()]);
 
         return true;
     }

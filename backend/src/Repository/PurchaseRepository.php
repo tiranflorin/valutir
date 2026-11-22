@@ -82,4 +82,70 @@ class PurchaseRepository extends ServiceEntityRepository
             ->setLockMode(LockMode::PESSIMISTIC_WRITE)
             ->getOneOrNullResult();
     }
+
+    /**
+     * @return array<string, int> purchase count per status
+     */
+    public function countByStatus(): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.status AS status, COUNT(p.id) AS purchases')
+            ->groupBy('p.status')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(string) $row['status']] = (int) $row['purchases'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * What paid purchases still bring in (refunded and disputed ones excluded), VAT included,
+     * before Stripe's fees.
+     *
+     * @return array<string, int> amount in cents per currency
+     */
+    public function sumPaidByCurrency(): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.currency AS currency, SUM(p.amountInCents) AS cents')
+            ->andWhere('p.status = :paid')
+            ->setParameter('paid', Purchase::STATUS_PAID)
+            ->groupBy('p.currency')
+            ->getQuery()
+            ->getArrayResult();
+
+        $totals = [];
+        foreach ($rows as $row) {
+            $totals[strtoupper((string) $row['currency'])] = (int) $row['cents'];
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Checkouts still pending that started before $before. Sessions expire after 30 minutes and Stripe
+     * then sends checkout.session.expired, so these mean the webhook that settles them hasn't arrived.
+     *
+     * @return array{count: int, oldest: ?\DateTimeImmutable}
+     */
+    public function findStalePendingSummary(\DateTimeImmutable $before): array
+    {
+        $row = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id) AS pending, MIN(p.createdAt) AS oldest')
+            ->andWhere('p.status = :pending')
+            ->andWhere('p.createdAt < :before')
+            ->setParameter('pending', Purchase::STATUS_PENDING)
+            ->setParameter('before', $before)
+            ->getQuery()
+            ->getSingleResult();
+
+        return [
+            'count' => (int) $row['pending'],
+            'oldest' => null === $row['oldest'] ? null : new \DateTimeImmutable((string) $row['oldest']),
+        ];
+    }
 }

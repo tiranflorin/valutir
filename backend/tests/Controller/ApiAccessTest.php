@@ -45,6 +45,8 @@ final class ApiAccessTest extends WebTestCase
         yield 'file an invoice' => ['PUT', '/api/business/charges/1/2026-10-25/invoice'];
         yield 'unfile an invoice' => ['DELETE', '/api/business/charges/1/2026-10-25/invoice'];
         yield 'accountant export' => ['GET', '/api/business/export.csv'];
+        yield 'admin overview' => ['GET', '/api/admin/overview'];
+        yield 'admin account lookup' => ['GET', '/api/admin/accounts?email=a@example.test'];
     }
 
     #[DataProvider('protectedEndpoints')]

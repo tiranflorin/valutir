@@ -11,7 +11,7 @@ export const LEGAL = {
     taxId: 'RO44441041',
     /** The law the Terms are governed by. */
     governingLaw: 'Romania',
-    privacyUpdated: '18 November 2026',
+    privacyUpdated: '22 November 2026',
     termsUpdated: '22 November 2026',
     refundsUpdated: '22 November 2026',
     /** Days after purchase in which the one-time unlock is refunded on request, no questions asked. */

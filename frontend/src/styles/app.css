@@ -5828,3 +5828,90 @@ img.catalog-tile {
 :root[data-theme='dark'] .manage-link-note {
     color: #94a3b8;
 }
+
+/* Admin page (AdminPage.tsx): label and value rows, the lookup form, and a purchase table. */
+.admin-facts {
+    display: grid;
+    margin: 0;
+}
+
+.admin-facts > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid #edf1ee;
+    font-size: 13px;
+}
+
+.admin-facts dt {
+    color: #5f6d65;
+}
+
+.admin-facts dd {
+    margin: 0;
+    color: #263a2d;
+    font-weight: 700;
+    text-align: right;
+}
+
+.admin-lookup {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.admin-lookup .MuiTextField-root {
+    max-width: 420px;
+}
+
+/* Keeps "Look up" on one line, as tall as the small input next to it. */
+.admin-lookup .MuiButton-root {
+    flex-shrink: 0;
+    height: 40px;
+    white-space: nowrap;
+}
+
+.admin-account {
+    margin-top: 18px;
+}
+
+.admin-account h3 {
+    margin: 18px 0 8px;
+    font-size: 14px;
+}
+
+.admin-note {
+    margin: 12px 0 0;
+    color: #78847d;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 7px 6px;
+    border-bottom: 1px solid #edf1ee;
+    text-align: left;
+}
+
+:root[data-theme='dark'] .admin-facts > div,
+:root[data-theme='dark'] .admin-table th,
+:root[data-theme='dark'] .admin-table td {
+    border-color: #344157;
+}
+
+:root[data-theme='dark'] .admin-facts dt,
+:root[data-theme='dark'] .admin-note {
+    color: #a8b4c8;
+}
+
+:root[data-theme='dark'] .admin-facts dd {
+    color: #e7ecf5;
+}

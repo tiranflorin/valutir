@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Subscription;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -130,5 +131,27 @@ class SubscriptionRepository extends ServiceEntityRepository
             ->andWhere('s.user = :user')
             ->andWhere('s.deletedAt IS NULL')
             ->setParameter('user', $user);
+    }
+
+    /**
+     * Free accounts (neither unlocked nor admin) with at least $minimum subscriptions in $statuses,
+     * soft-deleted ones excluded, as the free-plan limit counts them.
+     *
+     * @param list<string> $statuses
+     */
+    public function countFreeAccountsWithAtLeast(int $minimum, array $statuses): int
+    {
+        return (int) $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM (
+                SELECT s.user_id FROM subscription s
+                JOIN "user" u ON u.id = s.user_id
+                WHERE s.deleted_at IS NULL AND s.status IN (:statuses)
+                    AND u.unlocked_at IS NULL AND NOT u.roles::jsonb @> CAST(:admin AS jsonb)
+                GROUP BY s.user_id
+                HAVING COUNT(*) >= :minimum
+            ) AS near_limit',
+            ['statuses' => $statuses, 'admin' => json_encode([User::ROLE_ADMIN], \JSON_THROW_ON_ERROR), 'minimum' => $minimum],
+            ['statuses' => ArrayParameterType::STRING],
+        );
     }
 }

@@ -96,7 +96,7 @@ final readonly class EmailChangeService
         }
 
         [$user, $previousEmail] = $result;
-        $this->logger->info('Account email changed.', ['user_id' => $user->getId()]);
+        $this->logger->notice('Account email changed.', ['user_id' => $user->getId()]);
         $this->accountMailer->sendEmailChangedNotice($previousEmail, $user->getUserIdentifier());
 
         return true;

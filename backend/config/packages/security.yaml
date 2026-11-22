@@ -44,6 +44,8 @@ security:
         - { path: ^/api/reminders/unsubscribe$, roles: PUBLIC_ACCESS }
         # Stripe calls it; StripeWebhookVerifier checks the signature over the raw body.
         - { path: ^/api/billing/webhook$, roles: PUBLIC_ACCESS }
+        # The operator's admin page (AdminController); every other /api path only needs a signed-in user.
+        - { path: ^/api/admin(/|$), roles: ROLE_ADMIN }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

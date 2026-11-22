@@ -73,7 +73,7 @@ final readonly class AccountService
         $user->revokeAllTokens();
         $this->entityManager->flush();
 
-        $this->logger->info('Account password changed.', ['user_id' => $user->getId()]);
+        $this->logger->notice('Account password changed.', ['user_id' => $user->getId()]);
     }
 
     public function signOutEverywhere(User $user): void
@@ -81,7 +81,7 @@ final readonly class AccountService
         $user->revokeAllTokens();
         $this->entityManager->flush();
 
-        $this->logger->info('Account signed out of all sessions.', ['user_id' => $user->getId()]);
+        $this->logger->notice('Account signed out of all sessions.', ['user_id' => $user->getId()]);
     }
 
     /**
@@ -96,7 +96,7 @@ final readonly class AccountService
         $this->entityManager->remove($user);
         $this->entityManager->flush();
 
-        $this->logger->info('Account deleted.', ['user_id' => $userId]);
+        $this->logger->notice('Account deleted.', ['user_id' => $userId]);
         $this->accountMailer->sendAccountDeletedNotice($email);
     }
 }

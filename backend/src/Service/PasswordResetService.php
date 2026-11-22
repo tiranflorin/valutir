@@ -8,6 +8,7 @@ use App\Entity\PasswordResetToken;
 use App\Entity\User;
 use App\Repository\PasswordResetTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final readonly class PasswordResetService
@@ -18,6 +19,7 @@ final readonly class PasswordResetService
         private PasswordResetTokenRepository $tokenRepository,
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -44,10 +46,10 @@ final readonly class PasswordResetService
             return false;
         }
 
-        return $this->transaction(function () use ($rawToken, $newPassword): bool {
+        $user = $this->transaction(function () use ($rawToken, $newPassword): ?User {
             $token = $this->tokenRepository->findValid(hash('sha256', $rawToken), new \DateTimeImmutable());
             if (null === $token) {
-                return false;
+                return null;
             }
 
             $user = $token->getUser();
@@ -58,8 +60,15 @@ final readonly class PasswordResetService
             $user->markEmailVerified(new \DateTimeImmutable());
             $this->entityManager->remove($token);
 
-            return true;
+            return $user;
         });
+        if (null === $user) {
+            return false;
+        }
+        // Logged once the transaction has committed, so a failed save is never recorded as a reset.
+        $this->logger->notice('Account password reset from an email link.', ['user_id' => $user->getId()]);
+
+        return true;
     }
 
     private function transaction(callable $callback): mixed

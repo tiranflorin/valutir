@@ -135,6 +135,7 @@ export const UNLISTED_PAGES: UnlistedPage[] = [
     { path: '/invoices', title: 'Business invoices · ValuTir' },
     { path: '/profile', title: 'Your profile · ValuTir' },
     { path: '/preferences', title: 'Preferences · ValuTir' },
+    { path: '/admin', title: 'Admin · ValuTir' },
 ];
 
 /** Routes with parameters (/subscriptions/:id, /calendar/day/:date) live under these. */

@@ -72,6 +72,11 @@ const AppHeader: React.FC = () => {
                                     <MenuItem component={RouterLink} to="/preferences" selected={pathname === '/preferences'} onClick={closeMenu}>
                                         Preferences
                                     </MenuItem>
+                                    {user?.roles?.includes('ROLE_ADMIN') && (
+                                        <MenuItem component={RouterLink} to="/admin" selected={pathname === '/admin'} onClick={closeMenu}>
+                                            Admin
+                                        </MenuItem>
+                                    )}
                                     <Divider />
                                     <MenuItem
                                         onClick={() => {

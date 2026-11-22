@@ -1,6 +1,7 @@
 monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - admin # Every admin page view and lookup (App\Admin\OperatorReport), always written in production
 
 when@dev:
     monolog:
@@ -37,7 +38,7 @@ when@prod:
                 action_level: error
                 handler: nested
                 excluded_http_codes: [404, 405]
-                channels: ["!deprecation"]
+                channels: ["!deprecation", "!admin"]
                 buffer_size: 50 # How many messages should be saved? Prevent memory leaks
             nested:
                 type: stream
@@ -48,6 +49,22 @@ when@prod:
                 type: console
                 process_psr_3_messages: false
                 channels: ["!event", "!doctrine"]
+            # "main" writes a request's lines only when it logs an error. Notices and warnings (admin roles
+            # granted, rejected Stripe webhooks, reversed payments) are written as they happen instead;
+            # a request that also fails writes them a second time, with its buffer.
+            significant:
+                type: stream
+                path: php://stderr
+                level: notice
+                channels: ["!deprecation", "!admin"]
+                formatter: monolog.formatter.json
+            # Not buffered like "main": the Privacy Policy promises that every admin lookup is logged.
+            admin:
+                type: stream
+                path: php://stderr
+                level: info
+                channels: [admin]
+                formatter: monolog.formatter.json
             deprecation:
                 type: stream
                 channels: [deprecation]

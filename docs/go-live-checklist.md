@@ -38,7 +38,7 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 
 ### Infrastructure and deploy
 
-- [ ] Run migrations before the new code serves traffic: `cache_items`, `purchase` and `user.unlocked_at`, and the email verification columns on `user`. Existing accounts start unverified.
+- [ ] Run migrations before the new code serves traffic: `cache_items`, `purchase` and `user.unlocked_at`, the email verification columns on `user`, and `user.created_at`. Existing accounts start unverified, with no sign-up date.
 - [ ] API routed through the Cloudflare Tunnel, and the EC2 security group has no inbound rules, so the origin is reachable only through your own zone. Zone SSL mode Full (strict).
 - [ ] WAF rule: only `/api/*` and `/health` on the API hostname.
 - [ ] **WAF skip rule for `/api/billing/webhook`:** no Bot Fight Mode, managed challenge, "Under Attack" mode, or tight rate limit on it. Optionally allow only [Stripe's webhook IPs](https://docs.stripe.com/ips) there.

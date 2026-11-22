@@ -9,6 +9,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 ├── docker-compose.yml       # Includes backend and frontend Compose definitions
 ├── backend/                 # Symfony 7.4 API (PHP 8.3)
 │   ├── src/
+│   │   ├── Admin/           # OperatorReport: the read-only admin page's figures and account lookup
 │   │   ├── Controller/      # API and health endpoints
 │   │   ├── Dto/             # Request DTOs and validation
 │   │   ├── Entity/          # Doctrine entities (User, Subscription, Purchase, ...)
@@ -45,7 +46,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - `POST /api/login_check` authenticates JSON `{ "email", "password" }` and LexikJWTAuthenticationBundle returns a JWT.
 - JWTs are stateless, sent as `Authorization: Bearer <token>`, and have a 24-hour TTL.
 - Token revocation: `POST /api/logout` adds the current token to Lexik's blocklist (`cache.jwt_blocklist`). The blocklist and rate limiters/login throttling (`cache.rate_limiter`) are PostgreSQL-backed pools (`cache_items` table, `cache.yaml`) so they survive deploys and are shared across instances; keep such state out of `cache.app`, which is per-container filesystem. Every rate limiter (`framework.yaml`) and the login throttling (`security.yaml`) must set `lock_factory: app.rate_limiter.lock_factory`: a PostgreSQL advisory lock (`services.yaml`) that stops parallel requests from all reading the same count and getting past the limit (`RateLimiterLocksTest` enforces it). Tests swap both pools for array adapters and the lock store for an in-memory one. Every JWT also carries a `tv` claim matching `User::$tokenVersion`; `TokenVersionListener` rejects mismatches. Call `User::revokeAllTokens()` whenever every session must end (sign out everywhere, password change or reset, email change).
-- Public endpoints: `/api/login*`, `/api/register` (including `/api/register/verify-email`, link token), `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, `/api/reminders/unsubscribe` (signed token), and `/api/billing/webhook` (Stripe signature). All other `/api` endpoints require a fully authenticated user.
+- Public endpoints: `/api/login*`, `/api/register` (including `/api/register/verify-email`, link token), `/api/contact`, `/api/reset-password*`, `/api/profile/email/confirm`, `/api/reminders/unsubscribe` (signed token), and `/api/billing/webhook` (Stripe signature). All other `/api` endpoints require a fully authenticated user, and `/api/admin/*` requires `ROLE_ADMIN` in `access_control` (`AdminAccessTest`).
 - `ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, and `ApiExceptionSubscriber` keep API errors JSON-shaped.
 - Do not read, print, grep, expose, log, commit, or repeat values from local `.env` files (`.env`, `.env.local`, `.env.ci`, `.env.dev`, `.env.test`, ...), JWT keys (`config/jwt/*.pem`), or environment dumps (`printenv`, `env`, `docker compose config`, `docker inspect`, `debug:dotenv`). Use the committed templates (`.env.dist`, `.env.sample`) for variable names. For AI agents this is enforced by `.claude/settings.json` and `.claude/hooks/block-env-secrets.py`; treat a block as intended and ask the user instead of working around it.
 
@@ -53,7 +54,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 
 - PostgreSQL 16 is the database; Doctrine ORM uses PHP attributes and Doctrine migrations.
 - Emails are case-insensitive: always go through `User::setEmail()` / `User::normalizeEmail()` (trim + lowercase) and look users up with `UserRepository::findOneByEmail()`, never `findOneBy(['email' => ...])`. The security provider uses `UserRepository::loadUserByIdentifier()`, and the database enforces lowercase with `CHECK (email = LOWER(email))` next to the unique index.
-- `user`: ID, unique email, JSON roles, hashed password, name, default currency, token version, IANA `timezone` (default `Europe/Berlin`), reminder settings (`remindersEnabled`, `remindersProcessedOn`), the paid unlock (`unlockedAt`), and email verification (`emailVerifiedAt` plus the latest link's token hash and expiry).
+- `user`: ID, unique email, JSON roles, hashed password, name, `createdAt` (null for accounts made before 22 November 2026), default currency, token version, IANA `timezone` (default `Europe/Berlin`), reminder settings (`remindersEnabled`, `remindersProcessedOn`), the paid unlock (`unlockedAt`), and email verification (`emailVerifiedAt` plus the latest link's token hash and expiry).
 - Email verification (`App\Service\EmailVerificationService`): new accounts start unverified and are emailed a 24-hour link; only the SHA-256 hash of its token is stored, and only the latest link works. An unverified account can sign in and track subscriptions, but `CheckoutService` refuses payment (403) and reminders skip it (`User::canReceiveReminders()`, `UserRepository::findReminderRecipients()`). Any new feature that emails the user, charges them, or shares their data with a third party must require `User::isEmailVerified()`. A completed password reset or email change calls `User::markEmailVerified()`, since both prove control of the inbox.
 - `subscription`: belongs to a user through a required `user_id` FK with `ON DELETE CASCADE`; it stores monetary, cadence, status, date, notes, payment, trial, household-sharing, and audit information.
 - Household sharing: `householdShared` + `householdSize` (2-10 people, the owner included) split a bill equally; personal subscriptions only. Always set both through `Subscription::setHouseholdSharing()`. Frontend share maths lives in `src/utils/householdShare.ts`.
@@ -68,6 +69,7 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 - Who paid a business subscription: `paidPersonally` (the owner's own card, so the company owes it back; always false for personal subscriptions). Like price history, `SubscriptionService::update()` calls `Subscription::recordPayerChange()` before applying an edit, so a switch keeps the earlier card in `payer_change`, dated on the owner's local day (not on the day it was added; switching back the same day removes it), and `paidPersonallyOn()` gives the card of any day. It comes back as `payerChanges`.
 - Business charges (`App\Business\BusinessCharges`): the invoice checklist and the paid accountant export list estimated charges of business subscriptions, counted from `nextBillingDate` like the dashboard's month card (`frontend/src/utils/monthCharges.ts`) and priced with `Subscription::priceTermsOn()`, with the card from `paidPersonallyOn()`. `invoice_filing` stores only the owner's tick per subscription and charge date (unique, like `reminder_log`), never invoice files. The export checks `hasPaidFeatures()` server-side (`AccountantExport::period()`).
 - Deleting a subscription is a soft delete: record `deletedAt`, cancellation metadata, and `deletedUseful`; do not assume a DELETE removes its row.
+- Admin page (`/admin`, `App\Admin\OperatorReport`): read-only, for the operator's support work. It shows counts, background-job health and one account's status, never another account's subscriptions, password data, tokens or Stripe IDs, and logs every view with user IDs only (no emails). Anything that changes an account, or shows more of it, needs the Privacy Policy updated first. "Near the free limit" is `OperatorReport::NEAR_LIMIT` (30), kept below `FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS` by a test.
 
 ### API endpoints
 
@@ -105,6 +107,8 @@ ValuTir is a subscription tracker with a Symfony JSON API and a React single-pag
 | `GET /api/business/charges?month=YYYY-MM` | A month's business charges with their "invoice filed" tick (invoice checklist, free) |
 | `PUT` / `DELETE /api/business/charges/{subscriptionId}/{date}/invoice` | Tick or untick "Invoice filed" for a business charge that has gone out |
 | `GET /api/business/export.csv?from=YYYY-MM&to=YYYY-MM` | Accountant export of business charges, 1 to 12 months (403 without the unlock) |
+| `GET /api/admin/overview` | `ROLE_ADMIN` only: account counts (paid, free, admins, verified, created in the last 7/30 days), free accounts near the limit, purchases by status and paid revenue, and background-job health |
+| `GET /api/admin/accounts?email=…` | `ROLE_ADMIN` only: one account's plan, verification, active-subscription count, reminder status and purchases (404 when no account uses the email); never its subscriptions, password data, tokens or Stripe IDs |
 
 - Subscription payloads are deserialized into `SubscriptionUpsertRequest`, validated, then mapped by `SubscriptionService`.
 - Supported billing cadences are `weekly`, `monthly`, `quarterly`, and `yearly` (frontend form, API validation, `BillingSchedule::CADENCES`). Rows saved earlier may still hold `daily`; the scheduled commands skip unknown cadences.
@@ -159,7 +163,7 @@ Local services:
 
 The current Docker configuration uses port `5173` for Vite.
 
-Admin accounts (`ROLE_ADMIN`; it opens every paid feature through `User::hasPaidFeatures()`, and nothing else checks it yet):
+Admin accounts (`ROLE_ADMIN`; it opens every paid feature through `User::hasPaidFeatures()`, and the read-only admin page at `/admin`, linked from the account menu):
 
 ```bash
 docker compose exec backend php bin/console app:create-admin you@example.com
@@ -211,7 +215,7 @@ Apply these rules to all new or materially changed backend code. They are intent
 - Never commit or hard-code secrets, credentials, private keys, tokens, production URLs, or personal data. Keep secrets in deployment-managed environment variables or Symfony Secrets; rotate anything exposed. Redact sensitive headers and request fields before logging.
 - Use least-privilege database/service credentials, HTTPS in deployed environments, restrictive CORS origins/methods/headers, and secure response headers at the edge. Review dependency updates and run `composer audit` before releases.
 - Avoid unsafe deserialization, `eval`, dynamic includes, and shell execution. For outbound URLs, use an allow-list and block private/internal address ranges to prevent SSRF.
-- Record security-sensitive events (authentication failures, access denials, password resets, privilege changes) without sensitive payloads, and test that unauthorized, cross-user, malformed, and rate-limited requests fail safely.
+- Record security-sensitive events (authentication failures, access denials, password resets, privilege changes) without sensitive payloads, at `notice` or higher: production writes `info` and `debug` lines only for a request that logs an error (`monolog.yaml`, `ProductionLoggingTest`). Test that unauthorized, cross-user, malformed, and rate-limited requests fail safely.
 
 Reference material: Symfony's [coding conventions](https://symfony.com/doc/current/contributing/code/conventions.html) and [security documentation](https://symfony.com/doc/current/security.html), the PHP-CS-Fixer [`@Symfony` ruleset](https://cs.symfony.com/doc/ruleSets/Symfony.html), PHP-FIG [PER-CS](https://www.php-fig.org/per/coding-style/meta/migration-2.0/), and OWASP guidance for [secure review](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Code_Review_Cheat_Sheet.html), [SQL injection prevention](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html), and [REST APIs](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
 

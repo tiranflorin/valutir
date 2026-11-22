@@ -101,4 +101,51 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getQuery()
             ->execute();
     }
+
+    /**
+     * Account counts for the admin overview. Free means neither unlocked nor an admin (admins get
+     * the paid features without paying).
+     *
+     * @return array{total: int, verified: int, paid: int, free: int, admins: int}
+     */
+    public function countAccounts(): array
+    {
+        $row = $this->getEntityManager()->getConnection()->fetchAssociative(
+            'SELECT COUNT(*) AS total, COUNT(email_verified_at) AS verified, COUNT(unlocked_at) AS paid,
+                COUNT(*) FILTER (WHERE roles::jsonb @> CAST(:admin AS jsonb)) AS admins,
+                COUNT(*) FILTER (WHERE unlocked_at IS NULL AND NOT roles::jsonb @> CAST(:admin AS jsonb)) AS free
+            FROM "user"',
+            ['admin' => json_encode([User::ROLE_ADMIN], \JSON_THROW_ON_ERROR)],
+        );
+
+        return [
+            'total' => (int) ($row['total'] ?? 0),
+            'verified' => (int) ($row['verified'] ?? 0),
+            'paid' => (int) ($row['paid'] ?? 0),
+            'free' => (int) ($row['free'] ?? 0),
+            'admins' => (int) ($row['admins'] ?? 0),
+        ];
+    }
+
+    /** Accounts created at or after $since (accounts made before created dates were recorded never count). */
+    public function countCreatedSince(\DateTimeImmutable $since): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.createdAt >= :since')
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** The latest local day the reminder run handled for any account, or null when it never ran. */
+    public function findLatestReminderDay(): ?\DateTimeImmutable
+    {
+        $day = $this->createQueryBuilder('u')
+            ->select('MAX(u.remindersProcessedOn)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return null === $day ? null : new \DateTimeImmutable((string) $day);
+    }
 }

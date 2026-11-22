@@ -103,7 +103,7 @@ const PrivacyPage: React.FC = () => (
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Account: email address, name, password (stored only as a secure hash), and your settings (currency, time zone, reminders on or off)</td>
+                                    <td>Account: email address, name, password (stored only as a secure hash), when you created the account, and your settings (currency, time zone, reminders on or off)</td>
                                     <td>To create your account, sign you in, and keep your settings</td>
                                     <td>Contract (Art. 6(1)(b) GDPR)</td>
                                 </tr>
@@ -241,8 +241,9 @@ const PrivacyPage: React.FC = () => (
                     <h2>8. Security</h2>
                     <p>
                         Connections are encrypted (HTTPS), passwords are stored only as secure hashes, and access to your data
-                        is limited to your own account. If a breach ever puts your data at risk, we'll tell you and the
-                        authorities as the law requires.
+                        is limited to your own account. To answer a support or refund request, we can look up an account&apos;s
+                        email, plan, purchases and reminder settings, never its subscriptions, and every lookup is logged.
+                        If a breach ever puts your data at risk, we'll tell you and the authorities as the law requires.
                     </p>
                 </section>
 
