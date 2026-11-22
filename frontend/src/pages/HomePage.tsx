@@ -36,7 +36,7 @@ const HomePage: React.FC = () => (
                                 See how it works
                             </Button>
                         </div>
-                        <p className="free-caption">Free for up to 50 subscriptions · No card · No bank login · No ads</p>
+                        <p className="free-caption">Free for up to {LEGAL.freeActiveLimit} subscriptions · No card · No bank login · No ads</p>
                     </>
                 )}
             />
@@ -132,19 +132,19 @@ const HomePage: React.FC = () => (
                 <div className="section-head">
                     <h2>Start free. Keep using it free.</h2>
                     <p>
-                        Personal and Business views are part of the free tracker. If your list grows beyond 50 active
+                        Personal and Business views are part of the free tracker. If your list grows beyond {LEGAL.freeActiveLimit} active
                         subscriptions, there’s a one-time upgrade. No monthly software bill.
                     </p>
                 </div>
                 <div className="price-band">
                     <div>
-                        <h3>Track up to 50 active subscriptions for free</h3>
-                        <p>Your list, monthly and yearly costs, trial dates, the renewal calendar and reminders. The 50 are shared across Personal and Business.</p>
+                        <h3>Track up to {LEGAL.freeActiveLimit} active subscriptions for free</h3>
+                        <p>Your list, monthly and yearly costs, trial dates, the renewal calendar and reminders. The {LEGAL.freeActiveLimit} are shared across Personal and Business.</p>
                     </div>
                     <div className="price-tag"><strong>€0</strong><span>Free forever</span></div>
                 </div>
                 <div className="price-details">
-                    <div className="price-detail"><b>Need more than 50?</b>A one-time payment of {LEGAL.unlockPrice} (VAT included) unlocks tracking beyond 50 active subscriptions. No recurring charge. <RouterLink to="/plans">See the plans</RouterLink></div>
+                    <div className="price-detail"><b>Need more than {LEGAL.freeActiveLimit}?</b>A one-time payment of {LEGAL.unlockPrice} (VAT included) unlocks tracking beyond {LEGAL.freeActiveLimit} active subscriptions. No recurring charge. <RouterLink to="/plans">See the plans</RouterLink></div>
                     <div className="price-detail"><b>{LEGAL.refundDays}-day money-back guarantee</b>If the unlock isn’t for you, ask within {LEGAL.refundDays} days for a full refund. <RouterLink to="/refunds">Refund policy</RouterLink></div>
                 </div>
             </section>

@@ -1,8 +1,8 @@
 # Payments
 
-The paid plan is a **one-time unlock: €19.99, VAT included, no renewal**. It lifts the free plan's limit of 50 active (active or trial) subscriptions. Payment runs on Stripe-hosted Checkout, so card details never reach ValuTir.
+The paid plan is a **one-time unlock: €19.99, VAT included, no renewal**. It lifts the free plan's limit on active (active or trial) subscriptions: `FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS`, stated on the public pages from `LEGAL.freeActiveLimit` in `frontend/src/legal.ts`. Change both together (`FreePlanLimitTest` fails in CI when they differ) and bump the Terms and Refunds dates, which name it. Payment runs on Stripe-hosted Checkout, so card details never reach ValuTir.
 
-What it opens: no 50-subscription limit, the accountant export of business charges, and choosing how many days before each charge a subscription is reminded. Admin accounts (`ROLE_ADMIN`, granted with `app:create-admin`) get the same without paying, so the operator can use and test paid tools: the code checks `User::hasPaidFeatures()` (and the app `paidFeatures` from `GET /api/billing`), never the purchase alone. `unlocked` stays true only for accounts that paid.
+What it opens: no limit on active subscriptions, the accountant export of business charges, and choosing how many days before each charge a subscription is reminded. Admin accounts (`ROLE_ADMIN`, granted with `app:create-admin`) get the same without paying, so the operator can use and test paid tools: the code checks `User::hasPaidFeatures()` (and the app `paidFeatures` from `GET /api/billing`), never the purchase alone. `unlocked` stays true only for accounts that paid.
 
 How it works:
 
@@ -10,7 +10,7 @@ How it works:
 2. The browser goes to the returned URL. The frontend only follows URLs on `https://checkout.stripe.com`.
 3. Stripe calls `POST /api/billing/webhook`. The request must carry a valid `Stripe-Signature` (an HMAC of the raw body under `STRIPE_WEBHOOK_SECRET`, at most 5 minutes old), or it gets a 400. Only this webhook unlocks an account, and only for a session the server created whose mode, amount, currency, product, and buyer match the `purchase` row. Being redirected back to `/plans?checkout=success` proves nothing; the page polls `GET /api/billing` until the webhook has landed.
 4. Handled events: `checkout.session.completed`, `checkout.session.async_payment_succeeded` / `_failed`, `checkout.session.expired`, `charge.refunded` (a full refund revokes the unlock; a partial one keeps it), and `charge.dispute.created` (revokes it). Events are applied idempotently on a locked row, in any order and any number of times; other event types get a 200 and are ignored.
-5. The free limit is enforced in `App\Payment\FreePlanLimit`. Creating a 51st active subscription, or re-activating a cancelled one at the limit, returns 402; existing records stay readable and editable. The count runs with the user's row locked, so parallel requests can't pass it.
+5. The free limit is enforced in `App\Payment\FreePlanLimit`. Creating an active subscription past the limit, or re-activating a cancelled one at the limit, returns 402; existing records stay readable and editable. The count runs with the user's row locked, so parallel requests can't pass it.
 
 Tax: with `STRIPE_AUTOMATIC_TAX=1` Checkout uses Stripe Tax on the tax-inclusive price, requires a billing address (VAT location evidence), and accepts a VAT ID (EU business reverse charge). Before going live, set up Stripe Tax in the Dashboard: your origin address, the registrations you hold (e.g. Romania, plus EU OSS once you're over the threshold), and a default product tax code for SaaS. Check the setup with your accountant.
 

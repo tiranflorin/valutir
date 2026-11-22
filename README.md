@@ -23,8 +23,8 @@ It's a web app (React) with a JSON API (Symfony). Status: an MVP, built and test
 
 ## Plans and pricing
 
-- **Free:** everything above, for up to 50 active subscriptions (active or in trial).
-- **One-time unlock: €19.99, VAT included, no renewal.** It lifts the 50-subscription limit. Payment runs on Stripe's hosted checkout, so ValuTir never sees card details. Everyone is charged in EUR.
+- **Free:** everything above, for up to 40 active subscriptions (active or in trial).
+- **One-time unlock: €19.99, VAT included, no renewal.** It lifts the 40-subscription limit. Payment runs on Stripe's hosted checkout, so ValuTir never sees card details. Everyone is charged in EUR.
 - **14-day money-back guarantee:** a full refund on request, no questions asked.
 - The unlock also adds the accountant export of business charges and a choice of how many days before each charge you're reminded.
 

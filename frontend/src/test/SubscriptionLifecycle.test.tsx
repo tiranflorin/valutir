@@ -31,7 +31,7 @@ const fakeBackend = (initial: SubscriptionRecord[], { paidFeatures = false } = {
         'GET /api/profile': () => ({ status: 200, body: profile() }),
         'GET /api/billing': () => ({
             status: 200,
-            body: { unlocked: paidFeatures, unlockedAt: null, paidFeatures, checkoutAvailable: true, price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true }, freeActiveLimit: 50, activeCount: 1 },
+            body: { unlocked: paidFeatures, unlockedAt: null, paidFeatures, checkoutAvailable: true, price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true }, freeActiveLimit: 40, activeCount: 1 },
         }),
         'GET /api/subs': () => ({ status: 200, body: subscriptions }),
         'POST /api/subs': (call) => {

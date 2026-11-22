@@ -18,7 +18,7 @@ type ReturnState = 'confirming' | 'confirmed' | 'delayed' | 'cancelled' | null;
 
 const freeFeatures = [
     'Personal and Business dashboards',
-    'Up to 50 active subscriptions combined',
+    `Up to ${LEGAL.freeActiveLimit} active subscriptions combined`,
     'Renewal calendar and basic reminders',
     'Monthly and yearly cost summaries',
     'Trial tracking and review decisions',
@@ -29,7 +29,7 @@ const freeFeatures = [
 ];
 
 const unlockFeatures = [
-    'Add and track more than 50 active subscriptions',
+    `Add and track more than ${LEGAL.freeActiveLimit} active subscriptions`,
     'Choose how many days before each charge you’re reminded',
     'Business charges for a month or quarter, exported for your accountant',
     'Keep both dashboards and the same shared account',
@@ -147,7 +147,7 @@ const PlansPage: React.FC = () => {
                 <Box className="plans-hero">
                     <h1>A useful tracker should stay useful for free.</h1>
                     <p>
-                        Personal and Business views stay free. Pay once only if you need more than 50 active
+                        Personal and Business views stay free. Pay once only if you need more than {LEGAL.freeActiveLimit} active
                         subscriptions or the advanced small-business tools.
                     </p>
                     <p className="plans-revenue">
@@ -196,7 +196,7 @@ const PlansPage: React.FC = () => {
 
                 <Box className="plans-business-note">
                     <strong>Business tracking itself stays free.</strong> If you freelance or run a one-person company,
-                    marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond 50 active subscriptions,
+                    marking the tools it pays for as Business and switching views never requires payment. The one-time unlock is for going beyond {LEGAL.freeActiveLimit} active subscriptions,
                     the accountant export and choosing when you’re reminded.
                 </Box>
                 {status && !status.paidFeatures && (
@@ -229,8 +229,8 @@ const PlansPage: React.FC = () => {
                 )}
                 {error && <Alert className="plans-upgrade-notice" severity="error">{error}</Alert>}
                 <p className="plans-footnote">
-                    At 50 active subscriptions, your current records remain available to view, edit, review and archive.
-                    Add a 51st after the one-time unlock.
+                    At {LEGAL.freeActiveLimit} active subscriptions, your current records remain available to view, edit, review and archive.
+                    Adding more needs the one-time unlock.
                 </p>
             </Container>
             <AppFooter />

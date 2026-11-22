@@ -76,8 +76,8 @@ export const INDEXED_PAGES: IndexedPage[] = [
     {
         path: '/plans',
         title: 'Plans and pricing · ValuTir',
-        description: `ValuTir is free for up to 50 active subscriptions, with Personal and Business views. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit. No monthly fee.`,
-        summary: `Pricing: free up to 50 active subscriptions; a one-time ${LEGAL.unlockPrice} unlock, VAT included, no subscription.`,
+        description: `ValuTir is free for up to ${LEGAL.freeActiveLimit} active subscriptions, with Personal and Business views. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit. No monthly fee.`,
+        summary: `Pricing: free up to ${LEGAL.freeActiveLimit} active subscriptions; a one-time ${LEGAL.unlockPrice} unlock, VAT included, no subscription.`,
     },
     {
         path: '/register',

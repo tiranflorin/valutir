@@ -40,7 +40,7 @@ const AboutPage: React.FC = () => (
                 <section id="money">
                     <h2>How ValuTir makes money</h2>
                     <p>
-                        Only from {REVENUE_COMMITMENT.source}: a single {LEGAL.unlockPrice} payment (VAT included) for lists of more than 50
+                        Only from {REVENUE_COMMITMENT.source}: a single {LEGAL.unlockPrice} payment (VAT included) for lists of more than {LEGAL.freeActiveLimit}
                         active subscriptions. {REVENUE_COMMITMENT.never} {REVENUE_COMMITMENT.why}
                     </p>
                 </section>

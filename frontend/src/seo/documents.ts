@@ -15,13 +15,13 @@ const escapeHtml = (value: string) => value
 const jsonForScript = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
 
 const OFFERS = [
-    { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'EUR', description: 'Up to 50 active subscriptions.' },
+    { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'EUR', description: `Up to ${LEGAL.freeActiveLimit} active subscriptions.` },
     {
         '@type': 'Offer',
         name: 'One-time unlock',
         price: LEGAL.unlockPrice.replace(/[^0-9.]/g, ''),
         priceCurrency: 'EUR',
-        description: 'More than 50 active subscriptions. Paid once, VAT included.',
+        description: `More than ${LEGAL.freeActiveLimit} active subscriptions. Paid once, VAT included.`,
     },
 ];
 
@@ -165,7 +165,7 @@ export const llmsTxt = (siteUrl: string): string => [
     '',
     `ValuTir is on the side of the person paying: it helps people know what they pay, when, and whether each subscription is still worth it. It makes money only from ${REVENUE_COMMITMENT.source}. ${REVENUE_COMMITMENT.never}`,
     '',
-    `- Free for up to 50 active subscriptions. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit; there is no monthly fee.`,
+    `- Free for up to ${LEGAL.freeActiveLimit} active subscriptions. A one-time ${LEGAL.unlockPrice} unlock (VAT included) lifts the limit; there is no monthly fee.`,
     `- A free subscription cost calculator (${siteUrl}/calculator) works without an account: monthly, yearly and five-year totals by category. It runs in the browser; nothing typed there is sent to the server.`,
     '- Subscriptions are entered by hand or picked from a list of common services. No bank connection.',
     '- Personal and Business views (Business is for freelancers and one-person companies: the tools their business pays for), a renewal calendar, cost by category, a keep-or-cancel review, and household sharing that splits a bill.',

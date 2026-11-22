@@ -53,7 +53,7 @@ const RefundPage: React.FC = () => (
                     <h2>3. What happens to your account</h2>
                     <ul>
                         <li>Your account goes back to the free plan as soon as the refund is processed.</li>
-                        <li>Nothing is deleted. If you have more than 50 active subscriptions, they all stay visible and editable; you just can&apos;t add or reactivate more until you&apos;re back under 50.</li>
+                        <li>Nothing is deleted. If you have more than {LEGAL.freeActiveLimit} active subscriptions, they all stay visible and editable; you just can&apos;t add or reactivate more until you&apos;re back under {LEGAL.freeActiveLimit}.</li>
                         <li>You can buy the unlock again later if you want.</li>
                     </ul>
                 </section>

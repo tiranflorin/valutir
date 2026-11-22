@@ -338,7 +338,7 @@ describe('Pick what you pay for', () => {
             'GET /api/profile': () => ({ status: 200, body: profile() }),
             'POST /api/subs': () => (++posts === 1
                 ? { status: 201, body: { id: 1 } }
-                : { status: 402, body: { message: 'The free plan tracks up to 50 active subscriptions.' } }),
+                : { status: 402, body: { message: 'The free plan tracks up to 40 active subscriptions.' } }),
         });
         const user = userEvent.setup();
         renderWithMemoryRoute(<PickServicesPage />, { route: '/subscriptions/pick' });
@@ -351,7 +351,7 @@ describe('Pick what you pay for', () => {
         }
         await user.click(screen.getByRole('button', { name: 'Add 2 subscriptions' }));
 
-        expect(await screen.findByText('Added 1 of 2. The free plan tracks up to 50 active subscriptions.')).toBeInTheDocument();
+        expect(await screen.findByText('Added 1 of 2. The free plan tracks up to 40 active subscriptions.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Selected · 1' })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Spotify' })).toBeInTheDocument();
     });

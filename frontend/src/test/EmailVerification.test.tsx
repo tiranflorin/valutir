@@ -16,7 +16,7 @@ const billing = {
     paidFeatures: false,
     checkoutAvailable: true,
     price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true },
-    freeActiveLimit: 50,
+    freeActiveLimit: 40,
     activeCount: 3,
 };
 

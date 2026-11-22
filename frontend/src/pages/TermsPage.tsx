@@ -23,7 +23,7 @@ const TermsPage: React.FC = () => (
                 <section className="legal-summary" aria-label="Summary">
                     <h2>The short version</h2>
                     <ul>
-                        <li>ValuTir is free for up to 50 active subscriptions. A one-time {LEGAL.unlockPrice} payment lifts that limit; it never renews.</li>
+                        <li>ValuTir is free for up to {LEGAL.freeActiveLimit} active subscriptions. A one-time {LEGAL.unlockPrice} payment lifts that limit; it never renews.</li>
                         <li>Changed your mind? You get a full refund within {LEGAL.refundDays} days, no questions asked.</li>
                         <li>Your data is yours. You can delete your account at any time.</li>
                         <li>ValuTir helps you keep track of things. It doesn&apos;t pay, cancel, or manage subscriptions with providers for you.</li>
@@ -69,8 +69,8 @@ const TermsPage: React.FC = () => (
                 <section id="plans">
                     <h2>4. Free plan and one-time unlock</h2>
                     <ul>
-                        <li><strong>Free plan:</strong> personal and business tracking, the calendar, and reminders, for up to 50 active subscriptions (active or in trial) in total. Above 50, your existing records stay available to view, edit, and cancel; adding or reactivating another needs the unlock.</li>
-                        <li><strong>One-time unlock:</strong> {LEGAL.unlockPrice}, VAT included. It lifts the 50-subscription limit for your account. It&apos;s a single payment and never renews.</li>
+                        <li><strong>Free plan:</strong> personal and business tracking, the calendar, and reminders, for up to {LEGAL.freeActiveLimit} active subscriptions (active or in trial) in total. Above {LEGAL.freeActiveLimit}, your existing records stay available to view, edit, and cancel; adding or reactivating another needs the unlock.</li>
+                        <li><strong>One-time unlock:</strong> {LEGAL.unlockPrice}, VAT included. It lifts the {LEGAL.freeActiveLimit}-subscription limit for your account. It&apos;s a single payment and never renews.</li>
                         <li>Features shown on the <RouterLink to="/plans">Plans page</RouterLink> as planned are not part of the purchase until they&apos;re released. We may add them to the unlock at no extra cost, but we don&apos;t promise them.</li>
                         <li>Payment is handled by Stripe on its secure checkout page. Your account is unlocked once Stripe confirms the payment, usually within seconds, or a few days for bank transfers or direct debit.</li>
                         <li>The unlock belongs to your account and can&apos;t be transferred. If the payment is refunded or reversed, the account returns to the free plan.</li>

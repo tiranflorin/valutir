@@ -4,6 +4,7 @@ import AppFooter from '../components/AppFooter';
 import PrivacyPage from '../pages/PrivacyPage';
 import RefundPage from '../pages/RefundPage';
 import TermsPage from '../pages/TermsPage';
+import { LEGAL } from '../legal';
 import { mockApi, profile, signIn } from './api';
 import { renderWithMemoryRoute } from './test-utils';
 
@@ -23,7 +24,7 @@ describe('legal pages', () => {
         renderWithMemoryRoute(<TermsPage />, { route: '/terms' });
 
         expect(screen.getByRole('heading', { level: 1, name: 'Terms of use' })).toBeInTheDocument();
-        expect(screen.getAllByText(/50 active subscriptions/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(new RegExp(`${LEGAL.freeActiveLimit} active subscriptions`)).length).toBeGreaterThan(0);
         expect(screen.getAllByText(/€19\.99/).length).toBeGreaterThan(0);
         expect(screen.getByRole('link', { name: 'Refund policy' })).toHaveAttribute('href', '/refunds');
     });

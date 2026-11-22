@@ -13,6 +13,7 @@ import {
     importFromRows,
     readSharedResult,
     shareFragment,
+    CALCULATOR_IMPORT_MAX_ROWS,
     validCalculatorImport,
 } from '../utils/calculator';
 import {
@@ -108,7 +109,7 @@ describe('the list kept for an account', () => {
         expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, amount: '-1' }] })).toBeNull();
         expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, cadence: 'daily' }] })).toBeNull();
         expect(validCalculatorImport({ currency: 'EUR', rows: [{ ...good, category: '<b>' }] })).toBeNull();
-        expect(validCalculatorImport({ currency: 'EUR', rows: Array.from({ length: 51 }, (_, i) => ({ ...good, name: `S${i}` })) })).toBeNull();
+        expect(validCalculatorImport({ currency: 'EUR', rows: Array.from({ length: CALCULATOR_IMPORT_MAX_ROWS + 1 }, (_, i) => ({ ...good, name: `S${i}` })) })).toBeNull();
     });
 
     it('sets the next charge a month on, clamped to the end of a shorter month', () => {
@@ -260,13 +261,13 @@ describe('saving the calculator list', () => {
         mockApi({
             'GET /api/profile': () => ({ status: 200, body: profile() }),
             'GET /api/subs': () => ({ status: 200, body: [] }),
-            'POST /api/subs': () => (++posts === 1 ? { status: 201, body: {} } : { status: 402, body: { message: 'The free plan includes up to 50 active subscriptions.' } }),
+            'POST /api/subs': () => (++posts === 1 ? { status: 201, body: {} } : { status: 402, body: { message: 'The free plan includes up to 40 active subscriptions.' } }),
         });
         keepCalculatorList(list);
         renderApp('/my-subs');
 
         expect(await screen.findByTestId('calculator-saved')).toHaveTextContent('Added 1 subscription from the calculator: Netflix.');
-        expect(await screen.findByText(/couldn’t add Spotify and Local gym from the calculator: the free plan includes up to 50/i)).toBeInTheDocument();
+        expect(await screen.findByText(/couldn’t add Spotify and Local gym from the calculator: the free plan includes up to 40/i)).toBeInTheDocument();
         expect(posts).toBe(2);
     });
 

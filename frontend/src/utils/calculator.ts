@@ -6,6 +6,7 @@ import { isKnownCategory } from '../data/categories';
 import type { BillingInterval } from '../components/subscription-form/SubscriptionFormCard';
 import type { Currency } from '../components/CurrencySelect';
 import { yearlyCostOf } from './reviewQueue';
+import { LEGAL } from '../legal';
 
 export type CalculatorRow = {
     name: string;
@@ -115,7 +116,7 @@ export type CalculatorImport = {
 };
 
 /** At most this many rows: the free plan's limit. */
-export const CALCULATOR_IMPORT_MAX_ROWS = 50;
+export const CALCULATOR_IMPORT_MAX_ROWS = LEGAL.freeActiveLimit;
 
 const isImportRow = (row: unknown): row is CalculatorImport['rows'][number] => {
     const value = row as Partial<CalculatorImport['rows'][number]> | null;

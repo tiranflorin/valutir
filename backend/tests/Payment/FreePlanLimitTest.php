@@ -20,21 +20,21 @@ final class FreePlanLimitTest extends TestCase
     {
         $user = new User();
         $entityManager = $this->createMock(EntityManagerInterface::class);
-        // The count runs with the user's row locked, so two parallel requests can't both add the 50th.
+        // The count runs with the user's row locked, so two parallel requests can't both add the last allowed one.
         $entityManager->expects(self::once())->method('lock')->with($user, LockMode::PESSIMISTIC_WRITE);
 
-        (new FreePlanLimit($entityManager, $this->repositoryCounting(49)))->assertCanSave($user, null, 'active');
+        (new FreePlanLimit($entityManager, $this->repositoryCounting(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS - 1)))->assertCanSave($user, null, 'active');
     }
 
     #[DataProvider('countedStatuses')]
     public function testAFreeAccountAtTheLimitCannotAddAnother(string $status): void
     {
         try {
-            $this->limit(50)->assertCanSave(new User(), null, $status);
+            $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS)->assertCanSave(new User(), null, $status);
             self::fail('Expected the free limit to be enforced.');
         } catch (HttpException $e) {
             self::assertSame(402, $e->getStatusCode());
-            self::assertStringContainsString('50 active subscriptions', $e->getMessage());
+            self::assertStringContainsString(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS.' active subscriptions', $e->getMessage());
         }
     }
 
@@ -42,19 +42,19 @@ final class FreePlanLimitTest extends TestCase
     {
         $this->expectException(HttpException::class);
 
-        $this->limit(50)->assertCanSave(new User(), $this->subscription('cancelled'), 'active');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS)->assertCanSave(new User(), $this->subscription('cancelled'), 'active');
     }
 
     public function testEditingAnAlreadyActiveSubscriptionIsAllowedAtTheLimit(): void
     {
-        $this->limit(60)->assertCanSave(new User(), $this->subscription('trial'), 'active');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS + 10)->assertCanSave(new User(), $this->subscription('trial'), 'active');
         $this->addToAssertionCount(1);
     }
 
     public function testInactiveSubscriptionsCanAlwaysBeSaved(): void
     {
-        $this->limit(60)->assertCanSave(new User(), null, 'cancelled');
-        $this->limit(60)->assertCanSave(new User(), $this->subscription('active'), 'other');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS + 10)->assertCanSave(new User(), null, 'cancelled');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS + 10)->assertCanSave(new User(), $this->subscription('active'), 'other');
         $this->addToAssertionCount(2);
     }
 
@@ -62,14 +62,33 @@ final class FreePlanLimitTest extends TestCase
     {
         $user = (new User())->unlock(new \DateTimeImmutable());
 
-        $this->limit(500)->assertCanSave($user, null, 'active');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS * 10)->assertCanSave($user, null, 'active');
         $this->addToAssertionCount(1);
     }
 
     public function testAnAdminAccountHasNoLimit(): void
     {
-        $this->limit(500)->assertCanSave((new User())->setRoles([User::ROLE_ADMIN]), null, 'active');
+        $this->limit(FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS * 10)->assertCanSave((new User())->setRoles([User::ROLE_ADMIN]), null, 'active');
         $this->addToAssertionCount(1);
+    }
+
+    /**
+     * The public pages are prerendered, so they can't ask the API for the limit: they state it from
+     * LEGAL.freeActiveLimit. CI checks out the whole repository; the local backend container mounts only
+     * backend/, so the check is skipped there.
+     */
+    public function testThePublicPagesStateTheSameLimit(): void
+    {
+        $legal = \dirname(__DIR__, 3).'/frontend/src/legal.ts';
+        if (!is_file($legal)) {
+            self::markTestSkipped('frontend/src/legal.ts is not in this checkout.');
+        }
+
+        self::assertMatchesRegularExpression(
+            '/^\s*freeActiveLimit: '.FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS.',$/m',
+            (string) file_get_contents($legal),
+            'LEGAL.freeActiveLimit in frontend/src/legal.ts must equal FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS.',
+        );
     }
 
     /**

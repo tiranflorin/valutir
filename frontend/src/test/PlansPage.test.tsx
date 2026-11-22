@@ -12,7 +12,7 @@ const freeStatus = {
     paidFeatures: false,
     checkoutAvailable: true,
     price: { amountInCents: 1999, currency: 'EUR', taxInclusive: true },
-    freeActiveLimit: 50,
+    freeActiveLimit: 40,
     activeCount: 12,
 };
 
@@ -38,7 +38,7 @@ describe('plans page checkout', () => {
         });
         renderWithMemoryRoute(<PlansPage />, { route: '/plans' });
 
-        expect(await screen.findByText('You have 12 of 50 active subscriptions on the free plan.')).toBeInTheDocument();
+        expect(await screen.findByText('You have 12 of 40 active subscriptions on the free plan.')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Pay €19.99 once' }));
 
         await waitFor(() => expect(assign).toHaveBeenCalledWith('https://checkout.stripe.com/c/pay/cs_test_1'));

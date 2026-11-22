@@ -12,7 +12,7 @@ final class UnlockOffer
 {
     public const string PRODUCT = 'lifetime_unlock';
     public const string PRODUCT_NAME = 'ValuTir one-time unlock';
-    public const string PRODUCT_DESCRIPTION = 'Track more than 50 active subscriptions. Pay once, no renewal.';
+    public const string PRODUCT_DESCRIPTION = 'Track more than '.FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS.' active subscriptions. Pay once, no renewal.';
 
     /**
      * €19.99, VAT included. Stripe takes amounts in the currency's smallest unit (cents), so this is

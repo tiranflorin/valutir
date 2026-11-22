@@ -12,13 +12,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
- * Free accounts may have at most 50 active (active or trial) subscriptions; the one-time unlock lifts it.
+ * Free accounts may have at most MAX_ACTIVE_SUBSCRIPTIONS active (active or trial) subscriptions; the one-time unlock lifts it.
+ * The public pages state the same number from LEGAL.freeActiveLimit in frontend/src/legal.ts (FreePlanLimitTest checks they match).
  * Records past the limit stay readable and editable; only a new active one, or making an inactive
  * one active again, is refused.
  */
 final class FreePlanLimit
 {
-    public const int MAX_ACTIVE_SUBSCRIPTIONS = 50;
+    public const int MAX_ACTIVE_SUBSCRIPTIONS = 40;
     /** Statuses that count towards the limit (the same ones the reminder commands treat as billable). */
     public const array COUNTED_STATUSES = ['active', 'trial'];
 
@@ -35,7 +36,7 @@ final class FreePlanLimit
 
     /**
      * Call inside a transaction, before saving. Locks the user's row while counting, so two
-     * parallel requests can't both add the 50th subscription.
+     * parallel requests can't both add the last allowed subscription.
      *
      * @param Subscription|null $existing The subscription being updated, or null when creating one
      *

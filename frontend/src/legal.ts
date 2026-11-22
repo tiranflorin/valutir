@@ -12,11 +12,13 @@ export const LEGAL = {
     /** The law the Terms are governed by. */
     governingLaw: 'Romania',
     privacyUpdated: '18 November 2026',
-    termsUpdated: '15 November 2026',
-    refundsUpdated: '3 November 2026',
+    termsUpdated: '22 November 2026',
+    refundsUpdated: '22 November 2026',
     /** Days after purchase in which the one-time unlock is refunded on request, no questions asked. */
     refundDays: 14,
     unlockPrice: '€19.99',
+    /** Active or trial subscriptions a free account can have; mirrors the backend's FreePlanLimit::MAX_ACTIVE_SUBSCRIPTIONS. */
+    freeActiveLimit: 40,
 } as const;
 
 /**
