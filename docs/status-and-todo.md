@@ -68,3 +68,7 @@ Fixed items are removed from this list; the git history records what changed. It
     - If US buyers appear: a USD price in `UnlockOffer` (TODO #6), since a EUR charge can add a foreign-transaction fee on US cards, and the legal pages and `src/legal.ts` updated in the same change.
     - US sales tax: some states tax digital products, each above its own sales threshold. Check with an accountant before selling there in volume; Stripe Tax can track the thresholds.
     - Check that `src/data/services.ts` covers the services US users pay for.
+
+## Architecture
+
+14. **One frontend module for subscription API calls.** 14 files call `/api/subs` with `fetch` directly and about 8 of them build a subscription write by hand. That's why AGENTS.md has to tell every caller to send `householdShared`, `householdSize`, `reminderLeadDays`, `resumesOn`, `manageUrl` and `paidPersonally` in every PUT/PATCH, and why 17 files handle a 401 themselves. Plan: `src/services/subscriptions.ts` owns the URLs, the token, the complete write payload (built from a `Subscription` plus the changed fields) and error mapping. The pages, detail cards, calendar, pick page and calculator saver call it, and the "send X in every PUT/PATCH" lines in AGENTS.md are deleted. Tests go through the module's interface against the existing fake API.
