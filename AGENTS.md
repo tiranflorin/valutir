@@ -182,7 +182,7 @@ docker compose run --rm frontend-test npm run lint
 docker compose run --rm frontend-test npm run build
 ```
 
-Backend tests are database-free (unit tests, plus HTTP tests for requests rejected before any database access). Frontend tests use Vitest, JSDOM, and React Testing Library. Frontend CI runs type-check, lint, tests, and build; keep all four passing.
+Backend tests are database-free (unit tests, plus HTTP tests for requests rejected before any database access). Decided: no database-backed test suite, since it costs more to keep up than it catches; cover a rule with a unit test at its service's interface instead. Frontend tests use Vitest, JSDOM, and React Testing Library. Frontend CI runs type-check, lint, tests, and build; keep all four passing.
 
 After `package.json` changes, refresh the test container's dependencies (they live in an anonymous `node_modules` volume that survives rebuilds): `docker compose up -d --build --renew-anon-volumes frontend-test`.
 

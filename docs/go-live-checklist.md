@@ -12,16 +12,12 @@ Status on 2026-11-03: payments, email verification, branded emails, and the lega
 - [ ] **Re-run `npm audit` and `composer audit` right before release.**
 - [x] **Retire the committed JWT passphrase:** removed from the CI env file and the sample, and local keys regenerated on 2026-11-06. It never protected a committed key, and the git history is left as is (the repository is public, so rewriting it wouldn't un-expose anything).
 - [x] **Match the Plans page to what's built:** every paid feature it lists exists (the free-plan limit lifted, the accountant export, custom reminder timing) since 2026-11-18.
-- [ ] **Honor the 14-day money-back guarantee** promised in the Terms and Refund policy (instead of asking buyers to waive the EU withdrawal right at checkout). Refund requests arrive through the contact form; issue them in the Stripe Dashboard within 5 business days. A full refund returns the account to the free plan automatically.
+- [x] **Honor the 14-day money-back guarantee** promised in the Terms and Refund policy (instead of asking buyers to waive the EU withdrawal right at checkout): the steps are in [payments.md, "Handling a refund request"](payments.md#handling-a-refund-request). A full refund returns the account to the free plan automatically. Still needed in production: a `CONTACT_RECIPIENT` inbox you check every few days, and refund receipts turned on in Stripe (below).
 - [x] **Finish the legal pages:** Privacy (`/privacy`), Terms (`/terms`), and Refunds (`/refunds`), all linked in the footer and from the Plans page. Have all three reviewed by a lawyer. The Privacy policy already includes the cookies and storage table (TODO #4).
 - [ ] **Make the Privacy Policy's promises true in production:** error logs kept for at most 30 days (set CloudWatch log-group retention to 30 days), contact messages deleted from the `CONTACT_RECIPIENT` mailbox once handled, and data processing agreements in place with AWS, Cloudflare and Stripe.
 - [ ] **Add the Terms and Refunds URLs in the Stripe Dashboard** (Settings → Public details), and set the support email and the `VALUTIR` statement descriptor that the Refund policy names.
 - [x] **A process for GDPR access and portability requests.** Self-service: Profile → Download my data gives the account, every subscription (deleted ones too), purchases and sent reminders as JSON, and the subscriptions as CSV (`GET /api/profile/export`, `GET /api/profile/export/subscriptions.csv`). Requests that arrive through the contact form (restriction, objection, or a user who can't sign in) are still answered by hand within one month.
 - [x] **Add locking to the rate limiters:** done on 2026-11-06. Every limiter and login throttling takes a PostgreSQL advisory lock (`symfony/lock`, `DoctrineDbalPostgreSqlStore` on the app's own connection), so parallel requests can't go past a limit. Locally, 20 parallel sign-ups passed a limit of 5 before the change and exactly 5 after.
-
-### Should fix
-
-- [ ] **Database-backed tests** for user isolation, the checkout and webhook flow, and token revocation (TODO #1, currently deferred).
 
 ### Stripe account (live mode)
 

@@ -70,7 +70,7 @@ The comparison that led to the decision:
 | Maturity | Younger (1.0 in 2023), and it's the Symfony community's default (the official Symfony Docker template) | Decades in production, with very wide documentation |
 | HTTPS | Built-in automatic HTTPS and HTTP/2/3, not needed here: Cloudflare terminates TLS, and the container serves plain HTTP inside the instance only | Same: plain HTTP inside the instance |
 
-Why classic mode first: it gives the single container and the simpler setup with no request-isolation risk. ValuTir's early traffic doesn't need worker mode's speed. Turn it on later, after a load test and once the backend has database-backed tests (TODO #1).
+Why classic mode first: it gives the single container and the simpler setup with no request-isolation risk. ValuTir's early traffic doesn't need worker mode's speed. Turn it on later, after a load test and a check that no service keeps state between requests.
 
 ## Production image
 
